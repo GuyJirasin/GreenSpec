@@ -5,7 +5,7 @@
 | ขั้นตอน / กฎ | ช่องว่างเดิม | การแก้ไข |
 |---|---|---|
 | Create Project | Description ไม่จำเป็น แต่บังคับ location และ area | บังคับชื่อและ description; metadata ที่เหลือ optional |
-| Upload | ไม่มี replace และประเภท specification ไม่แยก | เพิ่ม replace โดยไม่ลบไฟล์เดิมเมื่อ validation ไม่ผ่าน; เพิ่ม Material / Technical Specification |
+| Upload | ประเภท specification ไม่แยก | เพิ่ม Material / Technical Specification; ตามคำขอเพิ่มเติมนำปุ่ม Replace ออก ใช้ Remove และเพิ่มไฟล์ใหม่ |
 | Processing → Review | พาไป overview แทน review | สำเร็จแล้วไป Recommendations; overview/hotspots ยังดูได้; ป้องกันการออกผ่าน navigation ระหว่าง processing และมี Cancel |
 | Review / traceability | แหล่งเอกสารอยู่ detail; feedback มีเฉพาะ reject | แสดง original + file/page/section ใน list/detail และเพิ่ม Comment / Request adjustment |
 | Approved locking | เปลี่ยน option หรือ reject รายการที่อนุมัติได้ทันที | ล็อกทุกครั้งที่ approve; ต้อง Unlock ก่อนแก้; finalized revision อ่านอย่างเดียว |
@@ -31,6 +31,6 @@
 
 Unit tests ตรวจ lock preservation, explicit unlock, feedback combination, snapshot independence, impact calculation, cost increase, optional output, acceptance rules และ file validation
 
-Browser tests ตรวจ create/upload/review, approve/unlock/Option B, iteration/history/refresh, optional document/download, compliance review, failed/missing/no recommendations, replace validation และ mobile overflow
+Browser tests ตรวจ create/upload/review, approve/unlock/Option B, iteration/history/refresh, optional document/download, compliance review, failed/missing/no recommendations, upload validation และ mobile overflow
 
 ผลตรวจ: production build ผ่าน, unit tests 9 กรณีผ่าน, browser tests 11 กรณีผ่าน และตรวจเพิ่มกรณี filter ต้นทุนของ Option B หลังเปลี่ยนการคำนวณ ผ่านเช่นกัน ตรวจภาพ Revision Summary, feedback dialog, document choice และ final impact ทั้ง desktop/mobile แล้ว

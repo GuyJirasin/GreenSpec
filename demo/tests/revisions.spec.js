@@ -63,15 +63,14 @@ test('generated document downloads and final history is preserved',async({page})
   await page.getByRole('button',{name:'Revision History',exact:true}).click();await page.getByRole('button',{name:'View revision 1'}).click();
   await expect(page.getByText('Approved · Option A · Locked')).toBeVisible();
 });
-test('replace validation failure preserves original file, successful replacement and remove',async({page})=>{
+test('upload has no replace button, validation preserves files, add and remove work',async({page})=>{
   await sample(page);await page.getByRole('button',{name:'Documents',exact:true}).click();
-  await page.getByRole('button',{name:'Replace TOR.pdf'}).click();
+  await expect(page.getByRole('button',{name:/Replace/})).toHaveCount(0);
   await page.getByLabel('Upload documents',{exact:true}).setInputFiles({name:'bad.exe',mimeType:'application/octet-stream',buffer:Buffer.from('bad')});
   await expect(page.getByRole('dialog')).toContainText('Unsupported file type');await page.getByRole('button',{name:'Close dialog'}).click();
   await expect(page.getByText('TOR.pdf',{exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Replace TOR.pdf'}).click();
   await page.getByLabel('Upload documents',{exact:true}).setInputFiles({name:'Replacement.pdf',mimeType:'application/pdf',buffer:Buffer.from('mock')});
-  await expect(page.getByText('TOR.pdf',{exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Analyze project'})).toBeDisabled();
+  await expect(page.getByText('TOR.pdf',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Analyze project'})).toBeDisabled();
   await expect(page.getByRole('button',{name:'Analyze project'})).toBeEnabled();await page.getByRole('button',{name:'Remove Replacement.pdf'}).click();
   await expect(page.getByText('Replacement.pdf',{exact:true})).toHaveCount(0);
 });
