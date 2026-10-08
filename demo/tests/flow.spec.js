@@ -1,20 +1,23 @@
 import { test, expect } from '@playwright/test';
 
-test('create, analyze, compare, select, revise and submit', async ({ page }) => {
+test('create, analyze, compare, edit wording and accept revision without document', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/');
   await page.getByRole('button', { name: 'New analysis', exact: true }).click();
   await page.getByLabel('Project name *').fill('React flow test');
-  await page.getByLabel('Project area (m²) *').fill('24000');
+  await page.getByRole('button', { name: 'Continue to documents' }).click();
+  await expect(page.getByRole('heading', { name: 'Create a new project' })).toBeVisible();
+  await page.getByLabel('Project description *').fill('Optimize the office specification');
+  await page.getByLabel('Location (optional)').fill('');
   await page.getByRole('button', { name: 'Continue to documents' }).click();
   await expect(page.getByRole('button', { name: 'Analyze project' })).toBeDisabled();
   await page.getByRole('button', { name: 'Use sample documents' }).click();
   await page.getByRole('button', { name: 'Analyze project' }).click();
-  await expect(page.getByRole('heading', { name: 'Analysis overview' })).toBeVisible({ timeout: 15000 });
-  await page.getByRole('button', { name: 'View recommendations' }).click();
+  await expect(page.getByRole('heading', { name: 'Recommendations', exact: true })).toBeVisible({ timeout: 15000 });
   await page.getByRole('button', { name: 'Accept', exact: true }).first().click();
   await page.getByRole('button', { name: 'Compare', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Unlock to edit' }).click();
   await page.getByRole('button', { name: 'Select Option B' }).click();
   await expect(page.getByRole('button', { name: 'Confirm and accept' })).toBeDisabled();
   await page.getByRole('dialog').getByRole('checkbox').check();
@@ -22,15 +25,16 @@ test('create, analyze, compare, select, revise and submit', async ({ page }) => 
   await page.getByRole('button', { name: 'Selected Spec (1)', exact: true }).click();
   await expect(page.getByText('−315 tCO₂e', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('Additional cost', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Generate revised specification' }).click();
+  await page.getByRole('button', { name: 'Revised Specification', exact: true }).click();
+  await page.getByRole('button', { name: 'Unlock wording to edit' }).click();
   await page.getByLabel('Revised requirement · editable').fill('Edited sample specification for review.');
+  await page.getByRole('button', { name: 'Review revision summary', exact: true }).click();
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Finalize & view summary' }).click();
-  await page.getByRole('button', { name: 'Submit for review', exact: true }).click();
-  await expect(page.getByRole('button', { name: '✓ Submitted', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Accept Revision', exact: true }).click();
+  await page.getByRole('button', { name: 'Finish without document' }).click();
+  await expect(page.getByRole('heading', { name: 'Revision completed' })).toBeVisible();
   await page.getByRole('button', { name: 'Selected Spec (1)', exact: true }).click();
-  await page.getByRole('button', { name: 'Remove', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Your selected specification is empty' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Remove', exact: true })).toBeDisabled();
   expect(errors).toEqual([]);
 });
 

@@ -30,10 +30,11 @@ The production build is written to `demo/dist`. Vite uses relative asset paths s
 3. Start the simulated analysis and review its processing steps.
 4. Explore baseline carbon / cost and material hotspots.
 5. Filter and sort recommendations. Inspect existing / proposed wording, references, performance, risk, confidence and sample compliance checks.
-6. Compare Original, Option A and Option B. Accept, reject with a reason, or save for review.
-7. Review selected changes and their combined impact. Only one alternative can be selected per recommendation.
-8. Generate and edit the revised specification, acknowledge review, and finalize.
-9. Review the final summary, download a specification (`.txt`) or analysis (`.json`), print / save PDF, or simulate submission for review.
+6. Compare Original, Option A and Option B. Approve, reject with a reason, comment / request adjustment, or save for review. Approved changes lock immediately; explicitly unlock to edit.
+7. Review the revision summary: approved, rejected and unresolved items, source references, combined CO₂ and cost impacts. Intentionally unresolved items may remain unchanged.
+8. Request another revision with round-level feedback. Processing returns to recommendation review; locked approvals are preserved. Inspect immutable previous rounds in Revision History.
+9. Accept the revision, then optionally generate a sample text specification or finish without a document. Both paths preserve the approved change set.
+10. Review final impact, download approved changes (`.json`), view / print the final summary, return to the dashboard, or view the local Project Management handoff.
 
 Use the left sidebar **Demo scenario** selector before analyzing to exercise successful, failed, missing-information and no-recommendation states. **Reset demo** restores the sample project.
 
@@ -43,10 +44,11 @@ Use the left sidebar **Demo scenario** selector before analyzing to exercise suc
 - Uploaded files stay on the local device. Only file metadata is used; document contents are not parsed.
 - Every project uses the same illustrative sample dataset.
 - Failed critical engineering checks block acceptance. Review-required alternatives use an explicit demo acknowledgement.
-- Changing selections or revised wording invalidates finalization and submission status.
+- Finalized revisions are read-only. Before finalization, unlock an approved item explicitly to change its option, wording, feedback or review decision.
 - Edited wording does not recalculate carbon, cost or compliance.
-- State is kept in memory and resets on a page refresh. Download analysis JSON to retain a record; importing it is not implemented.
-- Submit for review changes local demo status only; it sends nothing.
+- Project state, review decisions, feedback and revision history persist in this browser's local storage. Download analysis JSON for a portable record; importing it is not implemented. Reset demo starts fresh.
+- Regeneration is deterministic mock logic using both feedback levels and reject reasons; it is not a semantic AI interpretation or real budget/engineering optimization.
+- Document generation produces a sample `.txt` from approved mock excerpts. It does not edit an uploaded TOR / BOQ / PDF. Project Management is a local handoff page, not an external integration.
 - Project Matching, Materials, Suppliers and Knowledge Hub display future-feature placeholders.
 - No engineering standards, product EPDs or supplier certificates are actually verified. Figures are not certified carbon assessments or approved construction specifications.
 
@@ -59,6 +61,8 @@ demo/
     components.jsx   reusable interface components
     data.js          mock recommendations and documents
     model.js         impact calculations and validation
+    revisions.js     locking, revision snapshots and approved change sets
+    RevisionFlow.jsx revision checkpoint, feedback, final output and history
     model.test.js    decision and validation tests
     styles.css       Tailwind theme and shared styles
     main.jsx         React entry point
@@ -74,6 +78,6 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-To use an already installed Chromium browser, set `PLAYWRIGHT_EXECUTABLE_PATH` to its executable path. Browser tests start their own local Vite server.
+To use an already installed Chromium browser, set `PLAYWRIGHT_EXECUTABLE_PATH` to its executable path. Browser tests start their own local Vite server. Set `GREEN_SPEC_TEST_PORT` to use a separate test port when 5173 is occupied.
 
 The calculation tests cover combined reductions, additional costs, mutually exclusive alternatives, engineering acceptance rules, and file validation. Browser tests cover the main workflow, review / blocked acceptance, rejection, filters, analysis scenarios, and mobile page overflow.

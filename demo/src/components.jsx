@@ -6,7 +6,7 @@ export function Button({ children, primary, link, className = '', ...props }) {
 }
 export function Badge({ children, tone }) {
   const text = String(children);
-  const kind = tone || (/Fail|High Risk|High risk|Not Pass/.test(text) ? 'bad' : /Review|Medium|Verification/.test(text) ? 'warn' : 'good');
+  const kind = tone || (/Fail|High Risk|High risk|Not Pass|Rejected|blocked/.test(text) ? 'bad' : /Review|Medium|Verification|Unresolved|Adjustment/.test(text) ? 'warn' : 'good');
   return <span className={`inline-flex rounded-md px-2 py-1 text-[11px] font-semibold ${kind === 'bad' ? 'bg-red-50 text-red-700' : kind === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-800'}`}>{children}</span>;
 }
 export function Title({ title, subtitle, action }) {
