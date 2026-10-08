@@ -19,7 +19,7 @@ function Changes({ state, final = false }) {
     <div className="flex flex-wrap justify-between gap-3"><b>{r.title}</b><Badge tone={state.decisions[r.id] === 'Rejected' ? 'bad' : result.unresolved.includes(r) ? 'warn' : 'good'}>{state.selections[r.id] ? `Approved · Option ${state.selections[r.id]}${state.locks[r.id] ? ' · Locked' : ''}` : state.decisions[r.id] || 'Unresolved'}</Badge></div>
     <p className="mt-2 text-xs text-forest">{r.source}</p>
     {state.selections[r.id] && <><p><b>Original:</b> {r.old}</p><p><b>Approved replacement:</b> {state.drafts[r.id] ?? r[state.selections[r.id].toLowerCase()]}</p><p><b>Reason:</b> {r.why}</p><p className="text-xs text-muted">{carbon(approvedChangeSet(state).find(c => c.id === r.id).impact.carbon)} reduction · {money(Math.abs(approvedChangeSet(state).find(c => c.id === r.id).impact.savings))} {approvedChangeSet(state).find(c => c.id === r.id).impact.savings >= 0 ? 'saving' : 'additional cost'}</p></>}
-    {state.reasons[r.id] && <p className="text-muted">Reject reason: {state.reasons[r.id].reason} · {state.reasons[r.id].note}</p>}
+    {state.decisions[r.id] === 'Rejected' && state.reasons[r.id] && <p className="text-muted">Reject reason: {state.reasons[r.id].reason} · {state.reasons[r.id].note}</p>}
     {state.feedback[r.id] && <p className="text-muted">Feedback: {state.feedback[r.id].reason} · {state.feedback[r.id].note}</p>}
   </div>)}</section>;
 }

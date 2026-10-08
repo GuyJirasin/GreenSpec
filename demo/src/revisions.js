@@ -8,7 +8,11 @@ export function initialState() {
 export function restoreState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved?.version === 2 && saved.state?.candidates && saved.state?.history && saved.state?.project) return { ...initialState(), ...saved.state, documents: saved.state.documents.map(d => ({ ...d, status: 'Ready' })) };
+    if ([2, 3].includes(saved?.version) && saved.state?.candidates && saved.state?.history && saved.state?.project) {
+      const locks = { ...saved.state.locks };
+      if (saved.version === 2) for (const [id, decision] of Object.entries(saved.state.decisions || {})) if (decision === 'Rejected') locks[id] = true;
+      return { ...initialState(), ...saved.state, locks, documents: saved.state.documents.map(d => ({ ...d, status: 'Ready' })) };
+    }
   } catch { /* Invalid browser data starts a fresh demo. */ }
   return initialState();
 }
@@ -29,7 +33,7 @@ export function archiveRevision(state) {
 // Feedback chooses a sample alternative; no uploaded text or AI is processed.
 export function regenerate(state) {
   const candidates = state.candidates.map(r => {
-    if (state.locks[r.id]) return r;
+    if (state.locks[r.id] && state.selections[r.id]) return r;
     const feedback = [state.iterationFeedback, state.feedback[r.id]?.note, state.feedback[r.id]?.reason, state.reasons[r.id]?.reason, state.reasons[r.id]?.note].filter(Boolean).join(' · ');
     const costFocused = /cost|expensive|ราค|ต้นทุน|2%/i.test(feedback);
     const cost = costFocused;
@@ -41,8 +45,8 @@ export function regenerate(state) {
       status: r.check === 'Fail' ? 'High Risk' : !cost || r.check === 'Review' ? 'Needs Review' : 'Recommended',
       why: `${r.why} · Mock revision ${state.revision + 1}: ${cost ? 'prioritize cost and retain engineering requirements' : 'explore lower-carbon material; human verification required'}` };
   });
-  const keep = obj => Object.fromEntries(Object.entries(obj).filter(([id]) => state.locks[id]));
-  return { ...state, history: archiveRevision(state), revision: state.revision + 1, candidates, selections: keep(state.selections), locks: { ...state.locks }, decisions: keep(state.decisions), reviews: keep(state.reviews), drafts: keep(state.drafts), ready: false, pendingIteration: true, finalized: false, documentGenerated: false, submitted: false };
+  const keep = obj => Object.fromEntries(Object.entries(obj).filter(([id]) => state.locks[id] && state.selections[id]));
+  return { ...state, history: archiveRevision(state), revision: state.revision + 1, candidates, selections: keep(state.selections), locks: keep(state.locks), decisions: keep(state.decisions), reviews: keep(state.reviews), drafts: keep(state.drafts), ready: false, pendingIteration: true, finalized: false, documentGenerated: false, submitted: false };
 }
 export function approvedChangeSet(state) {
   return reviewSummary(state).approved.map(r => ({ id: r.id, material: r.mat, title: r.title, original: r.old, replacement: state.drafts[r.id] ?? r[state.selections[r.id].toLowerCase()], option: state.selections[r.id], reason: r.why, source: r.source, impact: optionImpact(r, state.selections[r.id]), engineering: r.perf, compliance: r.check, humanReviewAcknowledged: !!state.reviews[r.id] }));

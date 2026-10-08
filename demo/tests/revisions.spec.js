@@ -63,6 +63,31 @@ test('generated document downloads and final history is preserved',async({page})
   await page.getByRole('button',{name:'Revision History',exact:true}).click();await page.getByRole('button',{name:'View revision 1'}).click();
   await expect(page.getByText('Approved · Option A · Locked')).toBeVisible();
 });
+test('reject locks decisions, restores reasons on explicit edit, and clears stale rejection on approve',async({page})=>{
+  await sample(page);
+  let card=page.locator('article').first();
+  await card.getByRole('button',{name:'Reject',exact:true}).click();
+  await page.getByLabel('Reason').selectOption('Material unavailable');
+  await page.getByLabel('Notes (optional)').fill('Supplier not available');
+  await page.getByRole('dialog').getByRole('button',{name:'Reject',exact:true}).click();
+  await expect(card.getByRole('button',{name:'Rejected · Locked'})).toBeDisabled();
+  await expect(card.getByRole('button',{name:'Accept',exact:true})).toBeDisabled();
+  await expect(card.getByRole('button',{name:'Comment / Request adjustment'})).toBeDisabled();
+  await page.reload();await page.getByRole('button',{name:'Open',exact:true}).click();
+  card=page.locator('article').first();
+  await expect(card.getByRole('button',{name:'Rejected · Locked'})).toBeDisabled();
+  await card.getByRole('button',{name:'Unlock to edit'}).click();
+  await page.reload();await page.getByRole('button',{name:'Open',exact:true}).click();
+  await card.getByRole('button',{name:'Reject',exact:true}).click();
+  await expect(page.getByLabel('Reason')).toHaveValue('Material unavailable');
+  await expect(page.getByLabel('Notes (optional)')).toHaveValue('Supplier not available');
+  await page.getByRole('button',{name:'Cancel',exact:true}).click();
+  await card.getByRole('button',{name:'Accept',exact:true}).click();
+  await expect(card.getByRole('button',{name:'Approved · Locked'})).toBeDisabled();
+  await page.getByRole('button',{name:'Revision Summary',exact:true}).click();
+  await expect(page.getByText(/Reject reason:/)).toHaveCount(0);
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('greenspec-feature1-v2')).state.reasons[1])).toBeUndefined();
+});
 test('upload has no replace button, validation preserves files, add and remove work',async({page})=>{
   await sample(page);await page.getByRole('button',{name:'Documents',exact:true}).click();
   await expect(page.getByRole('button',{name:/Replace/})).toHaveCount(0);

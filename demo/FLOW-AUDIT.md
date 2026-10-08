@@ -4,11 +4,11 @@
 
 | ขั้นตอน / กฎ | ช่องว่างเดิม | การแก้ไข |
 |---|---|---|
-| Create Project | Description ไม่จำเป็น แต่บังคับ location และ area | บังคับชื่อและ description; metadata ที่เหลือ optional |
+| Create Project | บังคับ location และ area | บังคับเฉพาะชื่อ; description และ metadata ที่เหลือ optional ตามคำขอล่าสุด |
 | Upload | ประเภท specification ไม่แยก | เพิ่ม Material / Technical Specification; ตามคำขอเพิ่มเติมนำปุ่ม Replace ออก ใช้ Remove และเพิ่มไฟล์ใหม่ |
 | Processing → Review | พาไป overview แทน review | สำเร็จแล้วไป Recommendations; overview/hotspots ยังดูได้; ป้องกันการออกผ่าน navigation ระหว่าง processing และมี Cancel |
 | Review / traceability | แหล่งเอกสารอยู่ detail; feedback มีเฉพาะ reject | แสดง original + file/page/section ใน list/detail และเพิ่ม Comment / Request adjustment |
-| Approved locking | เปลี่ยน option หรือ reject รายการที่อนุมัติได้ทันที | ล็อกทุกครั้งที่ approve; ต้อง Unlock ก่อนแก้; finalized revision อ่านอย่างเดียว |
+| Decision locking | เปลี่ยนการตัดสินใจซ้ำได้ทันที | ล็อกทุกครั้งที่ approve/reject; ต้อง Unlock ก่อนแก้; เปิดแก้ reject โหลดเหตุผลเดิม; approve ล้างเหตุผล reject ปัจจุบัน; รอบใหม่ regenerate rejected ได้ แต่รักษา approved locks; finalized revision อ่านอย่างเดียว |
 | Option consistency | Detail แสดง wording B แต่ impact A | Detail ใช้ option ที่เลือกทั้งข้อความและค่า CO₂/cost; เพิ่มเปอร์เซ็นต์ต้นทุน |
 | Revision checkpoint | ไม่มี approved/rejected/unresolved decision checkpoint | เพิ่ม Revision Summary พร้อม counts, accepted/rejected/unresolved lists, CO₂/cost และเปอร์เซ็นต์; ยอมรับ unresolved โดยรับทราบอย่างชัดเจน |
 | Iteration loop | ไม่มี request another revision หรือ feedback ระดับรอบ | เพิ่ม feedback form → processing → recommendations; รวม item feedback, reject reasons, round feedback; regenerate เฉพาะรายการที่ไม่ได้ล็อก |
@@ -33,4 +33,4 @@ Unit tests ตรวจ lock preservation, explicit unlock, feedback combination
 
 Browser tests ตรวจ create/upload/review, approve/unlock/Option B, iteration/history/refresh, optional document/download, compliance review, failed/missing/no recommendations, upload validation และ mobile overflow
 
-ผลตรวจ: production build ผ่าน, unit tests 9 กรณีผ่าน, browser tests 11 กรณีผ่าน และตรวจเพิ่มกรณี filter ต้นทุนของ Option B หลังเปลี่ยนการคำนวณ ผ่านเช่นกัน ตรวจภาพ Revision Summary, feedback dialog, document choice และ final impact ทั้ง desktop/mobile แล้ว
+ผลตรวจล่าสุด: production build ผ่าน, unit tests 10 กรณีผ่าน และ browser tests 12 กรณีผ่าน รวมถึงการสร้างโครงการโดยไม่กรอก description, Reject/Unlock, โหลดเหตุผลเดิม, ล้างเหตุผลหลัง Approve, migration สถานะเดิม และ regenerate rejected items โดยรักษา approved locks ตรวจภาพ Revision Summary, feedback dialog, document choice และ final impact ทั้ง desktop/mobile ในรอบก่อนแล้ว

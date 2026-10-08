@@ -6,9 +6,6 @@ test('create, analyze, compare, edit wording and accept revision without documen
   await page.goto('/');
   await page.getByRole('button', { name: 'New analysis', exact: true }).click();
   await page.getByLabel('Project name *').fill('React flow test');
-  await page.getByRole('button', { name: 'Continue to documents' }).click();
-  await expect(page.getByRole('heading', { name: 'Create a new project' })).toBeVisible();
-  await page.getByLabel('Project description *').fill('Optimize the office specification');
   await page.getByLabel('Location (optional)').fill('');
   await page.getByRole('button', { name: 'Continue to documents' }).click();
   await expect(page.getByRole('button', { name: 'Analyze project' })).toBeDisabled();
