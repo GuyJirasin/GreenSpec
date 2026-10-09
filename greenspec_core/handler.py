@@ -66,7 +66,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         else:
             payload = body_str
 
-        result = analyze_and_draft_spec(payload, use_mock=True)
+        use_mock = payload.get("use_mock", False)
+        result = analyze_and_draft_spec(payload, use_mock=use_mock)
         return {
             "statusCode": 200,
             "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
