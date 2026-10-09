@@ -71,7 +71,7 @@ class TyphoonClient:
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.2,
-                "max_tokens": 2500
+                "max_tokens": 4000
             }).encode("utf-8")
 
             req = urllib.request.Request(
@@ -82,7 +82,7 @@ class TyphoonClient:
                     "Authorization": f"Bearer {self.api_key}"
                 }
             )
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=45) as resp:
                 resp_json = json.loads(resp.read().decode("utf-8"))
                 content = resp_json["choices"][0]["message"]["content"]
                 return self._parse_llm_output(content)
@@ -110,9 +110,27 @@ class TyphoonClient:
 """
 
     def _parse_llm_output(self, content: str) -> Tuple[str, str]:
-        parts = content.split("---")
-        if len(parts) >= 2:
+        split_markers = [
+            "2. Specification ภาษาอังกฤษ",
+            "Specification ภาษาอังกฤษ",
+            "Specification in English",
+            "English Specification",
+            "PART 1 - GENERAL",
+            "PART 1: GENERAL",
+            "PART 1 – GENERAL"
+        ]
+        for marker in split_markers:
+            if marker in content:
+                idx = content.find(marker)
+                th_part = content[:idx].strip()
+                en_part = content[idx:].strip()
+                if len(th_part) > 100:
+                    return th_part, en_part
+
+        parts = content.split("\n---\n")
+        if len(parts) >= 2 and len(parts[0]) > 200:
             return parts[0].strip(), parts[1].strip()
+
         return content.strip(), content.strip()
 
     def _mock_generate(self, project_name, element_type, fc_mpa, age_days, scm_name, scm_pct, wb_ratio, curing_days) -> Tuple[str, str]:
