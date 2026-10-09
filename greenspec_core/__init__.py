@@ -41,4 +41,17 @@ __all__ = [
     "build_technical_package",
     "analyze_and_draft_spec",
     "lambda_handler",
+    "calculate_concrete_mix",
+    "calculate_embodied_carbon",
+    "evaluate_thermal_mass_concrete",
+    "convert_concrete_strength",
+    "estimate_cost_impact",
 ]
+
+from greenspec_core.tools import (
+    calculate_concrete_mix,
+    calculate_embodied_carbon,
+    evaluate_thermal_mass_concrete,
+    convert_concrete_strength,
+    estimate_cost_impact,
+)
