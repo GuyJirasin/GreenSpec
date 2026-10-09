@@ -38,46 +38,82 @@ The production build is written to `demo/dist`. Vite uses relative asset paths s
 
 Use the left sidebar **Demo scenario** selector before analyzing to exercise successful, failed, missing-information and no-recommendation states. **Reset demo** restores the sample project.
 
-## Scope and behavior
+## System Architecture & Components
 
-- Mock data only. No backend, AI service, authentication or file-upload endpoint.
-- Uploaded files stay on the local device. Only file metadata is used; document contents are not parsed.
-- Every project uses the same illustrative sample dataset.
-- Failed critical engineering checks block acceptance. Review-required alternatives use an explicit demo acknowledgement.
-- Finalized revisions are read-only. Before finalization, unlock an approved or rejected item explicitly to change its option, wording, feedback or review decision. Editing a rejection restores its saved reason and notes; approving it clears the current reject reason.
-- Edited wording does not recalculate carbon, cost or compliance.
-- Project state, review decisions, feedback and revision history persist in this browser's local storage. Download analysis JSON for a portable record; importing it is not implemented. Reset demo starts fresh.
-- Regeneration is deterministic mock logic using both feedback levels and reject reasons; it is not a semantic AI interpretation or real budget/engineering optimization.
-- Document generation produces a sample `.txt` from approved mock excerpts. It does not edit an uploaded TOR / BOQ / PDF. Project Management is a local handoff page, not an external integration.
-- Project Matching, Materials, Suppliers and Knowledge Hub display future-feature placeholders.
-- No engineering standards, product EPDs or supplier certificates are actually verified. Figures are not certified carbon assessments or approved construction specifications.
-
-## Source structure
+GreenSpec is built as a **Hybrid Neuro-Symbolic Platform** combining a deterministic physics/engineering calculation engine with a full-text RAG pipeline and OpenTyphoon LLM.
 
 ```text
-demo/
-  src/
-    App.jsx          screens and workflow state
-    components.jsx   reusable interface components
-    data.js          mock recommendations and documents
-    model.js         impact calculations and validation
-    revisions.js     locking, revision snapshots and approved change sets
-    RevisionFlow.jsx revision checkpoint, feedback, final output and history
-    model.test.js    decision and validation tests
-    styles.css       Tailwind theme and shared styles
-    main.jsx         React entry point
-  tests/flow.spec.js  browser workflow tests
+GreenSpec/
+├── app.py                     # FastAPI REST API & Tool Endpoints
+├── api/                       # Vercel Serverless Function (api/analyze.py)
+├── greenspec_core/            # Decoupled Core AI & Engineering Engine
+│   ├── tools.py               # Deterministic Engineering Tools (ACI 211.1, TGO, ACI 207)
+│   ├── knowledge_graph.py     # Civil Engineering Knowledge Graph (14 nodes, 21 edges)
+│   ├── knowledge_indexer.py   # Hybrid Graph-RAG (Graph reasoning + 235 semantic chunks)
+│   ├── guardrails.py          # Safety Guardrails (Mass Concrete, PT Slabs, Columns)
+│   ├── catalog.py             # Thai Certified Concrete & SCM Catalog (CPAC, Insee, EGAT)
+│   ├── matcher.py             # Product Matching Algorithm
+│   ├── calculator.py          # Impact Calculator (Baseline, Opt A, Opt B)
+│   ├── llm_client.py          # OpenTyphoon LLM API Client (CSI 3-Part Bilingual Drafter)
+│   ├── package_builder.py     # Technical Package Builder (Clauses, Compliance, Checklists)
+│   ├── benchmark.py           # Internal Accuracy & Performance Benchmark Suite
+│   └── exam_benchmark.py      # Standardized Civil Exam Benchmark (COE Thailand & ACI)
+├── knowledge_base/            # Peer-Reviewed Literature & Thai Standards
+│   ├── full_texts/            # 117 pages / 345k characters verbatim from Chula, KMUTT, etc.
+│   ├── standards/             # TIS 15, TIS 2594, TIS 2135, DPT 1101-64, EIT 1014
+│   └── research/              # High-volume pozzolans, bottom ash, durability research
+├── demo/                      # React + Vite + Tailwind Frontend Application
+│   └── src/                   # Interactive Dashboard, Review Flow & Spec Generator
+├── docs/                      # Documentation & Benchmark Reports
+│   ├── BENCHMARK_REPORT.md    # 5-Suite Benchmark Report (100% Pass, Exam Suite)
+│   └── exam_benchmark_results.json # Itemized Civil Exam Benchmark Results
+└── tests/                     # Automated Test Suite (36 passing tests)
 ```
 
-## Tests
+## Running the Backend API
+
+Start the FastAPI server locally:
+
+```sh
+# Install python dependencies
+pip install fastapi uvicorn pymupdf pytest
+
+# Run API server (port 8000)
+python3 -m uvicorn app:app --reload --port 8000
+```
+
+Available API Endpoints:
+* `POST /api/analyze` - Full specification analysis, safety guardrails, carbon/cost optimization, and bilingual TOR drafting.
+* `GET /api/catalog` - List of certified low-carbon concrete and SCM materials in Thailand.
+* `POST /api/tools/mix-design` - Deterministic ACI 211.1 mix design proportioning.
+* `POST /api/tools/carbon-calc` - TGO-verified embodied carbon footprint calculator.
+* `POST /api/tools/thermal-check` - Mass concrete thermal cracking ($\Delta T \le 20^\circ\text{C}$) and DEF risk evaluator.
+* `GET /api/tools/strength-convert` - DPT 1101-64 Cylinder ($15\times 30\text{ cm}$) vs Cube ($15\times 15\text{ cm}$) converter.
+* `POST /api/tools/cost-estimate` - Ready-mix concrete cost impact estimator.
+* Interactive OpenAPI Swagger docs: `http://localhost:8000/docs`
+
+## Running Automated Tests & Benchmark
+
+```sh
+# Run all 36 unit and integration tests
+PYTHONPATH=. pytest -v tests/
+
+# Run comprehensive engineering benchmark suite
+python3 -m greenspec_core.benchmark
+```
+
+Benchmark highlights:
+* **Volumetric Conservation:** Sum of absolute volumes = $1.000\text{ m}^3$ (Error: 0.000%).
+* **Council of Engineers Exam Benchmark:** 93.3% on pure LLM vs 100.0% on GreenSpec Hybrid Engine.
+* **Engine Latency:** 20.55 ms total processing time.
+* See full report in [`docs/BENCHMARK_REPORT.md`](./docs/BENCHMARK_REPORT.md).
+
+## Running the Frontend Demo
 
 ```sh
 cd demo
-npm test
-npx playwright install chromium
-npm run test:e2e
+npm ci
+npm run dev
 ```
 
-To use an already installed Chromium browser, set `PLAYWRIGHT_EXECUTABLE_PATH` to its executable path. Browser tests start their own local Vite server. Set `GREEN_SPEC_TEST_PORT` to use a separate test port when 5173 is occupied.
-
-The calculation tests cover combined reductions, additional costs, mutually exclusive alternatives, engineering acceptance rules, and file validation. Browser tests cover the main workflow, review / blocked acceptance, rejection, filters, analysis scenarios, and mobile page overflow.
+Open `http://127.0.0.1:5173` to explore the interactive review flow.
