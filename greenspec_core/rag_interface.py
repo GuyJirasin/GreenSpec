@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
+from greenspec_core.config import Config
 
 class BaseRetriever(ABC):
     """Abstract interface for RAG context retrieval."""
@@ -46,3 +47,45 @@ class LocalStandardsRetriever(BaseRetriever):
         # Add general curing & mill certificate clauses
         results.extend(self.STANDARDS_DB["general"])
         return results
+
+class SupabaseRetriever(BaseRetriever):
+    """Retriever connected to Supabase pgvector or standard table."""
+
+    def __init__(
+        self,
+        supabase_url: Optional[str] = None,
+        supabase_key: Optional[str] = None,
+        table_name: str = "civil_standards",
+        fallback: Optional[BaseRetriever] = None
+    ):
+        cfg = Config()
+        self.url = supabase_url or cfg.supabase_url
+        self.key = supabase_key or cfg.supabase_anon_key or cfg.supabase_service_role_key
+        self.table_name = table_name
+        self.fallback = fallback or LocalStandardsRetriever()
+        self.client = None
+
+        if self.url and self.key:
+            try:
+                from supabase import create_client
+                self.client = create_client(self.url, self.key)
+            except Exception:
+                self.client = None
+
+    def retrieve(self, element_type: str, query: str) -> List[str]:
+        if not self.client:
+            return self.fallback.retrieve(element_type, query)
+
+        try:
+            # Query table for matching records
+            response = self.client.table(self.table_name)\
+                .select("clause_text")\
+                .ilike("element_type", f"%{element_type}%")\
+                .limit(5)\
+                .execute()
+
+            if response.data:
+                return [row["clause_text"] for row in response.data if "clause_text" in row]
+            return self.fallback.retrieve(element_type, query)
+        except Exception:
+            return self.fallback.retrieve(element_type, query)

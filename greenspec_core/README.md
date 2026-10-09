@@ -40,16 +40,34 @@ python3 greenspec_core/example.py
 python3 -m pytest tests/ -v
 ```
 
-## Integrating with Custom RAG
+## Environment Variables (`.env`)
+
+Copy `.env.example` to `.env` and fill in your keys:
+
+```bash
+cp .env.example .env
+```
+
+```env
+# Typhoon API (SCB 10X Thai LLM)
+TYPHOON_API_KEY=your_key_here
+TYPHOON_BASE_URL=https://api.opentyphoon.ai/v1
+TYPHOON_MODEL=typhoon-v1.5-instruct
+
+# Supabase (Database & Vector RAG)
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+```
+
+## Integrating with Supabase RAG
 ```python
-from greenspec_core import BaseRetriever, analyze_and_draft_spec
+from greenspec_core import SupabaseRetriever, analyze_and_draft_spec
 
-class MyVectorDBRetriever(BaseRetriever):
-    def retrieve(self, element_type: str, query: str):
-        # Query your Pinecone / Qdrant / Supabase DB
-        return ["ข้อกำหนดเฉพาะโครงการ..."]
+# Automatically uses SUPABASE_URL and keys from .env
+retriever = SupabaseRetriever()
 
-result = analyze_and_draft_spec(payload, retriever=MyVectorDBRetriever())
+result = analyze_and_draft_spec(payload, retriever=retriever)
 ```
 
 ## Serverless Deployment

@@ -9,6 +9,16 @@ def test_default_config_emission_factors():
     assert EMISSION_FACTORS["TIS_2594_Hydraulic"] == 690.0
     assert EMISSION_FACTORS["TIS_2135_FlyAsh"] == 18.0
 
+def test_config_typhoon_and_supabase_fields():
+    cfg = Config()
+    assert hasattr(cfg, "typhoon_api_key")
+    assert hasattr(cfg, "typhoon_base_url")
+    assert hasattr(cfg, "typhoon_model")
+    assert hasattr(cfg, "supabase_url")
+    assert hasattr(cfg, "supabase_anon_key")
+    assert hasattr(cfg, "supabase_service_role_key")
+    assert "opentyphoon" in cfg.typhoon_base_url
+
 def test_project_input_validation():
     data = ProjectInput(
         project_name="Test Tower",
