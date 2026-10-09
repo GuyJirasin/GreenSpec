@@ -30,6 +30,18 @@ if __name__ == "__main__":
     print("\n[Baseline Carbon]:", result["baseline"]["total_carbon_tco2e"], "tCO2e")
     print("[Option A Carbon Cut]:", result["options"]["option_a"]["carbon_reduction_tco2e"], "tCO2e", f"({result['options']['option_a']['carbon_reduction_percent']}%)")
     print("[Option A Cost Delta]: ฿", result["options"]["option_a"]["cost_delta_thb"])
+
+    print("\n--- Matched Certified Products in Thailand ---")
+    matched = result.get("matched_products", {})
+    if matched.get("balanced_product"):
+        b_prod = matched["balanced_product"]
+        print(f"✓ Balanced Ready-Mix: {b_prod['brand']} - {b_prod['product_name']}")
+        print(f"  • Certifications: {', '.join(b_prod['certifications'])}")
+        print(f"  • Estimated Supplier Price: ฿{b_prod['price_per_unit_thb']:,}/m³ (Total: ฿{matched['balanced_total_cost_thb']:,})")
+    if matched.get("raw_scm_option"):
+        raw = matched["raw_scm_option"]
+        print(f"✓ Local SCM Resource: {raw['brand']} - {raw['product_name']} (฿{raw['price_per_unit_thb']:,}/{raw['unit']})")
+
     print("\n--- Drafted Thai Spec Excerpt ---")
     print(result["technical_package"]["spec_clause_th"][:400] + "...\n")
     print("--- Compliance Matrix ---")

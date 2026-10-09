@@ -6,6 +6,7 @@ from greenspec_core.calculator import calculate_impacts
 from greenspec_core.package_builder import build_technical_package
 from greenspec_core.rag_interface import BaseRetriever, LocalStandardsRetriever
 from greenspec_core.llm_client import TyphoonClient
+from greenspec_core.matcher import match_products
 
 def analyze_and_draft_spec(
     payload: Dict[str, Any],
@@ -26,6 +27,7 @@ def analyze_and_draft_spec(
 
     guardrail = evaluate_guardrail(project)
     base_intensity, base_total, base_cost, opt_a, opt_b = calculate_impacts(project, guardrail)
+    matched = match_products(project, guardrail)
 
     # Default build technical package for Option A
     tech_pkg = build_technical_package(
@@ -51,6 +53,7 @@ def analyze_and_draft_spec(
             "option_a": asdict(opt_a),
             "option_b": asdict(opt_b)
         },
+        "matched_products": matched,
         "technical_package": asdict(tech_pkg)
     }
 

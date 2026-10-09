@@ -10,6 +10,8 @@ from greenspec_core.types import (
 )
 from greenspec_core.guardrails import evaluate_guardrail
 from greenspec_core.calculator import calculate_impacts
+from greenspec_core.catalog import SupplierProduct, get_catalog, THAI_MATERIAL_CATALOG
+from greenspec_core.matcher import match_products
 from greenspec_core.rag_interface import BaseRetriever, LocalStandardsRetriever
 from greenspec_core.llm_client import TyphoonClient, SpecLinter
 from greenspec_core.package_builder import build_technical_package
@@ -25,6 +27,10 @@ __all__ = [
     "ComplianceItem",
     "TechnicalPackage",
     "AnalysisResult",
+    "SupplierProduct",
+    "get_catalog",
+    "THAI_MATERIAL_CATALOG",
+    "match_products",
     "evaluate_guardrail",
     "calculate_impacts",
     "BaseRetriever",
