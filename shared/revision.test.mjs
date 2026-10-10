@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import JSZip from 'jszip';
+import {fixtures,createAnalysis,revisionPlan} from './domain.mjs';
+import {reviseDocx} from './revision.mjs';
+const sha=x=>createHash('sha256').update(x).digest('hex');
+test('Exported DOCX applies only approved paragraph, preserves original SHA256 and untouched zip parts',async()=>{
+ const f=fixtures[0],d={...f,id:'version1',upload_state:'READY'};
+ const r=createAnalysis({request_id:'run',context:{name:'Office',description:'Office specification'},generation_mode:'simulated',fixture_scenario_id:'success'},[d]);
+ const plan=revisionPlan(r.recommendations.map((snapshot,i)=>({snapshot,decision:i===0?'APPROVED':'REJECTED'})),d);
+ const path=new URL(`fixtures/${f.filename}`,import.meta.url);const source=readFileSync(path);const result=await reviseDocx(source,plan,JSZip);
+ assert.equal(result.changes.length,1);assert.equal(result.unapplied.length,0);assert.equal(sha(readFileSync(path)),f.checksum);
+ const old=await JSZip.loadAsync(source),updated=await JSZip.loadAsync(result.bytes);
+ for(const name of Object.keys(old.files).filter(x=>!old.files[x].dir&&x!=='word/document.xml'))assert.deepEqual(await old.file(name).async('uint8array'),await updated.file(name).async('uint8array'));
+ const oldXml=await old.file('word/document.xml').async('string'),newXml=await updated.file('word/document.xml').async('string');
+ const oldParas=oldXml.match(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g),newParas=newXml.match(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g);
+ assert.equal(oldParas.length,newParas.length);for(let i=0;i<oldParas.length;i++)if(i!==2)assert.equal(oldParas[i],newParas[i]);assert.ok(newParas[2].includes('Low carbon concrete'));
+ mkdirSync(new URL('qa/',import.meta.url),{recursive:true});writeFileSync(new URL('qa/revised-office-spec.docx',import.meta.url),result.bytes);
+});
+test('Ambiguous conflicting target and wrong source text never silently rewritten',async()=>{const source=readFileSync(new URL('fixtures/office-spec.docx',import.meta.url));const wrong={changes:[{paragraph_index:3,recommendation_id:'wrong',before:'Wrong source',after:'Replacement'}],unapplied:[]};const result=await reviseDocx(source,wrong,JSZip);assert.equal(result.status,'PARTIAL');assert.equal(result.changes.length,0);assert.equal(result.unapplied.length,1);await assert.rejects(()=>reviseDocx(source,{changes:[wrong.changes[0],wrong.changes[0]]},JSZip),{code:'OUTPUT_INVALID'});});

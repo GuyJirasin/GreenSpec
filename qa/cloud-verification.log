@@ -1,0 +1,9 @@
+PASS Auth: synthetic user password sign-in with publishable key
+PASS real PostgREST: checked project creation, anonymous denial, direct write denial
+PASS document Edge runtime/private Storage: actual DOCX bytes and SHA256, anonymous download denial
+PASS analyze Edge background job: real persisted results/reviews/finalize/approved-only handoff
+PASS revision Edge runtime: generated separate revision output
+PASS live browser: frontend password login and real cloud project list
+CLOUD_SMOKE_PASS
+Cleanup: synthetic project archived; source and audit history retained
+Cleanup: synthetic Auth account soft-deleted (no email sent)

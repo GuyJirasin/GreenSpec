@@ -1,0 +1,8 @@
+{
+  "name": "greenspec-workflow-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test tests/additional.test.mjs tests/options.test.mjs", "start": "supabase start", "reset": "supabase db reset", "sync:domain": "node scripts/sync-domain.mjs", "prefunctions": "npm run sync:domain", "functions": "supabase functions serve"},
+  "devDependencies": {"supabase": "2.120.0"}
+}
+

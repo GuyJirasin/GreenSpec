@@ -1,0 +1,148 @@
+export const fixtures = [
+  {
+    "fixture_id": "office-spec",
+    "title": "Office specification",
+    "type": "SPEC",
+    "filename": "office-spec.docx",
+    "path": "/fixtures/office-spec.docx",
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "bytes": 36838,
+    "checksum": "3f3c2f3d81538440c1d8f7a31f52c2f87182e17cea43041eacbd02deedcc2c55",
+    "extraction": [
+      {
+        "exact_text": "Office specification simulation fixture",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 1
+        }
+      },
+      {
+        "exact_text": "These clauses support deterministic workflow testing only. All quantities and factors are illustrative.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 2
+        }
+      },
+      {
+        "exact_text": "Structural concrete shall use ordinary Portland cement concrete grade C30 for 1000 m3.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 3
+        }
+      },
+      {
+        "exact_text": "Reinforcement shall use conventional steel reinforcement for 100 tonnes.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 4
+        }
+      },
+      {
+        "exact_text": "Interior partitions shall use standard gypsum board for 2000 m2.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 5
+        }
+      }
+    ]
+  },
+  {
+    "fixture_id": "zero-spec",
+    "title": "Reviewed specification",
+    "type": "SPEC",
+    "filename": "zero-spec.docx",
+    "path": "/fixtures/zero-spec.docx",
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "bytes": 36757,
+    "checksum": "b837793191b90e7e2628d662c7af1f2b452881f8f2c7cdfab39b73dcbf6e0b5b",
+    "extraction": [
+      {
+        "exact_text": "Reviewed specification simulation fixture",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 1
+        }
+      },
+      {
+        "exact_text": "This fixture represents a specification with no simulated opportunities. It does not certify compliance.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 2
+        }
+      },
+      {
+        "exact_text": "Structural concrete already specifies the selected low carbon concrete mix for 1000 m3.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 3
+        }
+      }
+    ]
+  },
+  {
+    "fixture_id": "partial-spec",
+    "title": "Partial specification",
+    "type": "TOR",
+    "filename": "partial-spec.docx",
+    "path": "/fixtures/partial-spec.docx",
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "bytes": 36760,
+    "checksum": "838248bd736439fb2b6a25aa4e87bea1aa486b2cb964ee718ffbebec4adc658b",
+    "extraction": [
+      {
+        "exact_text": "Partial specification simulation fixture",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 1
+        }
+      },
+      {
+        "exact_text": "This fixture deliberately contains a second unsupported input to demonstrate partial results.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 2
+        }
+      },
+      {
+        "exact_text": "Structural concrete shall use ordinary Portland cement concrete grade C30 for 1000 m3.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 3
+        }
+      }
+    ]
+  },
+  {
+    "fixture_id": "partial-boq",
+    "title": "Unavailable quantities schedule",
+    "type": "BOQ",
+    "filename": "partial-boq.docx",
+    "path": "/fixtures/partial-boq.docx",
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "bytes": 36771,
+    "checksum": "aa4fe560946b2a89cd3f1e62bc3c496be478108d22a7be9cd1e6aea1d3b5ca32",
+    "extraction": [
+      {
+        "exact_text": "Unavailable quantities schedule simulation fixture",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 1
+        }
+      },
+      {
+        "exact_text": "This source is deliberately unavailable to the simulated analysis adapter. The original file remains downloadable.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 2
+        }
+      },
+      {
+        "exact_text": "Concrete quantity schedule requires a clarification before recommendations can be evaluated.",
+        "locator": {
+          "kind": "paragraph",
+          "paragraph_index": 3
+        }
+      }
+    ]
+  }
+];
