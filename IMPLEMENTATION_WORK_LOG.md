@@ -56,3 +56,19 @@ Applied migration 202610100010_feature1_options.sql and deployed analyze/revisio
 Final TEST_IMPLEMENTATION.ps1 exit 0: frontend production build; shared 29/29; SQL 22/22 executions (15 distinct cases, seven imported base cases repeated); three Edge module graphs; browser 11/11 (five new F1 journeys plus six retained journeys); all 27 original non-demo files byte-identical and demo absent. Screenshots reviewed for Home, compare, summary, edited wording and mobile. Evidence: qa/feature1-verification.log, qa/feature1-cloud-verification.log, qa/screenshots, qa/F1_UX_ACCEPTANCE.md, FEATURE1_REDESIGN.md.
 
 Known limits remain simulated fixture analysis/Option B and unverified real email delivery/cron/full production acceptance. No Docker installation, Git commit or GitHub push. Local frontend remains on http://127.0.0.1:5173/.
+
+## Frontend performance fix — 2026-10-10 Asia/Bangkok
+
+User requested a local commit of completed work before performance changes. Created commit 60a77d8 (Implement Supabase MVP and Feature 1 review redesign); private environment files, dependencies and generated Supabase link metadata excluded. No push. Subsequent performance edits remain uncommitted for review.
+
+Replaced full-project review reloads with acknowledged review-row patches and one targeted analysis-run epoch read. Added per-user/project in-memory cache with 30-second freshness, screen-group loading, independent per-item saving/errors, stale row/version/auth-generation guards, and active-run-only polling with completion read retry. Feature 2 loads its own required tables, including source previews. Review completeness, locking, immutable finalized snapshots and conflict/draft recovery remain enforced. No backend/schema/deployment changes required.
+
+Production build PASS; clean browser suite 21/21 (11 existing +10 performance regressions) PASS. Request counts measured in browser: review save/A-B change two requests rather than the previous source path's25; local navigation/source preview/search/filter zero. Live Supabase Option B independently measured two requests, Details/Compare zero additional reads. Real cloud Auth/RLS/private source SHA/B snapshot/Thai DOCX/gates remained PASS; synthetic project archived and account soft-deleted without email. Initial cloud attempt stopped only because the test's Compare button locator matched two buttons; corrected locator, cleanup completed in both attempts, final cloud test PASS.
+
+Evidence: qa/performance-build.log, qa/performance-verification.log, qa/performance-cloud-verification.log, qa/browser/performance.spec.mjs, PERFORMANCE_FIX.md. Original 27 non-demo files remain unchanged. Latency in milliseconds was not benchmarked; cloud acknowledgment and file/analysis processing still take time. Generic project/document/execution writes refresh their relevant screen group. Test-generated baseline screenshots restored to keep the diff focused.
+
+## Typography readability — 2026-10-10 Asia/Bangkok
+
+Compared the historical demo stylesheet from HEAD~1 with current styles and reviewed the supplied old Home reference. The historical demo used Segoe UI / 14px body text; the new layout reduced many tables/buttons/nav labels to10–12px. Restored Segoe UI with Thai fallbacks, raised body14→15px, primary table/nav/button12→14px, metadata10–11→12–13px, input/source text16px, and headings with a clearer hierarchy. Increased line spacing and darkened secondary text while preserving the supplied palette/layout and source language.
+
+Production build PASS. Existing Home/mobile comparison/read-only narrow-navigation checks3/3 PASS; screenshots visually reviewed at desktop and360px. No new mirrored implementation tests added for this stylesheet-only change. Evidence: qa/typography-verification.log and updated Home/mobile screenshots. No commit/push; this change remains alongside the uncommitted performance fix.

@@ -69,9 +69,29 @@ try{
  for(let i=0;i<40 && ['QUEUED','PROCESSING'].includes(run.status);i++){await new Promise(r=>setTimeout(r,1000));run=await checked(user.from('analysis_runs').select('*').eq('id',run.id).single(),'poll real persisted job')}
  assert.equal(run.status,'COMPLETED',JSON.stringify(run.errors));
  const recs=await checked(user.from('recommendations').select('*').eq('run_id',run.id),'recommendations');assert.ok(recs.length);
- const reviews=await checked(user.from('reviews').select('*').in('recommendation_id',recs.map(r=>r.id)),'reviews');
+ let reviews=await checked(user.from('reviews').select('*').in('recommendation_id',recs.map(r=>r.id)),'reviews');
  const options=await checked(user.from('recommendation_options').select('*').in('recommendation_id',recs.map(r=>r.id)),'persisted A/B alternatives');assert.equal(options.length,recs.length*2);
  const target=recs.find(r=>r.work_scope_key==='structure/concrete')??recs[0];
+ if(process.argv.includes('--performance')){
+  const {chromium}=createRequire(resolve(root,'qa/package.json'))('playwright');
+  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+  try{
+   const page=await browser.newPage();
+   await page.goto('http://127.0.0.1:5173/#auth');
+   await page.getByLabel('Email',{exact:true}).fill(account.email);await page.getByLabel('Password',{exact:true}).fill(password);
+   await page.getByRole('button',{name:'Continue',exact:true}).click();
+   await page.getByRole('heading',{name:'Build better. Specify greener.',exact:true}).waitFor();
+   await page.evaluate(hash=>{location.hash=hash},`workspace?project=${project.id}&tab=review&run=${run.id}&stage=compare&item=${target.id}`);
+   await page.getByRole('button',{name:'Select Option B',exact:true}).waitFor();await page.waitForLoadState('networkidle');
+   const traffic=[];page.on('request',req=>{const parsed=new URL(req.url());if(parsed.origin===url&&parsed.pathname.startsWith('/rest/v1/'))traffic.push({method:req.method(),table:parsed.pathname.split('/').at(-1)})});
+   await page.getByRole('button',{name:'Select Option B',exact:true}).click();
+   await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>b.textContent.trim()==='Select Option A'&&!b.disabled));await page.waitForLoadState('networkidle');
+   assert.deepEqual(traffic,[{method:'POST',table:'gs_review_change'},{method:'GET',table:'analysis_runs'}]);
+   const count=traffic.length;await page.getByRole('button',{name:'Details',exact:true}).click();await page.getByRole('button',{name:'Compare options',exact:true}).first().click();await page.waitForLoadState('networkidle');assert.equal(traffic.length,count);
+   console.log('PASS live frontend request budget: Option B = 2 requests (write + run epoch); Details/Compare navigation = 0 additional reads');
+  }finally{await browser.close()}
+  reviews=await checked(user.from('reviews').select('*').in('recommendation_id',recs.map(r=>r.id)),'reviews after browser choice');
+ }
  const original=reviews.find(v=>v.recommendation_id===target.id);
  const prior=await mutate(project.id,'reviews',{decision:'APPROVED'},original);
  const wording='ใช้คอนกรีต C30 พร้อมข้อมูล A & B <ตามแบบ> และเอกสารจากผู้ผลิต';
@@ -116,6 +136,8 @@ try{
  if(account){await checked(admin.auth.admin.deleteUser(account.id,true),'soft-delete synthetic test account');console.log('Cleanup: synthetic Auth account soft-deleted (no email sent)');}
  await user.auth.signOut();
 }
+
+
 
 
 

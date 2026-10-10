@@ -69,6 +69,17 @@ const tabs = [
   ["members", "Members"],
 ];
 const defaultData = {};
+const projectCache = new Map();
+const cacheTTL = 30000;
+const feature1Tables = ["documents", "document_versions", "analysis_runs", "recommendations", "recommendation_options", "reviews", "feedback", "decision_sets", "decision_items", "document_revisions", "packages"];
+const executionTables = ["documents", "document_versions", "packages", "tasks", "milestones", "procurements", "implementation_entries", "issues", "evidence_files", "verifications", "actual_results", "comments", "activity_events"];
+function mergeRecords(previous = [], incoming = [], preserveTerminal = false) {
+  return incoming.map(row => {
+    const old = previous.find(x => x.id === row.id);
+    if (old && (Number(old.row_version || 0) > Number(row.row_version || 0) || Number(old.review_epoch || 0) > Number(row.review_epoch || 0) || (preserveTerminal && old.status && !["QUEUED", "PROCESSING"].includes(old.status.toUpperCase()) && ["QUEUED", "PROCESSING"].includes(row.status?.toUpperCase())))) return old;
+    return row;
+  });
+}
 const DraftContext = createContext(null);
 const dirtyForms = new Set();
 function Badge({ children, tone = "" }) {
@@ -294,20 +305,30 @@ function App() {
     [authReady, setAuthReady] = useState(!configured),
     [page, setPage] = useState(location.hash || "#landing"),
     [projects, setProjects] = useState([]),
-    [data, setData] = useState(defaultData),
+    [storedData, setData] = useState(defaultData),
+    [dataScope, setDataScope] = useState(""),
     [error, setError] = useState(""),
     [status, setStatus] = useState(""),
     [busy, setBusy] = useState(false),
+    [busyRecords, setBusyRecords] = useState(new Set()),
+    [staleEpochs, setStaleEpochs] = useState(new Set()),
+    [recordErrors, setRecordErrors] = useState({}),
     [showBell, setShowBell] = useState(false),
     [mobile, setMobile] = useState(false),
     [archive, setArchive] = useState(false);
   const pending = useRef(false),
-    retry = useRef(null);
+    retry = useRef(null), activeMutations = useRef(new Set()), view = useRef(null), authUser = useRef(null), authGeneration = useRef(0), projectList = useRef([]);
+  projectList.current = projects;
   const params = new URLSearchParams(page.split("?")[1] || "");
   const projectId = params.get("project"),
     packageId = params.get("package"),
     runId = params.get("run");
   const tab = params.get("tab") || "documents";
+  const group = projectId ? tab === "execution" ? "execution" : tab === "members" ? "members" : "feature1" : page.startsWith("#home") ? "home" : "projects";
+  const scopeKey = `${session?.user.id || ""}:${projectId || "all"}`;
+  const data = dataScope === scopeKey ? storedData : projectCache.get(scopeKey)?.data || {};
+  view.current = { key: scopeKey, user: session?.user.id, project: projectId, group, generation: authGeneration.current };
+  authUser.current = session?.user.id;
   const project = projects.find((p) => p.id === projectId);
   const own = data.project_members?.find((m) => m.user_id === session?.user.id);
   const role = own?.role;
@@ -333,10 +354,15 @@ function App() {
         setAuthReady(true);
       });
       const { data: listener } = db.auth.onAuthStateChange((_e, s) => {
-        setSession(s);
-        setData({});
-        setProjects([]);
-        setError("");
+        setSession(previous => {
+          if (previous?.user.id !== s?.user.id) {
+            authGeneration.current += 1;
+            projectCache.clear();
+            setData({}); setProjects([]); setError("");
+            setStatus(""); setRecordErrors({}); setStaleEpochs(new Set()); retry.current = null;
+          }
+          return s;
+        });
       });
       return () => {
         listener.subscription.unsubscribe();
@@ -349,65 +375,60 @@ function App() {
       window.removeEventListener("beforeunload", leave);
     };
   }, []);
-  async function refresh() {
-    if (!db || !session) return;
-    const p = await checked(
-      db.from("projects").select("*").order("updated_at", { ascending: false }),
-    );
-    setProjects(p);
-    if (projectId) {
-      const names = [
-        "project_members",
-        "documents",
-        "document_versions",
-        "analysis_runs",
-        "recommendations",
-        "recommendation_options",
-        "reviews",
-        "feedback",
-        "decision_sets",
-        "decision_items",
-        "packages",
-        "tasks",
-        "milestones",
-        "procurements",
-        "implementation_entries",
-        "issues",
-        "evidence_files",
-        "verifications",
-        "actual_results",
-        "comments",
-        "activity_events",
-        "notifications",
-        "document_revisions",
-      ];
-      const result = await Promise.all(
-        names.map(async (name) => [
-          name,
-          name === "project_members"
-            ? await rpc("gs_list_members", { p_project_id: projectId })
-            : await rows(name, projectId),
-        ]),
-      );
-      setData(Object.fromEntries(result));
-    } else {
-      const listings = await Promise.all(
-        [
-          ["notifications", "*"],
-          ["analysis_runs", "*"],
-          ["recommendations", "*"],
-          ["reviews", "*"],
-          ["recommendation_options", "*"],
-          ["packages", "id,project_id,execution_status,superseded_at"],
-          ["documents", "id,project_id,current_version_id,retired_at"],
-          ["document_versions", "id,project_id,upload_state,fixture_id"],
-        ].map(async ([table, fields]) => [
-          table,
-          await checked(db.from(table).select(fields)),
-        ]),
-      );
-      setData(Object.fromEntries(listings));
+  function entry(key = scopeKey) {
+    if (!projectCache.has(key)) projectCache.set(key, { data: {}, loaded: {}, requests: {}, writes: {} });
+    return projectCache.get(key);
+  }
+  function publish(key, next) {
+    if (view.current?.key === key) { setDataScope(key); setData({ ...next }); }
+  }
+  function patchRows(key, table, incoming) {
+    if (!key.startsWith(`${authUser.current}:`)) return;
+    const cached = entry(key);
+    const previous = cached.data[table] || [];
+    cached.writes[table] = (cached.writes[table] || 0) + 1;
+    const ids = new Set(incoming.map(r => r.id));
+    cached.data[table] = [...previous.filter(r => !ids.has(r.id)), ...mergeRecords(previous, incoming)];
+    publish(key, cached.data);
+    // Dashboard data uses the same confirmed records; never leave a saved choice stale there.
+    const allKey = `${authUser.current}:all`, all = projectCache.get(allKey);
+    if (all && allKey !== key && all.data[table]) {
+      all.writes[table] = (all.writes[table] || 0) + 1;
+      all.data[table] = [...all.data[table].filter(r => !ids.has(r.id)), ...mergeRecords(all.data[table], incoming)];
     }
+  }
+  async function refresh({ force = true, captured = view.current } = {}) {
+    if (!db || !captured?.user) return;
+    const { key, user, project: target, group: targetGroup, generation } = captured;
+    const cached = entry(key);
+    if (cached.requests[targetGroup]) {
+      if (!force) return cached.requests[targetGroup];
+      try { await cached.requests[targetGroup]; } catch {}
+      if (authUser.current !== user || authGeneration.current !== generation) return;
+      return refresh({force: true, captured});
+    }
+    if (!force && Date.now() - (cached.loaded[targetGroup] || 0) < cacheTTL) return;
+    const load = async () => {
+      const projectRows = await checked(db.from("projects").select("*").order("updated_at", { ascending: false }));
+      if (authUser.current !== user || authGeneration.current !== generation) return;
+      projectList.current = projectRows; setProjects(projectRows);
+      const names = target ? [...new Set(["project_members", "notifications", ...(targetGroup === "execution" ? executionTables : targetGroup === "members" ? [] : feature1Tables)])] : targetGroup === "home" ? ["notifications", "analysis_runs", "recommendations", "reviews", "recommendation_options"] : ["notifications", "analysis_runs", "packages", "documents", "document_versions"];
+      const startedWrites = { ...cached.writes };
+      const result = await Promise.all(names.map(async name => [name, target ? name === "project_members" ? await rpc("gs_list_members", {p_project_id: target}) : await rows(name, target) : await checked(db.from(name).select("*"))]));
+      if (authUser.current !== user || authGeneration.current !== generation) return;
+      for (const [name, records] of result) {
+        const previous = cached.data[name] || [];
+        const changed = (cached.writes[name] || 0) !== (startedWrites[name] || 0);
+        const ids = new Set(records.map(r => r.id));
+        const merged = mergeRecords(previous, records, changed);
+        cached.data[name] = changed ? [...previous.filter(r => !ids.has(r.id)), ...merged] : merged;
+      }
+      if (names.includes("analysis_runs")) setStaleEpochs(previous => { const next = new Set(previous); for (const r of cached.data.analysis_runs || []) next.delete(r.id); return next; });
+      cached.loaded[targetGroup] = Date.now();
+      publish(key, cached.data);
+    };
+    cached.requests[targetGroup] = load();
+    try { await cached.requests[targetGroup]; } finally { delete cached.requests[targetGroup]; }
   }
   useEffect(() => {
     if (error) document.querySelector("[role=alert]")?.focus();
@@ -421,21 +442,43 @@ function App() {
     return () => window.removeEventListener("keydown", close);
   }, [mobile]);
   useEffect(() => {
-    if (session) refresh().catch((e) => setError(e.message));
-  }, [session?.user.id, projectId]);
+    if (!session) return;
+    const captured = { ...view.current }, cached = entry(captured.key);
+    setDataScope(captured.key); setData({ ...cached.data }); setError("");
+    refresh({force: false, captured}).catch(e => { if (view.current.key === captured.key && authGeneration.current === captured.generation) setError(e.message); });
+  }, [session?.user.id, projectId, group]);
+  const activeRunIds = (data.analysis_runs || []).filter(r => ["QUEUED", "PROCESSING"].includes(r.status?.toUpperCase())).map(r => r.id).sort().join(",");
   useEffect(() => {
-    if (
-      !data.analysis_runs?.some((r) =>
-        ["QUEUED", "PROCESSING", "queued", "processing"].includes(r.status),
-      )
-    )
-      return;
-    const id = setInterval(
-      () => refresh().catch((e) => setError(e.message)),
-      2000,
-    );
-    return () => clearInterval(id);
-  }, [data.analysis_runs]);
+    if (!activeRunIds || !session) return;
+    const captured = { ...view.current }; let stopped = false, fetching = false, lastPollError = "";
+    const poll = async () => {
+      if (fetching || stopped) return; fetching = true;
+      try {
+        const result = await checked(db.from("analysis_runs").select("*").in("id", activeRunIds.split(",")));
+        if (stopped || authUser.current !== captured.user || authGeneration.current !== captured.generation) return;
+        patchRows(captured.key, "analysis_runs", result.filter(r => ["QUEUED", "PROCESSING"].includes(r.status?.toUpperCase())));
+        const completed = result.filter(r => !["QUEUED", "PROCESSING"].includes(r.status?.toUpperCase()));
+        if (completed.length) {
+          const ids = completed.map(r => r.id);
+          const recs = await checked(db.from("recommendations").select("*").in("run_id", ids));
+          if (authGeneration.current !== captured.generation) return;
+          patchRows(captured.key, "recommendations", recs);
+          if (recs.length) {
+            const recIds = recs.map(r => r.id);
+            const extra = await Promise.all(["reviews", "recommendation_options"].map(async table => [table, await checked(db.from(table).select("*").in("recommendation_id", recIds))]));
+            if (authGeneration.current !== captured.generation) return;
+            for (const [table, records] of extra) patchRows(captured.key, table, records);
+          }
+          if (lastPollError) { const resolvedError = lastPollError; setError(previous => previous === resolvedError ? "" : previous); lastPollError = ""; }
+          // Keep the run active until its complete result is loaded, so a failed read retries.
+          patchRows(captured.key, "analysis_runs", completed);
+        }
+      } catch(e) { if (!stopped && view.current.key === captured.key && authGeneration.current === captured.generation) { lastPollError = e.message; setError(e.message); } }
+      finally { fetching = false; }
+    };
+    const timer = setInterval(poll, 2000);
+    return () => { stopped = true; clearInterval(timer); };
+  }, [session?.user.id, scopeKey, activeRunIds]);
   function go(next, extra = {}) {
     location.hash =
       next === "workspace"
@@ -443,42 +486,53 @@ function App() {
         : next;
     setMobile(false);
   }
-  async function action(fn, { message = "Saved", reload = true } = {}) {
-    if (pending.current) return;
-    pending.current = true;
-    setBusy(true);
-    setError("");
-    setStatus("Saving…");
-    retry.current = () => action(fn, { message, reload });
+  async function action(fn, { message = "Saved", reload = true, recordKey = null, table = null, run = null } = {}) {
+    const captured = { ...view.current }, key = recordKey ? `${captured.key}:${recordKey}` : "global";
+    if (activeMutations.current.has(key) || activeMutations.current.has("global") || (!recordKey && activeMutations.current.size)) return;
+    activeMutations.current.add(key); pending.current = true;
+    if (recordKey) setBusyRecords(new Set(activeMutations.current)); else setBusy(true);
+    setError(""); setStatus("Saving…");
+    if (recordKey) setRecordErrors(previous => ({...previous, [key]: ""}));
+    retry.current = () => action(fn, { message, reload, recordKey, table, run });
     try {
       const result = await fn();
-      if (reload) await refresh();
-      setStatus(message);
-      retry.current = null;
+      if (authUser.current !== captured.user || authGeneration.current !== captured.generation) return result;
+      if (table && result?.id) patchRows(captured.key, table, [result]);
+      if (run) {
+        try {
+          const latest = await checked(db.from("analysis_runs").select("*").eq("id", run));
+          if (authGeneration.current !== captured.generation) return result;
+          patchRows(captured.key, "analysis_runs", latest);
+          setStaleEpochs(previous => { const next = new Set(previous); next.delete(run); return next; });
+        } catch(e) {
+          if (authGeneration.current !== captured.generation) return result;
+          setStaleEpochs(previous => new Set([...previous, run]));
+          if (view.current.key === captured.key) setError("Your change was saved. Load the latest data before finalizing.");
+        }
+      } else if (reload) await refresh({captured});
+      if (view.current.key === captured.key && authGeneration.current === captured.generation) { setStatus(message); retry.current = null; }
       return result;
-    } catch (e) {
-      setError(
-        e.message.includes("VERSION_CONFLICT")
-          ? "Someone changed this record. Load the latest data and review your changes before saving."
-          : e.message,
-      );
-      setStatus("Not saved");
+    } catch(e) {
+      if (recordKey && authUser.current === captured.user && authGeneration.current === captured.generation) setRecordErrors(previous => ({...previous, [key]: e.message}));
+      if (view.current.key === captured.key && authGeneration.current === captured.generation) { setError(e.message); setStatus("Not saved"); }
     } finally {
-      pending.current = false;
-      setBusy(false);
+      activeMutations.current.delete(key); pending.current = activeMutations.current.size > 0;
+      if (recordKey) setBusyRecords(new Set(activeMutations.current)); else setBusy(false);
     }
   }
   async function save(kind, values, record) {
-    if (kind === "reviews") {
-      values = {
-        decision: values.decision,
-        reason: values.reason || "",
-        locked: values.locked || false,
-      };
-    }
+    if (kind === "reviews") values = {decision: values.decision, reason: values.reason || "", locked: values.locked || false};
     const key = requestId();
-    return action(() => mutate(projectId, kind, values, record, key));
+    const run = kind === "reviews" ? data.recommendations?.find(r => r.id === record?.recommendation_id)?.run_id : null;
+    return action(() => mutate(projectId, kind, values, record, key), kind === "reviews" ? {recordKey: record.id, table: kind, run, reload: false} : {});
   }
+  async function changeReview(review, option, wording) {
+    const run = data.recommendations?.find(r => r.id === review.recommendation_id)?.run_id;
+    const operationKey = requestId();
+    return action(() => rpc("gs_review_change", {p_review_id: review.id, p_expected_version: review.row_version, p_selected_option: option, p_draft_wording: wording, p_request_id: operationKey}), {recordKey: review.id, table: "reviews", run, reload: false});
+  }
+  const reviewErrors = Object.fromEntries(Object.entries(recordErrors).filter(([key]) => key.startsWith(`${scopeKey}:`)).map(([key, value]) => [key.slice(scopeKey.length + 1), value]));
+  const pendingReviewIds = new Set([...busyRecords].filter(key => key.startsWith(`${scopeKey}:`)).map(key => key.slice(scopeKey.length + 1)));
   if (!authReady)
     return <main className="loading">Checking your account…</main>;
   if (page.startsWith("#landing"))
@@ -831,7 +885,7 @@ function App() {
                 )}
                 {tab === "review" && (
                   <Review
-                    {...{ project, data, canEdit, save, action, go, runId }}
+                    {...{ project, data, canEdit, save, action, go, runId, changeReview, pendingReviewIds, staleEpochs, reviewErrors }}
                   />
                 )}
                 {tab === "revision" && (
@@ -1679,7 +1733,7 @@ function locator(loc) {
         ? `${loc.sheet_name} · ${loc.cell_range}`
         : "No location";
 }
-function Review({ project, data, canEdit, save, action, go, runId }) {
+function Review({ project, data, canEdit, save, action, go, runId, changeReview, pendingReviewIds, staleEpochs, reviewErrors }) {
   const [source, setSource] = useState(null),
     [feedback, setFeedback] = useState(""),
     [omit, setOmit] = useState(false),
@@ -1895,7 +1949,7 @@ function Review({ project, data, canEdit, save, action, go, runId }) {
           )}
           <F1Screens {...{ stage, recs, reviews, run, final, canEdit, onStage, project }} options={data.recommendation_options || []} historyRuns={runs} decisionSets={data.decision_sets || []} onRun={(id)=>go("workspace",{tab:"review",run:id,stage:"overview"})} FormComponent={Form} onSource={setSource}
             onDecision={(row, decision, locked, reason) => save("reviews", {decision, locked, reason: reason ?? reviews.find(x => x.recommendation_id === row.id)?.reason ?? ""}, reviews.find(x => x.recommendation_id === row.id))}
-            onChange={(review, option, wording) => action(() => rpc("gs_review_change", {p_review_id: review.id, p_expected_version: review.row_version, p_selected_option: option, p_draft_wording: wording, p_request_id: requestId()}))} />
+            pendingReviewIds={pendingReviewIds} reviewErrors={reviewErrors} onChange={changeReview} />
           {(stage === "summary" || stage === "completion") && (final ? (
 
             <section className="card finalized">
@@ -2147,7 +2201,7 @@ function Review({ project, data, canEdit, save, action, go, runId }) {
                 </button>
                 <button
                   disabled={
-                    !canEdit ||
+                    pendingReviewIds.size > 0 || staleEpochs.has(run.id) || !canEdit ||
                     Boolean(finalizeReason) ||
                     run.status?.toUpperCase() === "FAILED"
                   }
@@ -3410,3 +3464,4 @@ function PackageDetail({
   );
 }
 createRoot(document.getElementById("root")).render(<App />);
+

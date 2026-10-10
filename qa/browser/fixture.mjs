@@ -16,11 +16,18 @@ export async function fixture(page,{role='owner',project=true,run=false}={}){
   const result=createAnalysis(input,[version]);tables.analysis_runs.push({id:rid,project_id:id,status:'COMPLETED',scenario:'success',review_epoch:1,input_snapshot:input,result,created_at:now,request_id:rid,stale:false});
   result.recommendations.forEach((payload,i)=>{const recid=`00000000-0000-4000-8000-${String(50+i).padStart(12,'0')}`;tables.recommendation_options.push(...proposalOptions({...payload,id:recid}).map(o=>({...o,recommendation_id:recid,project_id:id,run_id:rid})));tables.recommendations.push({id:recid,project_id:id,run_id:rid,payload:{...payload,id:recid},lineage_id:payload.lineage_id,work_scope_key:payload.work_scope_key});tables.reviews.push({id:`00000000-0000-4000-8000-${String(60+i).padStart(12,'0')}`,project_id:id,recommendation_id:recid,decision:'UNREVIEWED',reason:'',locked:false,selected_option:'A',draft_wording:null,row_version:1});});
  }
- const calls=[];let conflict=false;
+ const calls=[],requests=[],gates=[];let conflict=false,authIdentity={id:user,email:'owner@example.test'};
+ const signInAs=(id,email)=>{authIdentity={id,email};};
+ const failNext=(match,message='Test connection failed')=>gates.push({match,wait:Promise.resolve(),entered:()=>{},failure:message});
+ const holdNext=(match)=>{let release,entered;const reached=new Promise(resolve=>{entered=resolve});const wait=new Promise(resolve=>{release=resolve});gates.push({match,wait,entered});return {reached,release};};
  await page.route('http://127.0.0.1:54321/**',async route=>{
   const req=route.request(),url=new URL(req.url());let value;
   const headers={'Content-Type':'application/json','Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*'};
   if(req.method()==='OPTIONS')return route.fulfill({status:200,headers,body:'{}'});
+  const entry={method:req.method(),path:url.pathname,url:req.url(),table:url.pathname.split('/').at(-1),args:req.method()==='POST'?req.postDataJSON():null};requests.push(entry);
+  const readSnapshot=entry.method==='GET'&&tables[entry.table]?structuredClone(tables[entry.table]):null;
+  const gateIndex=gates.findIndex(g=>g.match(entry));const gate=gateIndex>=0?gates.splice(gateIndex,1)[0]:null;
+  if(gate){gate.entered(entry);await gate.wait;if(gate.failure)return route.fulfill({status:500,headers,body:JSON.stringify({message:gate.failure})});}
   if(url.pathname.startsWith('/rest/v1/rpc/')){
    const name=url.pathname.split('/').at(-1),args=req.postDataJSON();calls.push({name,args});
    if(name==='gs_mutate'){
@@ -49,12 +56,13 @@ export async function fixture(page,{role='owner',project=true,run=false}={}){
    else if(name==='gs_list_members')value=tables.project_members.map(m=>({...m,email:'owner@example.test'}));
    else value={};
   }else if(url.pathname.startsWith('/rest/v1/')){
-   const table=url.pathname.split('/').at(-1);value=[...(tables[table]??[])];for(const [k,v] of url.searchParams){if(v.startsWith('eq.'))value=value.filter(row=>String(row[k])===v.slice(3));}if(req.headers()['accept']?.includes('vnd.pgrst.object'))value=value[0]??null;
-  }else if(url.pathname.startsWith('/auth/v1/'))value={id:user,email:'owner@example.test'};
+   const table=url.pathname.split('/').at(-1);value=readSnapshot??[...(tables[table]??[])];for(const [k,v] of url.searchParams){if(v.startsWith('eq.'))value=value.filter(row=>String(row[k])===v.slice(3));}if(req.headers()['accept']?.includes('vnd.pgrst.object'))value=value[0]??null;
+  }else if(url.pathname.startsWith('/auth/v1/token')){const nextToken=[{alg:'HS256',typ:'JWT'},{sub:authIdentity.id,exp:Math.floor(Date.now()/1000)+3600},'test'].map((x,i)=>i<2?Buffer.from(JSON.stringify(x)).toString('base64url'):x).join('.');value={access_token:nextToken,refresh_token:'test-only',expires_in:3600,token_type:'bearer',user:{...authIdentity,aud:'authenticated',role:'authenticated'}};}
+  else if(url.pathname.startsWith('/auth/v1/'))value=authIdentity;
   else value={};
   return route.fulfill({status:200,headers,body:JSON.stringify(value)});
  });
- return {tables,calls,errors,conflictNext:()=>{conflict=true;}};
+ return {tables,calls,requests,holdNext,failNext,signInAs,errors,conflictNext:()=>{conflict=true;}};
 }
 
 
