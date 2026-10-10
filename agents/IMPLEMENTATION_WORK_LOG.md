@@ -104,3 +104,14 @@ User requested moving only their newly created root Markdown documents into agen
 ## Approved documentation cleanup — 2026-10-10
 
 User corrected the scope: keep AGENTS.md at the repository root and push the cleanup. Restored AGENTS.md to root, retaining its updated agents/IMPLEMENTATION_WORK_LOG.md reference and automatic repository-wide discovery. The other six implementation Markdown documents remain in agents/. Existing shared README.md and all 27 protected original files remain unchanged. Verified document paths and original-file preservation. No application code changed; no runtime tests needed for this documentation-only change. Committing and pushing the approved cleanup to main.
+
+## TypeScript AI Engine & Hono Serverless API — 2026-10-10 Asia/Bangkok
+
+Implemented the user-approved AIlaw architecture pattern (Hono + TypeScript Deterministic Tools + esbuild + Vercel):
+- Created `shared/tools.mjs` with exact mathematical parity to ACI 211.1, TGO carbon factors, ACI 207 thermal limits, and DPT 1101-64 strength conversion. Tested with Node.js built-in test runner: 5/5 tests PASS.
+- Created `shared/guardrails.mjs` (Mass Concrete, PT Slabs, Columns) and `shared/catalog.mjs` (Thai certified low-carbon ready-mix).
+- Created `shared/typhoon.mjs` supporting both standard JSON and Server-Sent Events (SSE) Streaming. Tested with Node.js: 2/2 tests PASS.
+- Created `api/server.mjs` using Hono framework with endpoints: `/health`, `/api/catalog`, `/api/tools/mix-design`, `/api/tools/carbon-calc`, `/api/tools/thermal-check`, `/api/tools/strength-convert`, `/api/tools/cost-estimate`, `/api/analyze`, and `/api/chat` (streaming). Tested with Node.js: 6/6 tests PASS.
+- Configured root `package.json` with esbuild server bundling (`api/index.js`, 35.3kb in 13ms) and `vercel.json` rewrites.
+- Frontend left 100% clean and untouched for the frontend developer as explicitly instructed.
+
