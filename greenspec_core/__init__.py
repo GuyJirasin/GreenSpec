@@ -12,7 +12,7 @@ from greenspec_core.guardrails import evaluate_guardrail
 from greenspec_core.calculator import calculate_impacts
 from greenspec_core.catalog import SupplierProduct, get_catalog, THAI_MATERIAL_CATALOG
 from greenspec_core.matcher import match_products
-from greenspec_core.rag_interface import BaseRetriever, LocalStandardsRetriever
+from greenspec_core.rag_interface import BaseRetriever, LocalStandardsRetriever, SupabaseRetriever
 from greenspec_core.llm_client import TyphoonClient, SpecLinter
 from greenspec_core.package_builder import build_technical_package
 from greenspec_core.handler import analyze_and_draft_spec, lambda_handler
@@ -35,9 +35,23 @@ __all__ = [
     "calculate_impacts",
     "BaseRetriever",
     "LocalStandardsRetriever",
+    "SupabaseRetriever",
     "TyphoonClient",
     "SpecLinter",
     "build_technical_package",
     "analyze_and_draft_spec",
     "lambda_handler",
+    "calculate_concrete_mix",
+    "calculate_embodied_carbon",
+    "evaluate_thermal_mass_concrete",
+    "convert_concrete_strength",
+    "estimate_cost_impact",
 ]
+
+from greenspec_core.tools import (
+    calculate_concrete_mix,
+    calculate_embodied_carbon,
+    evaluate_thermal_mass_concrete,
+    convert_concrete_strength,
+    estimate_cost_impact,
+)

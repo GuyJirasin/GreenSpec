@@ -124,3 +124,14 @@ User corrected the scope: keep AGENTS.md at the repository root and push the cle
 - Promoted the four existing locally hosted Inter weights (400/500/600/700) from Landing CSS to global CSS. Both root font rules use Inter first; Landing inherits the same stack. Form controls already inherit; pre/code views now inherit too. Existing sizes/weights remain unchanged.
 - Retained Noto Sans Thai as the fallback for Thai text. Inspected the local Inter font cmap: Latin A is present and Thai U+0E01 is absent. No new font dependency/download.
 - Production build PASS; three existing desktop/mobile Landing and mobile Home/compare browser checks PASS. Original-file verifier PASS for all 27 protected files. Restored generated baseline screenshots. No commit or push.
+
+## TypeScript AI Engine & Hono Serverless API — 2026-10-10 Asia/Bangkok
+
+Implemented the user-approved AIlaw architecture pattern (Hono + TypeScript Deterministic Tools + esbuild + Vercel):
+- Created `shared/tools.mjs` with exact mathematical parity to ACI 211.1, TGO carbon factors, ACI 207 thermal limits, and DPT 1101-64 strength conversion. Tested with Node.js built-in test runner: 5/5 tests PASS.
+- Created `shared/guardrails.mjs` (Mass Concrete, PT Slabs, Columns) and `shared/catalog.mjs` (Thai certified low-carbon ready-mix).
+- Created `shared/typhoon.mjs` supporting both standard JSON and Server-Sent Events (SSE) Streaming. Tested with Node.js: 2/2 tests PASS.
+- Created `api/server.mjs` using Hono framework with endpoints: `/health`, `/api/catalog`, `/api/tools/mix-design`, `/api/tools/carbon-calc`, `/api/tools/thermal-check`, `/api/tools/strength-convert`, `/api/tools/cost-estimate`, `/api/analyze`, and `/api/chat` (streaming). Tested with Node.js: 6/6 tests PASS.
+- Configured root `package.json` with esbuild server bundling (`api/index.js`, 35.3kb in 13ms) and `vercel.json` rewrites.
+- Frontend left 100% clean and untouched for the frontend developer as explicitly instructed.
+

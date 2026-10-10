@@ -1,0 +1,27 @@
+{
+  "name": "greenspec-platform",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "dev:server": "node api/server.mjs",
+    "build:client": "cd frontend && npm run build",
+    "build:server": "esbuild api/server.mjs --bundle --platform=node --target=node20 --format=esm --outfile=api/index.js --packages=external",
+    "build": "npm run build:client && npm run build:server",
+    "test:shared": "node --test shared/*.test.mjs",
+    "test:backend": "cd backend && npm test",
+    "test:python": "PYTHONPATH=. pytest -v tests/",
+    "test": "npm run test:shared"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.3",
+    "hono": "^4.13.12"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

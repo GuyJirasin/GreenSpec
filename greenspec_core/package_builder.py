@@ -13,7 +13,7 @@ def build_technical_package(
     if retriever is None:
         retriever = LocalStandardsRetriever()
     if typhoon_client is None:
-        typhoon_client = TyphoonClient(use_mock=True)
+        typhoon_client = TyphoonClient()
 
     standards = retriever.retrieve(project.element_type, f"{chosen_option.scm_type} {project.fc_prime_mpa}")
 

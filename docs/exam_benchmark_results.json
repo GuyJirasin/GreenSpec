@@ -1,0 +1,141 @@
+{
+  "score": 14,
+  "total": 15,
+  "details": [
+    {
+      "num": 1,
+      "id": "COE-MAT-01",
+      "category": "Cement & SCM Materials",
+      "correct": "B",
+      "model_ans": "B   ปูนซีเมนต์ไฮดรอลิกมีการใช้วัสดุแร่ธา",
+      "status": "PASS",
+      "latency_s": 0.92
+    },
+    {
+      "num": 2,
+      "id": "COE-MAT-02",
+      "category": "Cement & SCM Materials",
+      "correct": "A",
+      "model_ans": "A   เถ้าลอยชั้นคุณภาพ F มีคุณสมบัติปอซโซ",
+      "status": "PASS",
+      "latency_s": 0.98
+    },
+    {
+      "num": 3,
+      "id": "COE-STR-03",
+      "category": "Strength Conversion & Testing",
+      "correct": "B",
+      "model_ans": "B: f'c(Cylinder) ประมาณ 0.83 เท่าของ f'c",
+      "status": "PASS",
+      "latency_s": 0.83
+    },
+    {
+      "num": 4,
+      "id": "COE-MIX-04",
+      "category": "Mix Design Physics",
+      "correct": "B",
+      "model_ans": "B   ตามกฎของ Abram's Law อัตราส่วนน้ำต่อ",
+      "status": "PASS",
+      "latency_s": 0.66
+    },
+    {
+      "num": 5,
+      "id": "COE-MIX-05",
+      "category": "Mix Design Physics",
+      "correct": "B",
+      "model_ans": "B: 1.000 ลูกบาศก์เมตร พอดี   เนื่องจากวิ",
+      "status": "PASS",
+      "latency_s": 0.91
+    },
+    {
+      "num": 6,
+      "id": "COE-MASS-06",
+      "category": "Thermal & Mass Concrete",
+      "correct": "B",
+      "model_ans": "B: ไม่เกิน 20 องศาเซลเซียส   เนื่องจากตา",
+      "status": "PASS",
+      "latency_s": 0.77
+    },
+    {
+      "num": 7,
+      "id": "COE-MASS-07",
+      "category": "Thermal & Mass Concrete",
+      "correct": "C",
+      "model_ans": "C: สูงเกิน 70 องศาเซลเซียส (T_max >= 70 ",
+      "status": "PASS",
+      "latency_s": 0.71
+    },
+    {
+      "num": 8,
+      "id": "COE-EXEC-08",
+      "category": "Execution & Quality Control",
+      "correct": "C",
+      "model_ans": "C: 90 นาที หรือ 300 รอบหมุนของโม่ผสม   เ",
+      "status": "PASS",
+      "latency_s": 0.96
+    },
+    {
+      "num": 9,
+      "id": "COE-CODE-09",
+      "category": "Structural Codes & Detailing",
+      "correct": "D",
+      "model_ans": "D: 7.5 เซนติเมตร   เนื่องจากตามมาตรฐาน A",
+      "status": "PASS",
+      "latency_s": 0.9
+    },
+    {
+      "num": 10,
+      "id": "COE-SCM-10",
+      "category": "Structural Guardrails & SCM Limits",
+      "correct": "A",
+      "model_ans": "A   เนื่องจากเถ้าลอยมีปฏิกิริยาช้ากว่าปู",
+      "status": "PASS",
+      "latency_s": 0.65
+    },
+    {
+      "num": 11,
+      "id": "COE-CUR-11",
+      "category": "Curing & Durability",
+      "correct": "B",
+      "model_ans": "B   การบ่มชื้นต่อเนื่องอย่างน้อย 7–14 วั",
+      "status": "PASS",
+      "latency_s": 0.68
+    },
+    {
+      "num": 12,
+      "id": "COE-ENV-12",
+      "category": "Carbon & Green Building",
+      "correct": "B",
+      "model_ans": "B   องค์การบริหารจัดการก๊าซเรือนกระจก (T",
+      "status": "PASS",
+      "latency_s": 0.64
+    },
+    {
+      "num": 13,
+      "id": "COE-AGE-13",
+      "category": "Acceptance Age Criteria",
+      "correct": "C",
+      "model_ans": "C   เนื่องจากเถ้าลอยหรือเถ้าก้นเตาเป็นวั",
+      "status": "PASS",
+      "latency_s": 1.0
+    },
+    {
+      "num": 14,
+      "id": "COE-PHY-14",
+      "category": "Material Physical Properties",
+      "correct": "C",
+      "model_ans": "B: 2.65   ค่าความหนาแน่นสัมพัทธ์เฉลี่ยขอ",
+      "status": "FAIL",
+      "latency_s": 0.8
+    },
+    {
+      "num": 15,
+      "id": "COE-TST-15",
+      "category": "Fresh Concrete Testing",
+      "correct": "B",
+      "model_ans": "B   ต้องแบ่งเทคอนกรีตเป็น 3 ชั้น โดยแต่ล",
+      "status": "PASS",
+      "latency_s": 0.74
+    }
+  ]
+}

@@ -35,3 +35,31 @@ def test_api_analyze_endpoint():
     assert data["matched_products"]["balanced_product"] is not None
     assert "technical_package" in data
     assert "03 30 00" in data["technical_package"]["spec_clause_th"]
+
+def test_api_tools_endpoints():
+    # 1. Strength convert
+    resp = client.get("/api/tools/strength-convert?value=280&from_format=cylinder_ksc")
+    assert resp.status_code == 200
+    assert resp.json()["cylinder_15x30cm"]["strength_mpa"] > 27.0
+
+    # 2. Mix design
+    resp = client.post("/api/tools/mix-design", json={"fc_target_mpa": 35.0, "scm_percent": 25.0})
+    assert resp.status_code == 200
+    assert resp.json()["mix_proportions_per_m3"]["cement_opc_kg"] > 0
+
+    # 3. Thermal check
+    resp = client.post("/api/tools/thermal-check", json={"thickness_m": 1.5, "scm_percent": 35.0})
+    assert resp.status_code == 200
+    assert resp.json()["is_mass_concrete"] is True
+
+    # 4. Carbon calc
+    resp = client.post("/api/tools/carbon-calc", json={
+        "cement_opc_kg": 270.0,
+        "scm_kg": 90.0,
+        "scm_type": "fly_ash",
+        "ca_kg": 1000.0,
+        "sand_kg": 750.0,
+        "volume_m3": 500.0
+    })
+    assert resp.status_code == 200
+    assert resp.json()["reduction_percent"] > 20.0
