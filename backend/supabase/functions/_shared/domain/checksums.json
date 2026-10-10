@@ -1,0 +1,9 @@
+{
+  "domain.mjs": "6f911b38d65b993a6ddec686e23c3e20ec5287a9d272edd8db916f5f2eda7404",
+  "fixture-bytes.mjs": "845715a32756ef6d51d392d5b8a817e717ac5ca2d5050252bb0be868003f78fa",
+  "fixtures.mjs": "40b0d716747a0448ccb5b6abdb1dd41058147cb4de3ee12a2647cfd1bb3a1fd3",
+  "options.mjs": "0f4ee5364c0eda1eb76c1523850e78635320a96d61eca347720d1779b11b381d",
+  "revision.mjs": "f07ffaf50ab53fce8658261fddbda9ab2b70684583eaa3b06f9bed08de703ea3",
+  "schema.mjs": "b16bfece79d74196ecdead9ca7928250785f716558733cccee3ecd84fdc9e0c3",
+  "validation.mjs": "0852fd668bd559c913f7f7ad208f2af21288989d54bb278f08a280ef85eaee54"
+}

@@ -1,0 +1,1 @@
+{"name":"greenspec-shared","private":true,"type":"module","scripts":{"test":"node --test *.test.mjs"},"devDependencies":{"ajv":"^8.17.1","jszip":"^3.10.2"}}

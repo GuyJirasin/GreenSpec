@@ -1,15 +1,15 @@
 # GREEN SPEC
 
-Working frontend demo for **Feature 1: AI Green Spec Analysis**.
+Working frontend client for **Feature 1: AI Green Spec Analysis** and **Landing Page**.
 
-The application is in [`demo/`](./demo). It uses React, Tailwind CSS and Vite, with the white / dark-green / mint navigation theme from the original UI reference.
+The application is in [`frontend/`](./frontend). It uses React, Tailwind CSS and Vite, with the white / dark-green / mint navigation theme.
 
 ## Run locally
 
 Requires Node.js **22.18+** (or a newer supported LTS version).
 
 ```sh
-cd demo
+cd frontend
 npm ci
 npm run dev
 ```
@@ -21,7 +21,7 @@ npm run build
 npm run preview
 ```
 
-The production build is written to `demo/dist`. Vite uses relative asset paths so the build can be hosted in a subdirectory. This React version runs through Vite or a static HTTP server; it is not a standalone HTML file.
+The production build is written to `frontend/dist`.
 
 ## Demo workflow
 
@@ -108,10 +108,10 @@ Benchmark highlights:
 * **Engine Latency:** 20.55 ms total processing time.
 * See full report in [`docs/BENCHMARK_REPORT.md`](./docs/BENCHMARK_REPORT.md).
 
-## Running the Frontend Demo
+## Running the Frontend Client
 
 ```sh
-cd demo
+cd frontend
 npm ci
 npm run dev
 ```

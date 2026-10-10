@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: migrations and role access: owner/editor/viewer/nonmember, archive, immutable audit
+ok 1 - migrations and role access: owner/editor/viewer/nonmember, archive, immutable audit
+  ---
+  duration_ms: 2132.5552
+  type: 'test'
+  ...
+# Subtest: optimistic conflicts, request replay, assignment and cross-project denial
+ok 2 - optimistic conflicts, request replay, assignment and cross-project denial
+  ---
+  duration_ms: 1274.8452
+  type: 'test'
+  ...
+# Subtest: finalization guard and immutable snapshot, approved-only idempotent handoff
+ok 3 - finalization guard and immutable snapshot, approved-only idempotent handoff
+  ---
+  duration_ms: 1231.1779
+  type: 'test'
+  ...
+# Subtest: execution quantities, task membership, issues and actuals remain independent
+ok 4 - execution quantities, task membership, issues and actuals remain independent
+  ---
+  duration_ms: 1320.5243
+  type: 'test'
+  ...
+# Subtest: unchanged lineage reuses package; changed started execution creates issue without overwriting
+ok 5 - unchanged lineage reuses package; changed started execution creates issue without overwriting
+  ---
+  duration_ms: 1276.3149
+  type: 'test'
+  ...
+# Subtest: partial omission reason, stale inputs, missing reviews, overlap and empty finalization
+ok 6 - partial omission reason, stale inputs, missing reviews, overlap and empty finalization
+  ---
+  duration_ms: 1313.9976
+  type: 'test'
+  ...
+# Subtest: verification evidence, completion without actuals, regression, notifications dedup
+ok 7 - verification evidence, completion without actuals, regression, notifications dedup
+  ---
+  duration_ms: 1205.0504
+  type: 'test'
+  ...
+# Subtest: registered private upload RLS, verified READY immutability and null optimistic versions
+ok 8 - registered private upload RLS, verified READY immutability and null optimistic versions
+  ---
+  duration_ms: 1155.2261
+  type: 'test'
+  ...
+# Subtest: Edge function bundled domain is byte-identical to canonical shared source
+ok 9 - Edge function bundled domain is byte-identical to canonical shared source
+  ---
+  duration_ms: 26.6609
+  type: 'test'
+  ...
+# Subtest: nonfinite PostgreSQL numeric input cannot be persisted as quantities or actual totals
+ok 10 - nonfinite PostgreSQL numeric input cannot be persisted as quantities or actual totals
+  ---
+  duration_ms: 1111.1421
+  type: 'test'
+  ...
+# Subtest: actual fixture job persistence, source locks, locked iteration and stale reopened versions
+ok 11 - actual fixture job persistence, source locks, locked iteration and stale reopened versions
+  ---
+  duration_ms: 1123.4053
+  type: 'test'
+  ...
+# Subtest: persisted revision stages, separate generated output and explicit excluded approval snapshot
+ok 12 - persisted revision stages, separate generated output and explicit excluded approval snapshot
+  ---
+  duration_ms: 1145.1907
+  type: 'test'
+  ...
+# Subtest: migrations and role access: owner/editor/viewer/nonmember, archive, immutable audit
+ok 13 - migrations and role access: owner/editor/viewer/nonmember, archive, immutable audit
+  ---
+  duration_ms: 2143.4704
+  type: 'test'
+  ...
+# Subtest: optimistic conflicts, request replay, assignment and cross-project denial
+ok 14 - optimistic conflicts, request replay, assignment and cross-project denial
+  ---
+  duration_ms: 1262.9543
+  type: 'test'
+  ...
+# Subtest: finalization guard and immutable snapshot, approved-only idempotent handoff
+ok 15 - finalization guard and immutable snapshot, approved-only idempotent handoff
+  ---
+  duration_ms: 1280.984
+  type: 'test'
+  ...
+# Subtest: execution quantities, task membership, issues and actuals remain independent
+ok 16 - execution quantities, task membership, issues and actuals remain independent
+  ---
+  duration_ms: 1330.7085
+  type: 'test'
+  ...
+# Subtest: unchanged lineage reuses package; changed started execution creates issue without overwriting
+ok 17 - unchanged lineage reuses package; changed started execution creates issue without overwriting
+  ---
+  duration_ms: 1402.2756
+  type: 'test'
+  ...
+# Subtest: partial omission reason, stale inputs, missing reviews, overlap and empty finalization
+ok 18 - partial omission reason, stale inputs, missing reviews, overlap and empty finalization
+  ---
+  duration_ms: 1257.1946
+  type: 'test'
+  ...
+# Subtest: verification evidence, completion without actuals, regression, notifications dedup
+ok 19 - verification evidence, completion without actuals, regression, notifications dedup
+  ---
+  duration_ms: 1189.61
+  type: 'test'
+  ...
+# Subtest: choice edit authorization, lock, optimistic conflicts, replay and mandatory re-review
+ok 20 - choice edit authorization, lock, optimistic conflicts, replay and mandatory re-review
+  ---
+  duration_ms: 1241.0823
+  type: 'test'
+  ...
+# Subtest: service-generated choices keep canonical source and quantity; invalid options roll back
+ok 21 - service-generated choices keep canonical source and quantity; invalid options roll back
+  ---
+  duration_ms: 1112.0781
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14499.4172

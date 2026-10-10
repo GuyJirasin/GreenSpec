@@ -1,0 +1,294 @@
+
+> greenspec-frontend@1.0.0 build
+> vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 1641 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.47 kB │ gzip:   0.31 kB
+dist/assets/index-DHXgI697.css   13.33 kB │ gzip:   4.04 kB
+dist/assets/index-DWQUmMNa.js   402.94 kB │ gzip: 116.13 kB
+✓ built in 7.72s
+
+> test
+> node --test *.test.mjs
+
+TAP version 13
+# Subtest: Actual fixture bytes retain checksums and real paragraph anchors
+ok 1 - Actual fixture bytes retain checksums and real paragraph anchors
+  ---
+  duration_ms: 3.7436
+  type: 'test'
+  ...
+# Subtest: Success canonical result includes signed saving and exact evidence
+ok 2 - Success canonical result includes signed saving and exact evidence
+  ---
+  duration_ms: 4.1709
+  type: 'test'
+  ...
+# Subtest: Deterministic request produces same output
+ok 3 - Deterministic request produces same output
+  ---
+  duration_ms: 1.9875
+  type: 'test'
+  ...
+# Subtest: Zero results allows empty finalization without claiming execution complete
+ok 4 - Zero results allows empty finalization without claiming execution complete
+  ---
+  duration_ms: 0.982
+  type: 'test'
+  ...
+# Subtest: Missing metrics retain null and subtotal coverage
+ok 5 - Missing metrics retain null and subtotal coverage
+  ---
+  duration_ms: 1.9037
+  type: 'test'
+  ...
+# Subtest: Scope overlaps cannot inflate totals and block finalization
+ok 6 - Scope overlaps cannot inflate totals and block finalization
+  ---
+  duration_ms: 1.3949
+  type: 'test'
+  ...
+# Subtest: Partial failure requires explicit omission with reason
+ok 7 - Partial failure requires explicit omission with reason
+  ---
+  duration_ms: 0.7235
+  type: 'test'
+  ...
+# Subtest: Injected job failure has no reviewable output
+ok 8 - Injected job failure has no reviewable output
+  ---
+  duration_ms: 0.5533
+  type: 'test'
+  ...
+# Subtest: Malformed evidence blocked before approval
+ok 9 - Malformed evidence blocked before approval
+  ---
+  duration_ms: 2.1345
+  type: 'test'
+  ...
+# Subtest: Unknown arbitrary/checksum source rejected
+ok 10 - Unknown arbitrary/checksum source rejected
+  ---
+  duration_ms: 1.0146
+  type: 'test'
+  ...
+# Subtest: Full schema rejects extra fields, wrong warning and malformed errors
+ok 11 - Full schema rejects extra fields, wrong warning and malformed errors
+  ---
+  duration_ms: 3.1581
+  type: 'test'
+  ...
+# Subtest: Nonfinite or inconsistent metrics and evidence locator rejected
+ok 12 - Nonfinite or inconsistent metrics and evidence locator rejected
+  ---
+  duration_ms: 3.5068
+  type: 'test'
+  ...
+# Subtest: Unreviewed and stale inputs independently block finalization
+ok 13 - Unreviewed and stale inputs independently block finalization
+  ---
+  duration_ms: 0.8665
+  type: 'test'
+  ...
+# Subtest: Only unchanged locked approval carries over feedback iteration
+ok 14 - Only unchanged locked approval carries over feedback iteration
+  ---
+  duration_ms: 2.0668
+  type: 'test'
+  ...
+# Subtest: Partial quantities and installation coverage enforce prerequisite
+ok 15 - Partial quantities and installation coverage enforce prerequisite
+  ---
+  duration_ms: 0.6833
+  type: 'test'
+  ...
+# Subtest: Completion needs installed quantity, latest pass with ready evidence, no blocking issue
+ok 16 - Completion needs installed quantity, latest pass with ready evidence, no blocking issue
+  ---
+  duration_ms: 18.1118
+  type: 'test'
+  ...
+# Subtest: Procurement stage requires all predecessor data
+ok 17 - Procurement stage requires all predecessor data
+  ---
+  duration_ms: 0.6629
+  type: 'test'
+  ...
+# Subtest: Actual explicit zero valid but missing metrics not replaced by targets
+ok 18 - Actual explicit zero valid but missing metrics not replaced by targets
+  ---
+  duration_ms: 0.4211
+  type: 'test'
+  ...
+# Subtest: Revision only maps approved exact DOCX paragraphs
+ok 19 - Revision only maps approved exact DOCX paragraphs
+  ---
+  duration_ms: 2.5561
+  type: 'test'
+  ...
+# Subtest: Notifications produce stable per-day entity recipient dedup
+ok 20 - Notifications produce stable per-day entity recipient dedup
+  ---
+  duration_ms: 14.2076
+  type: 'test'
+  ...
+# Subtest: Correction events replace totals without erasing history and cannot reduce delivery below installation
+ok 21 - Correction events replace totals without erasing history and cannot reduce delivery below installation
+  ---
+  duration_ms: 0.6342
+  type: 'test'
+  ...
+# Subtest: Exported DOCX applies only approved paragraph, preserves original SHA256 and untouched zip parts
+ok 22 - Exported DOCX applies only approved paragraph, preserves original SHA256 and untouched zip parts
+  ---
+  duration_ms: 89.8169
+  type: 'test'
+  ...
+# Subtest: Ambiguous conflicting target and wrong source text never silently rewritten
+ok 23 - Ambiguous conflicting target and wrong source text never silently rewritten
+  ---
+  duration_ms: 18.931
+  type: 'test'
+  ...
+# Subtest: Portable frozen-schema validator agrees with Ajv2020 on canonical and negative/null/locator fixtures
+ok 24 - Portable frozen-schema validator agrees with Ajv2020 on canonical and negative/null/locator fixtures
+  ---
+  duration_ms: 33.9279
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 451.6353
+
+> test:sql
+> node --test ../backend/tests/additional.test.mjs
+
+TAP version 13
+# Subtest: migrations and role access: owner/editor/viewer/nonmember, archive, immutable audit
+ok 1 - migrations and role access: owner/editor/viewer/nonmember, archive, immutable audit
+  ---
+  duration_ms: 2343.8347
+  type: 'test'
+  ...
+# Subtest: optimistic conflicts, request replay, assignment and cross-project denial
+ok 2 - optimistic conflicts, request replay, assignment and cross-project denial
+  ---
+  duration_ms: 995.0954
+  type: 'test'
+  ...
+# Subtest: finalization guard and immutable snapshot, approved-only idempotent handoff
+ok 3 - finalization guard and immutable snapshot, approved-only idempotent handoff
+  ---
+  duration_ms: 975.415
+  type: 'test'
+  ...
+# Subtest: execution quantities, task membership, issues and actuals remain independent
+ok 4 - execution quantities, task membership, issues and actuals remain independent
+  ---
+  duration_ms: 1042.4379
+  type: 'test'
+  ...
+# Subtest: unchanged lineage reuses package; changed started execution creates issue without overwriting
+ok 5 - unchanged lineage reuses package; changed started execution creates issue without overwriting
+  ---
+  duration_ms: 904.5312
+  type: 'test'
+  ...
+# Subtest: partial omission reason, stale inputs, missing reviews, overlap and empty finalization
+ok 6 - partial omission reason, stale inputs, missing reviews, overlap and empty finalization
+  ---
+  duration_ms: 908.5046
+  type: 'test'
+  ...
+# Subtest: verification evidence, completion without actuals, regression, notifications dedup
+ok 7 - verification evidence, completion without actuals, regression, notifications dedup
+  ---
+  duration_ms: 920.1826
+  type: 'test'
+  ...
+# Subtest: registered private upload RLS, verified READY immutability and null optimistic versions
+ok 8 - registered private upload RLS, verified READY immutability and null optimistic versions
+  ---
+  duration_ms: 867.3689
+  type: 'test'
+  ...
+# Subtest: Edge function bundled domain is byte-identical to canonical shared source
+ok 9 - Edge function bundled domain is byte-identical to canonical shared source
+  ---
+  duration_ms: 11.1486
+  type: 'test'
+  ...
+# Subtest: nonfinite PostgreSQL numeric input cannot be persisted as quantities or actual totals
+ok 10 - nonfinite PostgreSQL numeric input cannot be persisted as quantities or actual totals
+  ---
+  duration_ms: 863.6788
+  type: 'test'
+  ...
+# Subtest: actual fixture job persistence, source locks, locked iteration and stale reopened versions
+ok 11 - actual fixture job persistence, source locks, locked iteration and stale reopened versions
+  ---
+  duration_ms: 957.8433
+  type: 'test'
+  ...
+# Subtest: persisted revision stages, separate generated output and explicit excluded approval snapshot
+ok 12 - persisted revision stages, separate generated output and explicit excluded approval snapshot
+  ---
+  duration_ms: 953.5527
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11913.1968
+
+> check:edges
+> node compile-edges.mjs
+
+PASS: analyze Edge Function TypeScript syntax and local module graph (runtime not executed)
+PASS: document Edge Function TypeScript syntax and local module graph (runtime not executed)
+PASS: revision Edge Function TypeScript syntax and local module graph (runtime not executed)
+
+> test:browser
+> playwright test
+
+[WebServer] (node:28736) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:27104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 1 worker
+
+(node:25004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 browser\ui.spec.mjs:47:1 › landing theme and honest capability notice, contact recipient visible, keyboard auth (1.2s)
+  ok 2 browser\ui.spec.mjs:58:1 › task notification opens its authorized package and section, not task UUID as package (938ms)
+  ok 3 browser\ui.spec.mjs:65:1 › draft setup saves only mutable fields; document without file persists across reload (3.2s)
+  ok 4 browser\ui.spec.mjs:79:1 › viewer read-only and mobile 360px navigation keep primary actions accessible (1.0s)
+  ok 5 browser\ui.spec.mjs:89:1 › evidence focus trap, decisions persist, Feature 1 finalizes separately and explicit handoff only approved (2.5s)
+  ok 6 browser\ui.spec.mjs:103:1 › failed save does not overwrite; unsaved draft requires explicit recovery after reload (3.8s)
+  ok 7 browser\ui.spec.mjs:109:1 › package task Bangkok time, selected estimates versus missing actuals, explicit zero actual save (1.4s)
+
+  7 passed (18.7s)
+
+> verify:originals
+> node verify-originals.mjs
+
+PASS: 27 original files unchanged; demo/ removed.
+All available checks passed. Live Supabase runtime integration is a separate gate.

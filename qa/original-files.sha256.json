@@ -1,0 +1,110 @@
+[
+  {
+    "Path": ".gitignore",
+    "Hash": "5CD04CF7BB0F8088101CC23C6F3B21907CB3409B10D9773183A9234E6E03DC11"
+  },
+  {
+    "Path": "README.md",
+    "Hash": "B28238A0E319FC25FBA05389D6BB462555A4214645BD3425EEA702935CCC223E"
+  },
+  {
+    "Path": "api/analyze.py",
+    "Hash": "EEE840DA68148C64BA804315F3D1D8860B0FFF9DC94BD3D3971F7582E280EC90"
+  },
+  {
+    "Path": "app.py",
+    "Hash": "15FE56D321F558D2043A8A3B173525DABB70588D000C23B73B1AAC41DAF87384"
+  },
+  {
+    "Path": "docs/superpowers/plans/2026-10-09-green-spec-core-ai-engine.md",
+    "Hash": "20B636808B3431640330CC9BE428150D3917C66EBDD0B8304CF8D87251638B4C"
+  },
+  {
+    "Path": "docs/superpowers/specs/2026-10-09-green-spec-core-ai-engine-design.md",
+    "Hash": "646ABA53F35D291B5B739C23293E43575270F11A3DE1FEF04119437493A884C9"
+  },
+  {
+    "Path": "greenspec_core/README.md",
+    "Hash": "E00A4E34DDA3FBFF6C474DCA5750769E940BD0D8B93E4A6D7E71EBEBD4CC7642"
+  },
+  {
+    "Path": "greenspec_core/__init__.py",
+    "Hash": "117093CAD6A7B2637EA8E39FF67BE39D3CB2F48BD25ADD8F690AF2CD9442F5FC"
+  },
+  {
+    "Path": "greenspec_core/calculator.py",
+    "Hash": "D9C7F3C1CB6A353BFF168B903B03E591503D12F9B503D693282CE578B527EE56"
+  },
+  {
+    "Path": "greenspec_core/catalog.py",
+    "Hash": "E09E3923F7273AA4EC9481FDC2224A7CD15418E506921630A0D92146AF1F574E"
+  },
+  {
+    "Path": "greenspec_core/config.py",
+    "Hash": "2B403639527E67BF7D922931C7FB13C0E1AC4C71DB7A4BF5E7498509BC3693D8"
+  },
+  {
+    "Path": "greenspec_core/example.py",
+    "Hash": "5B425DFC046794F93DD26485F7BCD72B995466FA5FA11742143D57BA4BF88819"
+  },
+  {
+    "Path": "greenspec_core/guardrails.py",
+    "Hash": "A1454A7C4E541C09346843C723B02EA5710EB7B6FE1DC35A70FF5D842A0739FA"
+  },
+  {
+    "Path": "greenspec_core/handler.py",
+    "Hash": "FCB8AF9210DD809178FA93054F0A29EE4D5B88B677EB8DDF3983212F6F8006FA"
+  },
+  {
+    "Path": "greenspec_core/llm_client.py",
+    "Hash": "5461A67293CE707A3EE634D4BABC4802CDCBB702ABC641FB2FB60457F0287597"
+  },
+  {
+    "Path": "greenspec_core/matcher.py",
+    "Hash": "4F3C16BA1AA57F71404C390045B29D5F90198323F4A4E07A925400108C0D5899"
+  },
+  {
+    "Path": "greenspec_core/package_builder.py",
+    "Hash": "4084DA86188D42D00AD8C36C480C7D76E885852291AB59C5873F42A089706D7B"
+  },
+  {
+    "Path": "greenspec_core/rag_interface.py",
+    "Hash": "75868D1CA6C13F7022CA0FBAE6FB08BAB80EEA0CC6904EDBB4E8BFB9E5997A1F"
+  },
+  {
+    "Path": "greenspec_core/types.py",
+    "Hash": "A78B28B01AD3FDED14A1CED8CDB2972D4D3C30DE4504EB48172DF0D08F8CEA2A"
+  },
+  {
+    "Path": "tests/test_api_endpoints.py",
+    "Hash": "D62C26711B6E80A8DFC87B9FF3DD41F47AA614E6F8D6A33A0CAB53317153D9AC"
+  },
+  {
+    "Path": "tests/test_calculator.py",
+    "Hash": "4A284CAFBC6F57D04660FEB6FDDC0061BCE27CBE3492A95F9804801312C79F21"
+  },
+  {
+    "Path": "tests/test_catalog_and_matcher.py",
+    "Hash": "37B7E5E0E7982AED9F4E325DDEBAF397E102BBB05226A891271D874EEAAEF46A"
+  },
+  {
+    "Path": "tests/test_config_and_types.py",
+    "Hash": "6E0468D64AD215ECAF4163A5F18A93192BF3FE4530D54E2A52D0A7B45A92F81D"
+  },
+  {
+    "Path": "tests/test_guardrails.py",
+    "Hash": "862694F6EEEA9AA869B62B587DD394657D2CE62437FD68B2C23A87693B9DC8F2"
+  },
+  {
+    "Path": "tests/test_handler.py",
+    "Hash": "4B25C6915109BF7CC8A5C49A01531A9BA689A025BA2B2A98D69A590408EFFC83"
+  },
+  {
+    "Path": "tests/test_llm_client.py",
+    "Hash": "2A9B0A3F25C526B6DA87F737BA89E8EB5AA66E4AFBA27127798E4CB28D075FEC"
+  },
+  {
+    "Path": "tests/test_rag_interface.py",
+    "Hash": "B208FE933D378C3780E8CAE5750D399024D42C1D87C917D8F6D279520B1E0A26"
+  }
+]

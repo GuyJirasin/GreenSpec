@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import Ajv2020 from 'ajv/dist/2020.js';
+import {analysisSchema} from './schema.mjs';
+import {schemaErrors,fixtures,createAnalysis} from './domain.mjs';
+const ajv=new Ajv2020({strict:false,allErrors:true});const validate=ajv.compile(analysisSchema);
+const documents=[{...fixtures[0],id:'source-v1',upload_state:'READY'}];
+const valid=()=>createAnalysis({request_id:'request',context:{name:'Office',description:'Office spec'},generation_mode:'simulated',fixture_scenario_id:'success'},documents);
+const mutations=[r=>r.extra=true,r=>r.warnings=[null],r=>r.errors=[{message:'No code'}],r=>r.recommendations[0].extra=true,r=>r.recommendations[0].quantity.value=0,r=>r.recommendations[0].quantity.value=null,r=>r.recommendations[0].sources[0].locator={kind:'page'},r=>r.recommendations[0].sources[0].locator={kind:'page',page_number:0},r=>r.recommendations[0].sources[0].locator={kind:'sheet_cell',sheet_name:'Sheet1'},r=>r.recommendations[0].sources[0].locator={kind:'sheet_cell',sheet_name:'Sheet1',cell_range:'B2'},r=>r.recommendations[0].impacts.baseline_cost_thb=null,r=>r.recommendations[0].impacts.baseline_cost_thb=-1,r=>r.fixture_scenario_id=null,r=>r.status='partial',r=>r.status='failed',r=>{r.status='failed';r.recommendations=[];r.errors=[{code:'JOB_FAILED',message:'Injected',retryable:true}]},r=>r.recommendations[0].sources[0].locator.paragraph_index=1.2,r=>r.contract_version='2.0',r=>r.recommendations[0].methodology.version='',r=>r.recommendations[0].missing_data_reasons=[42]];
+test('Portable frozen-schema validator agrees with Ajv2020 on canonical and negative/null/locator fixtures',()=>{for(const mutate of [()=>{},...mutations]){const value=valid();mutate(value);assert.equal(schemaErrors(value).length===0,validate(value),JSON.stringify({value,ajv:validate.errors,portable:schemaErrors(value)}));}});

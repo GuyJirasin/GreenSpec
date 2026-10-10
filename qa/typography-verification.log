@@ -1,0 +1,20 @@
+
+> test:browser
+> playwright test --grep Home uses saved|mobile home|viewer read-only
+
+[WebServer] (node:22508) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:14092) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:7200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 browser\f1flow.spec.mjs:7:1 › Home uses saved projects and only implemented navigation (2.2s)
+  ok 2 browser\f1flow.spec.mjs:53:1 › mobile home and compare keep actions inside a narrow screen (1.8s)
+  ok 3 browser\ui.spec.mjs:36:1 › viewer read-only and mobile 360px navigation keep primary actions accessible (1.7s)
+
+  3 passed (12.6s)

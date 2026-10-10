@@ -1,0 +1,16 @@
+{
+  "name": "greenspec-acceptance-qa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify:originals": "node verify-originals.mjs",
+    "test:browser": "playwright test",
+    "test:sql": "node --test ../backend/tests/additional.test.mjs ../backend/tests/options.test.mjs",
+    "check:edges": "node compile-edges.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "@playwright/test": "1.58.2"
+  }
+}
+

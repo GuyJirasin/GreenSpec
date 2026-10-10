@@ -1,0 +1,177 @@
+@font-face { font-family: Inter; src: url('/assets/landing/Inter-400.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: Inter; src: url('/assets/landing/Inter-500.ttf') format('truetype'); font-weight: 500; font-display: swap; }
+@font-face { font-family: Inter; src: url('/assets/landing/Inter-600.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: Inter; src: url('/assets/landing/Inter-700.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+.figma-landing {
+  --lp-dark: #073132;
+  --lp-green: #005440;
+  --lp-muted: #949da6;
+  --lp-mint: #78b3a5;
+  color: var(--lp-dark);
+  background: white;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-x: clip;
+}
+.figma-landing p, .figma-landing h1, .figma-landing h2, .figma-landing h3, .figma-landing figure { margin: 0; }
+.figma-landing main { padding: 0; max-width: none; margin: 0; }
+.figma-landing h1, .figma-landing h2, .figma-landing h3 { color: var(--lp-dark); }
+.figma-landing p { line-height: 1.45; }
+.figma-landing ul, .figma-landing ol { margin: 0; padding: 0; list-style: none; }
+.figma-landing .lp-icon { display: block; max-width: none; flex: none; }
+.figma-landing .lp-button { border: 2px solid transparent; border-radius: 14px; background: #025844; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 14px; text-decoration: none; font-weight: 600; cursor: pointer; line-height: 1.2; }
+.figma-landing .lp-outline { background: white; border-color: var(--lp-green); color: var(--lp-green); }
+.figma-landing .lp-header { height: 83px; padding: 0 43px 0 29px; border: 0; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 2; box-shadow: 0 4px 6px #00000025; }
+.figma-landing .lp-brand { display: flex; align-items: center; gap: 16px; color: var(--lp-green); text-decoration: none; font-weight: 700; font-size: 22.3px; line-height: 32px; }
+.figma-landing .lp-brand-mark { display: grid; place-items: center; width: 36px; height: 36px; background: var(--lp-green); border-radius: 50%; }
+.figma-landing .lp-header nav { display: flex; align-items: center; gap: 28px; }
+.figma-landing .lp-login { padding: 8px 0; background: transparent; color: var(--lp-muted); border: 0; font-size: 15px; }
+.figma-landing .lp-header-demo { width: 158px; min-height: 38px; padding: 7px 12px; font-size: 12px; gap: 8px; }
+.figma-landing .lp-hero { min-height: 749px; position: relative; max-width: 1920px; margin: auto; }
+.figma-landing .lp-forest { position: absolute; inset: 0; overflow: hidden; mask-image: url('/assets/landing/imgPineWatt2Hzmz15WGikUnsplash1.svg'); mask-size: 100% 100%; mask-repeat: no-repeat; mask-mode: alpha; }
+.figma-landing .lp-forest > img { position: absolute; width: 100.85%; height: 155.06%; top: -15.07%; left: -1px; max-width: none; }
+.figma-landing .lp-hero-copy { position: relative; z-index: 1; padding: 132px 0 50px 3.3565%; width: 51.3%; }
+.figma-landing .lp-eyebrow { color: var(--lp-mint); font-size: 16px; font-weight: 600; line-height: 26px; }
+.figma-landing h1 { font-size: 48px; font-weight: 700; line-height: 51px; letter-spacing: -1px; margin-top: 20px; }
+.figma-landing .lp-intro { color: var(--lp-muted); font-size: 20px; line-height: 26px; max-width: 745px; margin-top: 32px; }
+.figma-landing .lp-hero-actions { display: flex; gap: 52px; margin-top: 50px; }
+.figma-landing .lp-hero-actions .lp-button { min-height: 81px; width: 265px; padding: 15px 17px; font-size: 20px; }
+.figma-landing .lp-hero-demo { gap: 17px; }
+.figma-landing .lp-benefits { display: flex; align-items: center; gap: 27px; margin-top: 58px; margin-left: -9px; color: #707070; font-size: 14px; }
+.figma-landing .lp-benefits li { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+.figma-landing .lp-preview { position: absolute; left: 51.27%; top: 85px; width: 51.56%; aspect-ratio: 891 / 541; overflow: hidden; border-radius: 17px; box-shadow: 0 4px 13.5px 6px #00000021; }
+.figma-landing .lp-preview > img { position: absolute; width: 124.69%; height: 116.5%; left: 0; top: -.03%; max-width: none; }
+.figma-landing h2 { font-size: 48px; line-height: 1.08; font-weight: 700; letter-spacing: -.8px; }
+.figma-landing h3 { font-weight: 700; }
+.figma-landing .lp-teams { max-width: 1728px; margin: auto; padding: 70px 3.125% 69px; }
+.figma-landing .lp-team-heading { text-align: center; }
+.figma-landing .lp-team-heading h2 { margin-top: 15px; }
+.figma-landing .lp-team-heading > p:last-child { color: var(--lp-muted); font-size: 20px; line-height: 26px; margin-top: 17px; }
+.figma-landing .lp-team-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 34px; margin-top: 28px; }
+.figma-landing .lp-team-card { padding: 38px 22px 16px; border: 2px solid #97979766; border-radius: 14px; min-height: 330px; min-width: 0; }
+.figma-landing .lp-team-top { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 20px; min-height: 141px; }
+.figma-landing .lp-team-top > div { min-width: 0; }
+.figma-landing .lp-team-symbol { display: flex; align-items: flex-start; justify-content: center; padding-top: 6px; }
+.figma-landing .lp-team-card h3 { font-size: 24px; line-height: 32px; margin-top: 1px; }
+.figma-landing .lp-team-card p { color: var(--lp-muted); font-size: 16px; line-height: 19px; margin-top: 10px; max-width: 340px; }
+.figma-landing .lp-team-rule { overflow: hidden; height: 2px; margin-bottom: 12px; }
+.figma-landing .lp-team-card li { display: flex; align-items: center; gap: 9px; min-height: 40px; color: var(--lp-muted); font-size: 16px; font-weight: 500; }
+.figma-landing .lp-workflow { background: #f4f9f7; padding: 60px max(3.3565%, calc((100% - 1612px) / 2)) 33px; scroll-margin-top: 20px; }
+.figma-landing .lp-workflow h2 { margin-top: 14px; }
+.figma-landing .lp-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 80px; margin-top: 66px; }
+.figma-landing .lp-steps > li { position: relative; min-height: 150px; }
+.figma-landing .lp-step-heading { display: flex; align-items: center; gap: 12px; }
+.figma-landing .lp-step-symbol { display: grid; place-items: center; background: #e0eee9; border-radius: 50%; width: 52px; height: 52px; flex: none; }
+.figma-landing .lp-step-number { color: var(--lp-mint); font-size: 13px; font-weight: 600; }
+.figma-landing .lp-step-heading h3 { font-size: 18px; line-height: 22px; margin-top: 2px; }
+.figma-landing .lp-steps p { color: var(--lp-muted); font-size: 15px; line-height: 22px; margin-top: 12px; }
+.figma-landing .lp-step-arrow { position: absolute; right: -53px; top: 42px; }
+.figma-landing .lp-evidence { max-width: 1728px; margin: auto; padding: 67px 2% 95px; }
+.figma-landing .lp-evidence .lp-eyebrow { font-size: 14px; }
+.figma-landing .lp-evidence h2 { max-width: 930px; margin-top: 14px; line-height: 56px; }
+.figma-landing .lp-evidence-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 56px; margin-top: 44px; padding: 0 7px; }
+.figma-landing .lp-evidence-grid article { min-height: 160px; }
+.figma-landing .lp-evidence-heading { display: flex; align-items: center; gap: 16px; }
+.figma-landing .lp-evidence-heading > span { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 8px; background: #f4f9f7; flex: none; }
+.figma-landing .lp-evidence-heading h3 { font-size: 18px; line-height: 24px; }
+.figma-landing .lp-evidence-grid p { color: var(--lp-muted); font-size: 15px; line-height: 22px; margin-top: 12px; }
+.figma-landing .lp-final { padding: 25px max(3.3565%, calc((100% - 1612px) / 2)); min-height: 124px; display: flex; align-items: center; justify-content: space-between; gap: 30px; background: #e8f5ef; }
+.figma-landing .lp-final h2 { color: var(--lp-green); font-size: 32px; line-height: 42px; letter-spacing: -.4px; }
+.figma-landing .lp-final p { color: #6d7e78; font-size: 18px; line-height: 26px; margin-top: 1px; }
+.figma-landing .lp-final-actions { display: flex; gap: 27px; flex: none; }
+.figma-landing .lp-final-actions .lp-button { min-height: 47px; width: 250px; padding: 10px 16px; font-size: 18px; }
+.figma-landing .lp-final-actions .lp-final-demo { width: 265px; }
+.figma-landing .lp-final-actions .lp-outline { border-color: var(--lp-mint); }
+.figma-landing .lp-footer { padding: 24px 3.3565%; margin: 0; font-size: 13px; color: #6d7e78; display: flex; gap: 24px; align-items: start; }
+.figma-landing .lp-footer strong { color: var(--lp-green); white-space: nowrap; }
+.figma-landing .lp-contact-dialog { border: 1px solid #cdded7; border-radius: 14px; padding: 28px; color: var(--lp-dark); max-width: 480px; width: calc(100% - 40px); }
+.figma-landing .lp-contact-dialog::backdrop { background: #07313280; }
+.figma-landing .lp-contact-dialog h2 { font-size: 28px; }
+.figma-landing .lp-contact-dialog p { margin: 20px 0; font-size: 16px; color: #6d7e78; }
+.figma-landing .lp-contact-dialog > div { display: flex; gap: 12px; }
+.figma-landing .lp-contact-dialog .lp-button { padding: 12px 18px; }
+.figma-landing .lp-skip { position: absolute; z-index: 5; left: 16px; top: -100px; padding: 10px 16px; background: white; color: var(--lp-green); }
+.figma-landing .lp-skip:focus { top: 10px; }
+@media (max-width: 1450px) {
+  .figma-landing .lp-hero-copy { width: 51%; padding-top: 110px; }
+  .figma-landing h1 { font-size: 42px; line-height: 46px; }
+  .figma-landing .lp-intro { font-size: 18px; line-height: 25px; }
+  .figma-landing .lp-hero-actions { gap: 22px; margin-top: 35px; }
+  .figma-landing .lp-hero-actions .lp-button { width: 230px; min-height: 68px; font-size: 18px; }
+  .figma-landing .lp-benefits { flex-wrap: wrap; gap: 15px 24px; margin-top: 38px; }
+  .figma-landing .lp-preview { top: 120px; }
+  .figma-landing .lp-team-top { grid-template-columns: 90px minmax(0, 1fr); gap: 14px; min-height: 170px; }
+  .figma-landing .lp-team-card h3 { font-size: 22px; }
+  .figma-landing .lp-steps { gap: 45px; }
+  .figma-landing .lp-step-arrow { right: -37px; }
+  .figma-landing .lp-final { flex-wrap: wrap; }
+}
+@media (max-width: 1000px) {
+  .figma-landing .lp-header { padding: 0 24px; }
+  .figma-landing .lp-hero { min-height: auto; padding-bottom: 45px; }
+  .figma-landing .lp-hero-copy { width: 100%; padding: 70px 32px 30px; }
+  .figma-landing .lp-hero-copy .lp-intro { max-width: 690px; }
+  .figma-landing .lp-preview { position: relative; left: auto; top: auto; width: calc(100% - 64px); margin: 15px 32px 0; }
+  .figma-landing .lp-forest { opacity: .65; }
+  .figma-landing h2 { font-size: 36px; line-height: 1.15; }
+  .figma-landing .lp-teams { padding: 55px 32px; }
+  .figma-landing .lp-team-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .figma-landing .lp-team-card { min-height: auto; padding: 24px; }
+  .figma-landing .lp-team-top { min-height: 130px; grid-template-columns: 110px 1fr; gap: 20px; }
+  .figma-landing .lp-team-card p { max-width: 600px; line-height: 24px; }
+  .figma-landing .lp-team-card ul { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .figma-landing .lp-workflow { padding: 50px 32px; }
+  .figma-landing .lp-steps { grid-template-columns: repeat(2, 1fr); gap: 35px; margin-top: 45px; }
+  .figma-landing .lp-step-arrow { display: none; }
+  .figma-landing .lp-evidence { padding: 55px 32px; }
+  .figma-landing .lp-evidence h2 { line-height: 1.2; }
+  .figma-landing .lp-evidence-grid { gap: 24px; }
+  .figma-landing .lp-evidence-heading { align-items: flex-start; flex-direction: column; }
+  .figma-landing .lp-final { padding: 30px 32px; }
+  .figma-landing .lp-wide-break { display: none; }
+}
+@media (max-width: 600px) {
+  .figma-landing .lp-header { height: 76px; padding: 0 18px; }
+  .figma-landing .lp-brand { font-size: 16px; gap: 9px; }
+  .figma-landing .lp-header nav { gap: 16px; }
+  .figma-landing .lp-header-demo { display: none; }
+  .figma-landing .lp-login { font-size: 15px; }
+  .figma-landing .lp-hero-copy { padding: 46px 22px 20px; }
+  .figma-landing .lp-forest { opacity: .18; }
+  .figma-landing .lp-eyebrow { font-size: 12px; line-height: 20px; }
+  .figma-landing h1 { font-size: 32px; line-height: 1.12; letter-spacing: -.6px; margin-top: 18px; }
+  .figma-landing .lp-intro { margin-top: 24px; font-size: 16px; line-height: 25px; }
+  .figma-landing .lp-hero-actions { flex-direction: column; gap: 14px; margin-top: 26px; }
+  .figma-landing .lp-hero-actions .lp-button { width: 100%; min-height: 60px; font-size: 17px; }
+  .figma-landing .lp-benefits { flex-direction: column; align-items: flex-start; margin: 30px 0 0; gap: 14px; }
+  .figma-landing .lp-preview { width: calc(100% - 44px); margin: 14px 22px 0; }
+  .figma-landing .lp-teams, .figma-landing .lp-workflow, .figma-landing .lp-evidence { padding: 44px 22px; }
+  .figma-landing h2 { font-size: 29px; line-height: 1.15; letter-spacing: -.4px; }
+  .figma-landing .lp-team-heading > p:last-child { font-size: 16px; line-height: 25px; margin-top: 18px; }
+  .figma-landing .lp-team-grid { margin-top: 28px; }
+  .figma-landing .lp-team-card { padding: 22px 18px; }
+  .figma-landing .lp-team-top { grid-template-columns: 100px minmax(0, 1fr); gap: 14px; }
+  .figma-landing .lp-team-symbol { justify-content: flex-start; }
+  .figma-landing .lp-team-card h3 { font-size: 21px; line-height: 26px; }
+  .figma-landing .lp-team-card p { font-size: 15px; line-height: 22px; margin-top: 8px; }
+  .figma-landing .lp-team-card ul { grid-template-columns: 1fr; gap: 0; }
+  .figma-landing .lp-team-card li { font-size: 15px; gap: 10px; }
+  .figma-landing .lp-team-rule { margin-top: 18px; }
+  .figma-landing .lp-steps { grid-template-columns: 1fr; margin-top: 32px; gap: 22px; }
+  .figma-landing .lp-steps > li { min-height: auto; }
+  .figma-landing .lp-step-heading h3 { font-size: 18px; }
+  .figma-landing .lp-steps p { font-size: 16px; line-height: 24px; }
+  .figma-landing .lp-evidence .lp-eyebrow { font-size: 12px; }
+  .figma-landing .lp-evidence-grid { grid-template-columns: 1fr; margin-top: 28px; gap: 26px; padding: 0; }
+  .figma-landing .lp-evidence-grid article { min-height: auto; }
+  .figma-landing .lp-evidence-heading { flex-direction: row; align-items: center; gap: 14px; }
+  .figma-landing .lp-evidence-grid p { font-size: 16px; line-height: 24px; }
+  .figma-landing .lp-final { padding: 30px 22px; gap: 24px; }
+  .figma-landing .lp-final h2 { font-size: 28px; line-height: 1.2; }
+  .figma-landing .lp-final p { font-size: 16px; line-height: 24px; margin-top: 10px; }
+  .figma-landing .lp-final-actions { flex-direction: column; width: 100%; gap: 14px; }
+  .figma-landing .lp-final-actions .lp-button, .figma-landing .lp-final-actions .lp-final-demo { width: 100%; min-height: 54px; }
+  .figma-landing .lp-footer { flex-direction: column; gap: 10px; padding: 22px; }
+}
+@media (prefers-reduced-motion: no-preference) { html:has(.figma-landing) { scroll-behavior: smooth; } }
