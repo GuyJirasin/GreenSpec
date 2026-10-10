@@ -3,12 +3,12 @@ import {mkdirSync} from 'node:fs';
 import {fixture,id,user,now} from './fixture.mjs';
 test('landing theme and honest capability notice, contact recipient visible, keyboard auth',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/#landing');
- await expect(page.getByRole('heading',{level:1})).toContainText('lower-carbon');
- await expect(page.getByText('Standalone simulated MVP')).toBeVisible();
- await expect(page.getByRole('link',{name:'Contact / request Demo'})).toHaveAttribute('href',/^mailto:team@example.test/);
- await expect(page.getByText(/Opens an email draft to/)).toBeVisible();
+ await expect(page.getByRole('heading',{level:1})).toContainText('low-carbon revisions.');
+ await expect(page.getByText(/MVP: analysis uses supported sample files/)).toBeVisible();
+ await expect(page.getByRole('link',{name:'Request a demo',exact:true}).first()).toHaveAttribute('href',/^mailto:team@example.test/);
+ await expect(page.getByText(/team@example.test/)).toBeVisible();
  mkdirSync('screenshots',{recursive:true});await page.screenshot({path:'screenshots/landing-desktop.png',fullPage:true});
- await page.getByRole('button',{name:'Sign in',exact:true}).focus();await page.keyboard.press('Enter');
+ await page.getByRole('button',{name:'Log in',exact:true}).focus();await page.keyboard.press('Enter');
  await expect(page.getByLabel('Email',{exact:true})).toBeVisible();await expect(page.getByLabel('Password',{exact:true})).toBeVisible();
  expect(errors).toEqual([]);
 });

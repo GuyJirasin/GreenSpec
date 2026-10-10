@@ -43,6 +43,7 @@ import {
 } from "./api";
 import "./style.css";
 import F1Screens, { HomeDashboard, stages, selectedPayload } from "./F1Screens";
+import LandingPage from "./LandingPage";
 function bangkokInput(value) {
   if (!value) return "";
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -1009,109 +1010,7 @@ function App() {
     </DraftContext.Provider>
   );
 }
-function Landing({ onEnter, configured }) {
-  return (
-    <div className="landing">
-      <header>
-        <a className="brand" href="#landing">
-          <span>
-            <Leaf size={19} />
-          </span>
-          GREEN SPEC
-        </a>
-        <button onClick={onEnter}>
-          Sign in <ArrowRight size={16} />
-        </button>
-      </header>
-      <main>
-        <section className="landing-hero">
-          <div>
-            <p className="eyebrow">
-              SPECIFICATIONS FOR A LOWER CARBON BUILT ENVIRONMENT
-            </p>
-            <h1>
-              From specification review
-              <br />
-              to lower-carbon materials
-              <br />
-              ready for your project.
-            </h1>
-            <p>
-              Review project files, find lower-carbon choices,
-              and keep evidence and a clear record of each decision.
-            </p>
-            <div className="actions">
-              <button onClick={onEnter}>
-                Get started <ArrowRight size={17} />
-              </button>
-              {import.meta.env.VITE_CONTACT_EMAIL ? (
-                <a
-                  className="button secondary"
-                  href={`mailto:${import.meta.env.VITE_CONTACT_EMAIL}?subject=GREEN%20SPEC%20Demo%20request`}
-                >
-                  Contact / request Demo
-                </a>
-              ) : (
-                <span className="muted">Contact details are not set yet.</span>
-              )}
-            </div>
-            <small>
-              {import.meta.env.VITE_CONTACT_EMAIL
-                ? `Opens an email draft to ${import.meta.env.VITE_CONTACT_EMAIL}`
-                : "The team can add contact details before launch."}
-            </small>
-          </div>
-          <div className="forest" aria-hidden="true">
-            <div className="tree t1" />
-            <div className="tree t2" />
-            <div className="tree t3" />
-            <Leaf size={150} />
-          </div>
-        </section>
-        <section className="landing-grid">
-          {[
-            [
-              "01",
-              "Review with evidence",
-              "Review materials beside the original text and source reference.",
-            ],
-            [
-              "02",
-              "Specify with confidence",
-              "Save your choices and estimates, with missing data clearly shown.",
-            ],
-            [
-              "03",
-              "Track what matters",
-              "Track purchases, installation, checks, and actual results with evidence.",
-            ],
-          ].map(([n, t, d]) => (
-            <article className="card" key={n}>
-              <p className="eyebrow">{n}</p>
-              <h2>{t}</h2>
-              <p>{d}</p>
-            </article>
-          ))}
-        </section>
-        <div className="notice">
-          <b>Standalone simulated MVP</b>
-          <p>
-            Analysis is available for selected sample files only.
-            Your own files can be stored and viewed. There is no AI
-            analysis of those files yet.
-          </p>
-          
-        </div>
-        {!configured && (
-          <p className="config-note">
-            The system is not connected local Please set URL and public client key
-            using the setup guide before signing in.
-          </p>
-        )}
-      </main>
-    </div>
-  );
-}
+function Landing(props) { return <LandingPage {...props} />; }
 function Auth({ onBack, onDone }) {
   const [mode, setMode] = useState(
       location.hash.includes("recovery") ? "update" : "login",
@@ -3464,4 +3363,5 @@ function PackageDetail({
   );
 }
 createRoot(document.getElementById("root")).render(<App />);
+
 

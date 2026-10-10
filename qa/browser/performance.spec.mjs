@@ -47,7 +47,7 @@ test('choosing B patches server-confirmed choice without reloading immutable opt
  expect(f.tables.reviews[0].selected_option).toBe('A');
  await expect(page.getByRole('button',{name:'Select Option B',exact:true})).toBeDisabled();
  delayed.release();await expect.poll(()=>f.tables.reviews[0].selected_option).toBe('B');
- await expect(page.locator('.comparison-table th').filter({hasText:'Option B'})).toContainText('Selected');await page.waitForLoadState('networkidle');
+ await expect(page.locator('.comparison-table th').filter({hasText:'Option B'})).toContainText('Selected');await expect.poll(()=>reads(f.requests.slice(start)).map(r=>r.table)).toEqual(['analysis_runs']);await page.waitForLoadState('networkidle');
  const changed=f.requests.slice(start);expect(changed.filter(r=>r.table==='gs_review_change')).toHaveLength(1);
  expect(reads(changed).map(r=>r.table)).toEqual(['analysis_runs']);expect(changed).toHaveLength(2);expect(f.errors).toEqual([]);
 });

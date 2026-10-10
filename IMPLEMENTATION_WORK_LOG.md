@@ -72,3 +72,21 @@ Evidence: qa/performance-build.log, qa/performance-verification.log, qa/performa
 Compared the historical demo stylesheet from HEAD~1 with current styles and reviewed the supplied old Home reference. The historical demo used Segoe UI / 14px body text; the new layout reduced many tables/buttons/nav labels to10–12px. Restored Segoe UI with Thai fallbacks, raised body14→15px, primary table/nav/button12→14px, metadata10–11→12–13px, input/source text16px, and headings with a clearer hierarchy. Increased line spacing and darkened secondary text while preserving the supplied palette/layout and source language.
 
 Production build PASS. Existing Home/mobile comparison/read-only narrow-navigation checks3/3 PASS; screenshots visually reviewed at desktop and360px. No new mirrored implementation tests added for this stylesheet-only change. Evidence: qa/typography-verification.log and updated Home/mobile screenshots. No commit/push; this change remains alongside the uncommitted performance fix.
+
+## Push boundary and Figma Landing — 2026-10-10 Asia/Bangkok
+
+User explicitly authorized pushing the completed performance and typography work before implementing the supplied Figma landing page. Created commit 062e4dc (Reduce review requests and improve reading sizes) and pushed main successfully. This also published the earlier local MVP commit. Landing changes began after that push and remain uncommitted/unpushed for review.
+
+Implemented the supplied Landing Page node 67:8534 with all website sections, exact local Figma image/icon/mask assets and licensed self-hosted Inter fonts. Excluded the macOS/browser presentation frame. Added responsive layouts and existing Auth links; workflow link scrolls without changing the hash route. Demo contact uses configured mail draft or an honest accessible fallback dialog. Adjusted unsupported marketing claims to current MVP capabilities. Backend unchanged.
+
+Initial production build passed and all27 protected original files remained byte-identical. Visual QA found and corrected a JSX React import issue; desktop visual review passed. Mobile visual review identified masked team-card overflow that a root scroll-width check did not catch; correction and stronger element bounds checks are in progress. Final validation follows below. Details and first-load source-image limitation are documented in LANDING_IMPLEMENTATION.md.
+
+Final Landing validation: production build PASS; clean browser suite 24/24 PASS (21 retained journeys and three new Landing checks). New checks cover desktop1728/mobile360 layout, original local asset loading/native SVG dimensions, text bounds, route-preserving scroll, keyboard Auth entry, configured mail draft and unconfigured contact dialog without sending data. Desktop and mobile screenshots visually reviewed. All27 original protected files remain unchanged; backend unchanged.
+
+The first full run exposed a premature assertion in the existing Option B request-count test. The selected-state assertion and networkidle could complete before the follow-up read began. Waiting for the observable analysis_runs request resolved the focused test and the clean full rerun; the exact one-write/one-read/two-total assertions remain. No product logic changed for this test correction. Baseline screenshots overwritten by browser tests were restored; dedicated Landing captures remain. Evidence: qa/landing-verification.log and qa/screenshots/landing-figma-1728.png, landing-figma-360.png.
+
+Landing changes remain uncommitted and unpushed. HEAD and origin/main remain062e4dc. Local review: http://127.0.0.1:5173/#landing. Contact email remains unset in the local environment, so Request a demo uses the fallback dialog. Forest source first-load weight remains documented in LANDING_IMPLEMENTATION.md.
+
+## Landing publication authorization — 2026-10-10
+
+User reviewed the local Landing and explicitly requested pushing it. Committing the completed Landing implementation, local design assets/fonts, validation evidence and scoped test timing correction to main for the authorized push. Prior production build and24/24 browser checks passed; protected original files verified unchanged again.
