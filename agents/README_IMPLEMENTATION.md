@@ -1,6 +1,8 @@
 # GREEN SPEC — คู่มือ implementation ใหม่
 
-> อัปเดต 2026-10-10: เชื่อม Supabase cloud และทดสอบการล็อกอิน/Storage/Edge จริงแล้ว ดู CLOUD_SETUP.md สำหรับสถานะปัจจุบันและการสร้างบัญชีแอป ส่วนขั้นตอน local ด้านล่างยังใช้เมื่อเลือก Docker local
+> Paths and commands in this document are relative to the repository root (GreenSpec/), unless stated otherwise. This document is stored in agents/.
+
+> อัปเดต 2026-10-10: เชื่อม Supabase cloud และทดสอบการล็อกอิน/Storage/Edge จริงแล้ว ดู agents/CLOUD_SETUP.md สำหรับสถานะปัจจุบันและการสร้างบัญชีแอป ส่วนขั้นตอน local ด้านล่างยังใช้เมื่อเลือก Docker local
 
 สร้างตาม Frozen PRD v1 ใน `../document` โดยเอกสารต้นทางและไฟล์เดิมของ repository เป็น read-only การเปลี่ยนแปลงเดิมเพียงรายการเดียวคือการลบ `demo/` ตามคำสั่ง
 
@@ -74,7 +76,7 @@ Local endpoints:
 
 Browser tests ใช้ Chrome ที่ติดตั้งในเครื่อง ค่าเริ่มต้น `C:/Program Files/Google/Chrome/Application/chrome.exe`; ใช้ `PLAYWRIGHT_EXECUTABLE_PATH` หาก executable อยู่ตำแหน่งอื่น ชุด browser ใช้ controlled test API เพื่อทดสอบ UI เท่านั้น ไม่ได้เป็นโหมด mock ในแอป
 
-ผลและรายละเอียดขอบเขตการตรวจอยู่ใน `qa/ACCEPTANCE_REPORT.md` และ `IMPLEMENTATION_WORK_LOG.md` หลัง local Supabase พร้อม ต้องทำรายการ live integration ใน `backend/INTEGRATION_CHECKLIST.md` ด้วย
+ผลและรายละเอียดขอบเขตการตรวจอยู่ใน `qa/ACCEPTANCE_REPORT.md` และ `agents/IMPLEMENTATION_WORK_LOG.md` หลัง local Supabase พร้อม ต้องทำรายการ live integration ใน `backend/INTEGRATION_CHECKLIST.md` ด้วย
 
 ## สถานะที่ต้องทราบ
 

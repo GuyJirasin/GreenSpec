@@ -1,5 +1,7 @@
 # Figma landing page
 
+> Paths and commands in this document are relative to the repository root (GreenSpec/), unless stated otherwise. This document is stored in agents/.
+
 Design: https://www.figma.com/design/qJ4Eujczg4W5Sp4pdcalej/GREEN-SPEC?node-id=67-8534&m=dev
 
 Implemented the website content of Landing Page (67:8534), including the hero, three team cards, four workflow steps, three evidence cards and final call to action. The macOS browser frame is presentation framing and is excluded. Desktop spacing follows the 1728px reference; narrower screens stack the content. Authenticated application styling remains separate.

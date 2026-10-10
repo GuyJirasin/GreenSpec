@@ -1,5 +1,7 @@
 # Feature 1 redesign — 10 October 2026
 
+> Paths and commands in this document are relative to the repository root (GreenSpec/), unless stated otherwise. This document is stored in agents/.
+
 ## Delivered flow
 
 Sign in → Home → project and documents → Overview → Hotspots → Recommendations → Details / Compare options → Selected Spec → Revised Specification → Revision Summary → finalize → optional DOCX or project-work handoff. Revision History retains earlier analyses and finalized revisions.

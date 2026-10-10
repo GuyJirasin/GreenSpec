@@ -1,5 +1,7 @@
 # GREEN SPEC — Supabase cloud connection
 
+> Paths and commands in this document are relative to the repository root (GreenSpec/), unless stated otherwise. This document is stored in agents/.
+
 Configured and verified: 2026-10-10 (Asia/Bangkok).
 
 Project: `GreenSpec` / `fegwjlytecobdaeqhbdf`.
@@ -64,4 +66,4 @@ node qa/cloud-smoke.mjs
 
 ## Feature 1 redesign rollout — 2026-10-10
 
-Migration 202610100010_feature1_options.sql and updated analyze/revision functions are deployed to the linked project. A/B alternatives and edited wording now persist to the cloud; every recommendation must be reviewed before finalize. Finalized B choices and Thai edited DOCX output passed the real cloud test, including frontend password login. See qa/feature1-cloud-verification.log and FEATURE1_REDESIGN.md. The synthetic test account was closed and its project archived without sending email. Earlier finalized history is retained. Analysis still uses controlled sample files and estimates.
+Migration 202610100010_feature1_options.sql and updated analyze/revision functions are deployed to the linked project. A/B alternatives and edited wording now persist to the cloud; every recommendation must be reviewed before finalize. Finalized B choices and Thai edited DOCX output passed the real cloud test, including frontend password login. See qa/feature1-cloud-verification.log and agents/FEATURE1_REDESIGN.md. The synthetic test account was closed and its project archived without sending email. Earlier finalized history is retained. Analysis still uses controlled sample files and estimates.

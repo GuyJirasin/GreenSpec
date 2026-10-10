@@ -1,5 +1,7 @@
 # GREEN SPEC implementation rules
 
+> Paths and commands in this document are relative to the repository root (GreenSpec/), unless stated otherwise. Implementation documentation is stored in agents/. AGENTS.md remains at the repository root.
+
 User-authorized implementation on 2026-10-09.
 
 - Existing cloned repository files are read-only. Only the original root demo/ may be deleted, as explicitly requested. Do not edit api/, greenspec_core/, tests/, docs/, app.py, README.md, or .gitignore.
@@ -11,7 +13,7 @@ User-authorized implementation on 2026-10-09.
 - Finish Feature 1 independently; PM requires explicit finalized approved-only handoff. Quantity, verification and metric completeness are separate.
 - Tests and milestone log must report what actually ran. No deployment or Docker installation authorized; user requested code and setup instructions while Docker is unavailable.
 - Preserve credentials outside version control; frontend only uses publishable keys.
-- Keep IMPLEMENTATION_WORK_LOG.md updated with progress, tests, limitations, and next steps. Do not modify original ../document/WORK_LOG.md.
+- Keep agents/IMPLEMENTATION_WORK_LOG.md updated with progress, tests, limitations, and next steps. Do not modify original ../document/WORK_LOG.md.
 
 ## User-approved Feature 1 redesign — 2026-10-10
 

@@ -1,5 +1,7 @@
 # Frontend request and cache improvements — 10 October 2026
 
+> Paths and commands in this document are relative to the repository root (GreenSpec/), unless stated otherwise. This document is stored in agents/.
+
 The completed Supabase MVP / Feature 1 redesign was committed locally as `60a77d8` before these changes. No push was performed. The performance fix remains a separate working-tree change for review.
 
 ## Scope
