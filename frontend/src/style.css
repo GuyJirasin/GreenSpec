@@ -1,6 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap");
+@font-face { font-family: Inter; src: url('/assets/landing/Inter-400.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: Inter; src: url('/assets/landing/Inter-500.ttf') format('truetype'); font-weight: 500; font-display: swap; }
+@font-face { font-family: Inter; src: url('/assets/landing/Inter-600.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: Inter; src: url('/assets/landing/Inter-700.ttf') format('truetype'); font-weight: 700; font-display: swap; }
 :root {
-  font-family: "Noto Sans Thai", system-ui, sans-serif;
+  font-family: "Inter", "Noto Sans Thai", system-ui, sans-serif;
   color: #27483f;
   background: #f3f8f5;
   font-synthesis: none;
@@ -52,6 +56,10 @@ textarea:focus-visible {
   outline: 3px solid #36c695;
   outline-offset: 3px;
 }
+.language-switcher { display: inline-flex; flex: none; align-items: center; gap: 6px; padding: 4px 7px; border: 1px solid var(--border, #d9e7df); border-radius: 9px; color: var(--muted, #789087); font-size: 13px; white-space: nowrap; }
+.language-switcher button { padding: 3px 5px; border: 0; border-radius: 5px; background: transparent; color: inherit; font-size: inherit; font-weight: 500; }
+.language-switcher button[aria-pressed="true"] { color: var(--forest, #005b45); font-weight: 700; }
+.language-switcher button:focus-visible { outline: 2px solid #36c695; outline-offset: 1px; }
 .secondary {
   background: white;
   border-color: #d9e7df;
@@ -1133,7 +1141,7 @@ button svg,
 }
 
 /* Feature 1 uses the original GREEN SPEC dashboard palette and layout. */
-:root { --forest:#005b46; --emerald:#00b68b; --mint:#dcfce9; --border:#e2eae6; --muted:#5c7066; background:#f4f8f6; color:#29483e; font-family:"Segoe UI","Noto Sans Thai",Tahoma,sans-serif; font-size:15px; }
+:root { --forest:#005b46; --emerald:#00b68b; --mint:#dcfce9; --border:#e2eae6; --muted:#5c7066; background:#f4f8f6; color:#29483e; font-family:"Inter","Noto Sans Thai",system-ui,sans-serif; font-size:15px; }
 .sidebar {width:200px;padding:30px 12px 20px;border-color:var(--border)}
 .sidebar .brand {font-size:18px;gap:7px}.brand span{width:26px;height:26px}
 .main-area {margin-left:200px;width:calc(100% - 200px)}
@@ -1169,3 +1177,6 @@ table th { font-weight:600; }
   .dashboard-hero h2 { font-size:26px; }
   .main-area>header { gap:10px; }
 }
+
+/* Use the application font in text previews and exported-data views too. */
+pre, code { font-family: inherit; }

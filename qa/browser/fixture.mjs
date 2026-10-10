@@ -4,6 +4,7 @@ import {proposalOptions} from '../../shared/options.mjs';
 export const id='00000000-0000-4000-8000-000000000010',user='00000000-0000-4000-8000-000000000001';
 export const now=new Date().toISOString();
 export async function fixture(page,{role='owner',project=true,run=false}={}){
+ await page.addInitScript(() => localStorage.setItem('greenspec-language', 'en'));
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const token=[{alg:'HS256',typ:'JWT'},{sub:user,exp:Math.floor(Date.now()/1000)+3600},'test'].map((x,i)=>i<2?Buffer.from(JSON.stringify(x)).toString('base64url'):x).join('.');
  await page.addInitScript(({token,user})=>localStorage.setItem('sb-127-auth-token',JSON.stringify({access_token:token,refresh_token:'test-only',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,token_type:'bearer',user:{id:user,email:'owner@example.test',aud:'authenticated',role:'authenticated'}})),{token,user});

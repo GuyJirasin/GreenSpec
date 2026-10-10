@@ -1,0 +1,10 @@
+2026-10-10 guest access and language verification
+Production build: PASS (clean).
+Full browser regression run: 28/29 passed; the session-revocation test still clicked the removed login control after the simulated session had already opened Home.
+Corrected test adaptation: PASS in targeted rerun.
+Targeted final run: 3/3 passed (concurrent tabs reuse one guest; mobile pending state fits; revoked-session cache isolation).
+Total distinct verified browser cases: 31 across the full run and targeted rerun.
+Cloud checks: real anonymous signup, same-account restored session, owned project creation/read, unauthenticated denial and direct-write protection PASS. One synthetic project archived and its account soft-deleted.
+Cloud config diff: no declared changes remaining; unrelated remote-only properties preserved.
+Original-file verifier: 27 protected files unchanged.
+No commit, push or Vercel deployment performed.

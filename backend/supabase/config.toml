@@ -19,6 +19,7 @@ port = 54324
 enabled = true
 file_size_limit = "25MiB"
 [auth]
+enable_anonymous_sign_ins = true
 enabled = true
 site_url = "http://localhost:5173"
 additional_redirect_urls = ["http://localhost:5173/**", "http://127.0.0.1:5173/**"]

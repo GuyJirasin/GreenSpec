@@ -1,16 +1,15 @@
 import {test,expect} from '@playwright/test';
 import {mkdirSync} from 'node:fs';
 import {fixture,id,user,now} from './fixture.mjs';
-test('landing theme and honest capability notice, contact recipient visible, keyboard auth',async({page})=>{
- const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/#landing');
+test('landing entry opens Home with the existing browser account',async({page})=>{
+ const f=await fixture(page);const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/#landing');
  await expect(page.getByRole('heading',{level:1})).toContainText('low-carbon revisions.');
  await expect(page.getByText(/MVP: analysis uses supported sample files/)).toBeVisible();
- await expect(page.getByRole('link',{name:'Request a demo',exact:true}).first()).toHaveAttribute('href',/^mailto:team@example.test/);
- await expect(page.getByText(/team@example.test/)).toBeVisible();
- mkdirSync('screenshots',{recursive:true});await page.screenshot({path:'screenshots/landing-desktop.png',fullPage:true});
- await page.getByRole('button',{name:'Log in',exact:true}).focus();await page.keyboard.press('Enter');
- await expect(page.getByLabel('Email',{exact:true})).toBeVisible();await expect(page.getByLabel('Password',{exact:true})).toBeVisible();
- expect(errors).toEqual([]);
+ await expect(page.locator('.lp-header-demo')).toBeEnabled();await expect(page.locator('.lp-login')).toBeEnabled();
+ mkdirSync('screenshots',{recursive:true});await page.screenshot({path:'screenshots/landing-existing-account-entry.png',fullPage:true});
+ await page.locator('.lp-header-demo').focus();await page.keyboard.press('Enter');
+ await expect(page.getByRole('heading',{name:'Build better. Specify greener.'})).toBeVisible();
+ expect(f.requests.filter(r=>r.method==='POST'&&r.path==='/auth/v1/signup')).toHaveLength(0);expect(errors).toEqual([]);
 });
 test('task notification opens its authorized package and section, not task UUID as package',async({page})=>{
  const f=await fixture(page,{run:true}),pid='00000000-0000-4000-8000-000000000090',tid='00000000-0000-4000-8000-000000000091';

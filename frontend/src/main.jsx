@@ -44,6 +44,8 @@ import {
 import "./style.css";
 import F1Screens, { HomeDashboard, stages, selectedPayload } from "./F1Screens";
 import LandingPage from "./LandingPage";
+import { enterGuest } from "./guest";
+import { LanguageProvider, LanguageSwitcher, useLanguage } from "./i18n";
 function bangkokInput(value) {
   if (!value) return "";
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -84,10 +86,12 @@ function mergeRecords(previous = [], incoming = [], preserveTerminal = false) {
 const DraftContext = createContext(null);
 const dirtyForms = new Set();
 function Badge({ children, tone = "" }) {
+  const { t } = useLanguage();
   const labels = {COMPLETED:"Ready",APPROVED:"Approved",REJECTED:"Rejected",UNREVIEWED:"Not reviewed",READY:"Ready",QUEUED:"Waiting",PROCESSING:"Analysing",COMPLETE:"Complete",PARTIAL:"Some sources failed",FAILED:"Failed",DRAFT:"Draft",ORDERED:"Ordered",DELIVERED:"Delivered",INSTALLED:"Installed",NOT_STARTED:"Not started",IN_PROGRESS:"In progress",VERIFIED:"Checked",OPEN:"Open",CLOSED:"Closed",BLOCKING:"Blocking",owner:"Owner",editor:"Editor",viewer:"Read only"};
-  return <span className={`badge ${tone}`}>{typeof children === "string" ? labels[children] || children : children}</span>;
+  return <span className={`badge ${tone}`}>{typeof children === "string" ? t(labels[children] || children) : children}</span>;
 }
 function Empty({ title, children }) {
+  const { t } = useLanguage();
   return (
     <div className="empty">
       <Leaf size={28} />
@@ -106,6 +110,7 @@ function Form({
   draftKey = "",
   onDirtyChange,
 }) {
+  const { t } = useLanguage();
   const [values, setValues] = useState(initial),
     [dirty, setDirty] = useState(false),
     [recovery, setRecovery] = useState(null),
@@ -192,11 +197,8 @@ function Form({
     >
       {recovery && (
         <div className="notice warning">
-          <b>You have an unsaved draft for this project.</b>
-          <p>
-            This draft is saved on this device. Check the latest data before saving.
-            An internet connection is needed.
-          </p>
+          <b>{t("You have an unsaved draft for this project.")}</b>
+          <p>{t("This draft is saved on this device. Check the latest data before saving. An internet connection is needed.")}</p>
           <div className="actions">
             <button
               type="button"
@@ -205,9 +207,7 @@ function Form({
                 change(recovery);
                 setRecovery(null);
               }}
-            >
-              Restore draft
-            </button>
+            >{t("Restore draft")}</button>
             <button
               type="button"
               className="ghost"
@@ -215,15 +215,13 @@ function Form({
                 localStorage.removeItem(storageKey);
                 setRecovery(null);
               }}
-            >
-              Discard draft
-            </button>
+            >{t("Discard draft")}</button>
           </div>
         </div>
       )}
       {fields.map((f) => (
         <label key={f.name}>
-          {f.label}
+          {t(f.label)}
           {f.type === "select" ? (
             <select
               disabled={disabled}
@@ -232,7 +230,7 @@ function Form({
             >
               {f.options.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label ?? o.value}
+                  {o.translate ? t(o.label ?? o.value) : (o.label ?? o.value)}
                 </option>
               ))}
             </select>
@@ -277,12 +275,12 @@ function Form({
       ))}
       <button disabled={disabled || saving || Boolean(recovery)} type="submit">
         <Check size={15} />
-        {saving ? "Saving…" : label}
+        {t(saving ? "Saving…" : label)}
       </button>
       {dirty && (
         <small>
-          Unsaved changes
-          {autoSave ? " · Changes are saved after you stop typing." : ""}
+          {t("Unsaved changes")}
+          {autoSave ? ` · ${t("Changes are saved after you stop typing.")}` : ""}
         </small>
       )}
     </form>
@@ -299,9 +297,18 @@ const select = (name, label, options) => ({
   name,
   label,
   type: "select",
-  options: options.map((x) => (typeof x === "string" ? { value: x } : x)),
+  options: options.map((x) => (typeof x === "string" ? { value: x, translate: true } : x)),
 });
 function App() {
+  const { t } = useLanguage();
+  const [entering, setEntering] = useState(false), [entryError, setEntryError] = useState("");
+  async function enter() {
+    if (entering) return;
+    setEntering(true); setEntryError("");
+    try { const current = await enterGuest(); setSession(current); go("home"); }
+    catch (e) { setEntryError(e.message); }
+    finally { setEntering(false); }
+  }
   const [session, setSession] = useState(null),
     [authReady, setAuthReady] = useState(!configured),
     [page, setPage] = useState(location.hash || "#landing"),
@@ -350,10 +357,11 @@ function App() {
     };
     window.addEventListener("beforeunload", leave);
     if (db) {
-      db.auth.getSession().then(({ data }) => {
+      db.auth.getSession().then(({ data, error }) => {
         setSession(data.session);
+        if (error) setEntryError(error.message);
         setAuthReady(true);
-      });
+      }).catch(e => { setEntryError(e.message); setAuthReady(true); });
       const { data: listener } = db.auth.onAuthStateChange((_e, s) => {
         setSession(previous => {
           if (previous?.user.id !== s?.user.id) {
@@ -535,25 +543,9 @@ function App() {
   const reviewErrors = Object.fromEntries(Object.entries(recordErrors).filter(([key]) => key.startsWith(`${scopeKey}:`)).map(([key, value]) => [key.slice(scopeKey.length + 1), value]));
   const pendingReviewIds = new Set([...busyRecords].filter(key => key.startsWith(`${scopeKey}:`)).map(key => key.slice(scopeKey.length + 1)));
   if (!authReady)
-    return <main className="loading">Checking your account…</main>;
-  if (page.startsWith("#landing"))
-    return <Landing onEnter={() => go("auth")} configured={configured} />;
-  if (!session || page.startsWith("#auth"))
-    return (
-      <Auth
-        onBack={() => go("landing")}
-        onDone={() =>
-          projectId
-            ? go("workspace", {
-                tab,
-                project: projectId,
-                ...(runId ? { run: runId } : {}),
-                ...(packageId ? { package: packageId } : {}),
-              })
-            : go("home")
-        }
-      />
-    );
+    return <main className="loading">{t("Checking your account…")}</main>;
+  if (page.startsWith("#landing") || !session || page.startsWith("#auth"))
+    return <Landing onEnter={enter} configured={configured} entering={entering} entryError={entryError} />;
   const notifications = data.notifications ?? [];
   return (
     <DraftContext.Provider
@@ -599,17 +591,17 @@ function App() {
           </nav>
           <div className="sidebar-bottom">
             <Badge>● SAMPLE ANALYSIS</Badge>
-            <p>Sample results are not engineering approval.</p>
-            <button className="ghost" onClick={() => db.auth.signOut()}>
-              <LogOut size={15} />
-              Sign out
+            <p>{t("Sample results are not engineering approval.")}</p>
+            <button className="ghost" onClick={() => go("landing")}>
+              <ArrowLeft size={15} />
+              {t("Back to landing")}
             </button>
           </div>
         </aside>
         {mobile && (
           <button
             className="nav-backdrop"
-            aria-label="Close menu"
+            aria-label={t("Close menu")}
             onClick={() => setMobile(false)}
           />
         )}
@@ -617,27 +609,28 @@ function App() {
           <header>
             <button
               className="icon mobile-toggle"
-              aria-label="Open menu"
+              aria-label={t("Open menu")}
               onClick={() => setMobile(!mobile)}
             >
               <Menu />
             </button>
             <span>{project?.name || (page.startsWith("#home") ? "Home" : "Projects")}</span>
             <div className="header-right">
+              <LanguageSwitcher />
               <button
                 className="icon"
-                aria-label="Notifications"
+                aria-label={t("Notifications")}
                 onClick={() => setShowBell(!showBell)}
               >
                 <Bell size={18} />
                 {notifications.some((n) => !n.read_at) && <i />}
               </button>
               <span className="avatar">
-                {session.user.email?.slice(0, 2).toUpperCase()}
+                {session.user.is_anonymous ? "G" : session.user.email?.slice(0, 2).toUpperCase()}
               </span>
               <div className="user">
-                <b>{session.user.email}</b>
-                <small>{role || "GREEN SPEC member"}</small>
+                <b>{session.user.is_anonymous ? `${t("Guest")} ${session.user.id.slice(0, 6)}` : session.user.email}</b>
+                <small>{t(({owner:"Owner",editor:"Editor",viewer:"Read only"})[role] || "GREEN SPEC member")}</small>
               </div>
             </div>
           </header>
@@ -646,7 +639,7 @@ function App() {
               <div tabIndex={-1} role="alert" className="error">
                 <AlertCircle size={17} />
                 <div>
-                  {error}
+                  {t(error)}
                   <div className="actions">
                     <button
                       className="secondary"
@@ -655,16 +648,12 @@ function App() {
                           .then(() => setError(""))
                           .catch((e) => setError(e.message))
                       }
-                    >
-                      Load latest data
-                    </button>
+                    >{t("Load latest data")}</button>
                     {retry.current && !error.includes("Someone changed") && (
                       <button
                         className="secondary"
                         onClick={() => retry.current()}
-                      >
-                        Try again
-                      </button>
+                      >{t("Try again")}</button>
                     )}
                   </div>
                 </div>
@@ -672,7 +661,7 @@ function App() {
             )}
             {status && (
               <p aria-live="polite" className="save-status">
-                {status}
+                {t(status)}
               </p>
             )}
             {project?.archived_at && (
@@ -690,17 +679,12 @@ function App() {
                         }),
                       )
                     }
-                  >
-                    Restore project
-                  </button>
+                  >{t("Restore project")}</button>
                 )}
               </div>
             )}
             {projectId && role === "viewer" && (
-              <div className="notice">
-                You have read-only access.
-                Ask the project owner for edit access.
-              </div>
+              <div className="notice">{t("You have read-only access. Ask the project owner for edit access.")}</div>
             )}
             {!projectId && page.startsWith("#home") ? <HomeDashboard projects={projects} data={data} onNew={() => go("projects")} /> : !projectId ? (
               <>
@@ -708,9 +692,7 @@ function App() {
                   <div>
                     <p className="eyebrow">YOUR GREEN SPEC WORKSPACE</p>
                     <h1>Build better. Specify greener.</h1>
-                    <p>
-                      Turn project requirements into informed material decisions.
-                    </p>
+                    <p>{t("Turn project requirements into informed material decisions.")}</p>
                   </div>
                 </div>
                 <section className="card">
@@ -746,20 +728,18 @@ function App() {
                         type="checkbox"
                         checked={archive}
                         onChange={(e) => setArchive(e.target.checked)}
-                      />
-                      Show archived
-                    </label>
+                      />{t("Show archived")}</label>
                   </div>
                   {projects.filter((p) => archive || !p.archived_at).length ? (
                     <div className="table-wrap">
                       <table>
                         <thead>
                           <tr>
-                            <th>Project</th>
-                            <th>Setup status</th>
-                            <th>Latest analysis</th>
-                            <th>Work checked</th>
-                            <th>Last updated</th>
+                            <th>{t("Project")}</th>
+                            <th>{t("Setup status")}</th>
+                            <th>{t("Latest analysis")}</th>
+                            <th>{t("Work checked")}</th>
+                            <th>{t("Last updated")}</th>
                             <th />
                           </tr>
                         </thead>
@@ -815,7 +795,7 @@ function App() {
                                         </small>
                                       </>
                                     ) : (
-                                      <small>Not analysed</small>
+                                      <small>{t("Not analysed")}</small>
                                     );
                                   })()}
                                 </td>
@@ -836,8 +816,7 @@ function App() {
                                   <a
                                     className="button secondary"
                                     href={`#workspace?project=${p.id}&tab=documents`}
-                                  >
-                                    Open <ArrowRight size={15} />
+                                  >{t("Open")}<ArrowRight size={15} />
                                   </a>
                                 </td>
                               </tr>
@@ -846,9 +825,7 @@ function App() {
                       </table>
                     </div>
                   ) : (
-                    <Empty title="No projects yet">
-                      Name your first project, then add its documents.
-                    </Empty>
+                    <Empty title={t("No projects yet")}>{t("Name your first project, then add its documents.")}</Empty>
                   )}
                 </section>
               </>
@@ -857,9 +834,7 @@ function App() {
                 <div className="page-title">
                   <div>
                     <a className="back" href="#projects">
-                      <ArrowLeft size={14} />
-                      All projects
-                    </a>
+                      <ArrowLeft size={14} />{t("All projects")}</a>
                     <h1>{project.name}</h1>
                     <p>
                       {project.description ||
@@ -913,14 +888,9 @@ function App() {
                 )}
               </>
             ) : (
-              <Empty title="Project not found">
-                Check the link or ask the owner for access.
-              </Empty>
+              <Empty title={t("Project not found")}>{t("Check the link or ask the owner for access.")}</Empty>
             )}
-            <footer>
-              GREEN SPEC · Estimates use sample data ·
-              Actual results need their own sources
-            </footer>
+            <footer>{t("GREEN SPEC · Estimates use sample data · Actual results need their own sources")}</footer>
           </main>
         </div>
         {showBell && (
@@ -929,7 +899,7 @@ function App() {
               <h2>Notifications</h2>
               <button
                 className="icon"
-                aria-label="Close notifications"
+                aria-label={t("Close notifications")}
                 onClick={() => setShowBell(false)}
               >
                 <X />
@@ -950,9 +920,7 @@ function App() {
                           rpc("gs_mark_notification", { p_id: n.id }),
                         )
                       }
-                    >
-                      Read
-                    </button>
+                    >{t("Read")}</button>
                     <button
                       className="secondary"
                       disabled={busy}
@@ -993,16 +961,12 @@ function App() {
                           { message: "Item opened", reload: false },
                         )
                       }
-                    >
-                      Open item
-                    </button>
+                    >{t("Open item")}</button>
                   </div>
                 </article>
               ))
             ) : (
-              <Empty title="No notifications">
-                Items that need your attention appear here.
-              </Empty>
+              <Empty title={t("No notifications")}>{t("Items that need your attention appear here.")}</Empty>
             )}
           </div>
         )}
@@ -1012,6 +976,7 @@ function App() {
 }
 function Landing(props) { return <LandingPage {...props} />; }
 function Auth({ onBack, onDone }) {
+  const { t } = useLanguage();
   const [mode, setMode] = useState(
       location.hash.includes("recovery") ? "update" : "login",
     ),
@@ -1022,13 +987,11 @@ function Auth({ onBack, onDone }) {
       <div className="auth-brand">
         <Leaf size={35} />
         <h1>GREEN SPEC</h1>
-        <p>Build better. Specify greener.</p>
+        <p>{t("Build better. Specify greener.")}</p>
       </div>
       <section className="card">
         <button className="ghost" onClick={onBack}>
-          <ArrowLeft size={15} />
-          Back to home
-        </button>
+          <ArrowLeft size={15} />{t("Back to home")}</button>
         <h2>
           {mode === "signup"
             ? "Create account"
@@ -1095,14 +1058,10 @@ function Auth({ onBack, onDone }) {
           >
             {mode === "signup" ? "I have an account" : "Create account"}
           </button>
-          <button className="ghost" onClick={() => setMode("reset")}>
-            Forgot password
-          </button>
+          <button className="ghost" onClick={() => setMode("reset")}>{t("Forgot password")}</button>
         </div>
         {location.hash.includes("recovery") && (
-          <button className="secondary" onClick={() => setMode("update")}>
-            Reset password
-          </button>
+          <button className="secondary" onClick={() => setMode("update")}>{t("Reset password")}</button>
         )}
       </section>
     </div>
@@ -1169,6 +1128,7 @@ async function uploadBytes(bucket, path, file, signal) {
 }
 
 function Documents({ project, data, canEdit, save, action, go }) {
+  const { t } = useLanguage();
   const [scenario, setScenario] = useState("success"),
     [selected, setSelected] = useState([]),
     [uploadState, setUploadState] = useState({}),
@@ -1271,14 +1231,12 @@ function Documents({ project, data, canEdit, save, action, go }) {
             onSubmit={(v) => save("projects", v, project)}
           />
           {running && (
-            <p className="notice">
-              Analysis is running. Its source files are temporarily locked.
-            </p>
+            <p className="notice">{t("Analysis is running. Its source files are temporarily locked.")}</p>
           )}
         </section>
         <section className="card">
           <h2>Add document</h2>
-          <p>Add a document name, then upload the file.</p>
+          <p>{t("Add a document name, then upload the file.")}</p>
           <Form
             fields={[
               field("title", "Document title"),
@@ -1293,12 +1251,10 @@ function Documents({ project, data, canEdit, save, action, go }) {
       <section className="card">
         <div className="section-head">
           <h2>Project documents</h2>
-          <Badge>PDF · DOCX · XLSX / 25 MiB</Badge>
+          <Badge>{t("PDF · DOCX · XLSX / 25 MiB")}</Badge>
         </div>
         {!docs.length ? (
-          <Empty title="No documents yet">
-            Add a document or load a sample below.
-          </Empty>
+          <Empty title={t("No documents yet")}>{t("Add a document or load a sample below.")}</Empty>
         ) : (
           docs.map((doc) => {
             const version =
@@ -1315,8 +1271,8 @@ function Documents({ project, data, canEdit, save, action, go }) {
                     <small>
                       {doc.type} ·{" "}
                       {version
-                        ? `Version ${version.version_no}`
-                        : "No file"}
+                        ? `${t("Version")} ${version.version_no}`
+                        : t("No file")}
                     </small>
                     <p>
                       <Badge tone={version ? "" : "warning"}>
@@ -1325,12 +1281,10 @@ function Documents({ project, data, canEdit, save, action, go }) {
                           "No file"}
                       </Badge>{" "}
                       {version?.fixture_id ? (
-                        <Badge>Supported sample</Badge>
+                        <Badge>{t("Supported sample")}</Badge>
                       ) : (
                         version && (
-                          <Badge tone="warning">
-                            Stored file · analysis not available
-                          </Badge>
+                          <Badge tone="warning">{t("Stored file · analysis not available")}</Badge>
                         )
                       )}
                     </p>
@@ -1348,15 +1302,11 @@ function Documents({ project, data, canEdit, save, action, go }) {
                           })
                         }
                       >
-                        <Download size={14} />
-                        Download original
-                      </button>
+                        <Download size={14} />{t("Download original")}</button>
                       <button
                         className="secondary"
                         onClick={() => setPreview(version)}
-                      >
-                        View text / source
-                      </button>
+                      >{t("View text / source")}</button>
                     </>
                   )}
                   {uploadState[doc.id]?.status === "Uploading" && (
@@ -1365,9 +1315,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
                       onClick={() =>
                         controls.current[doc.id]?.controller.abort()
                       }
-                    >
-                      Cancel upload
-                    </button>
+                    >{t("Cancel upload")}</button>
                   )}
                   {canEdit && (
                     <>
@@ -1385,9 +1333,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
                         <button
                           className="secondary"
                           onClick={() => upload(doc, uploadState[doc.id].file)}
-                        >
-                          Try again
-                        </button>
+                        >{t("Try again")}</button>
                       )}
                       <button
                         className="ghost"
@@ -1398,14 +1344,12 @@ function Documents({ project, data, canEdit, save, action, go }) {
                             doc,
                           )
                         }
-                      >
-                        Archive document
-                      </button>
+                      >{t("Archive document")}</button>
                     </>
                   )}
                 </div>
                 <details>
-                  <summary>Edit document details</summary>
+                  <summary>{t("Edit document details")}</summary>
                   <Form
                     key={doc.row_version}
                     fields={[
@@ -1424,10 +1368,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
       </section>
       <section className="card">
         <h2>Analyse sample files</h2>
-        <div className="notice">
-          Sample analysis only. Your own files are stored but are not analysed.
-          Sources are never replaced without your choice.
-        </div>
+        <div className="notice">{t("Sample analysis only. Your own files are stored but are not analysed. Sources are never replaced without your choice.")}</div>
         <div className="actions">
           {fixtures.map((f) => (
             <button
@@ -1441,17 +1382,13 @@ function Documents({ project, data, canEdit, save, action, go }) {
             </button>
           ))}
         </div>
-        <label className="stack">
-          Sample scenario
-          <select
+        <label className="stack">{t("Sample scenario")}<select
             value={scenario}
             onChange={(e) => setScenario(e.target.value)}
           >
-            <option value="success">Success — Material choices</option>
-            <option value="zero">Zero opportunities — No recommendations</option>
-            <option value="partial">
-              Partial — Some sources failed
-            </option>
+            <option value="success">{t("Success — Material choices")}</option>
+            <option value="zero">{t("Zero opportunities — No recommendations")}</option>
+            <option value="partial">{t("Partial — Some sources failed")}</option>
           </select>
         </label>
         <h3>Files included in analysis</h3>
@@ -1484,7 +1421,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
         </p>
         {missing.length > 0 && (
           <div className="notice warning">
-            <b>Not ready to analyse</b>
+            <b>{t("Not ready to analyse")}</b>
             <ul>
               {missing.map((m) => (
                 <li key={m}>{m}</li>
@@ -1514,8 +1451,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
               { message: "Analysis requested" },
             );
           }}
-        >
-          Start sample analysis <ArrowRight size={16} />
+        >{t("Start sample analysis")}<ArrowRight size={16} />
         </button>
       </section>
       {preview && (
@@ -1529,6 +1465,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
   );
 }
 function SourceViewer({ version, source, documents, onClose }) {
+  const { t } = useLanguage();
   const modalRef = useRef(null);
   useEffect(() => {
     const previous = document.activeElement;
@@ -1570,12 +1507,12 @@ function SourceViewer({ version, source, documents, onClose }) {
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Source reference"
+        aria-label={t("Source reference")}
       >
         <button
           autoFocus
           className="icon close"
-          aria-label="Close"
+          aria-label={t("Close")}
           onClick={onClose}
         >
           <X />
@@ -1608,17 +1545,11 @@ function SourceViewer({ version, source, documents, onClose }) {
             ))}
           </div>
         ) : (
-          <p>
-            No text preview is available for this file.
-            Open the original file to read it.
-          </p>
+          <p>{t("No text preview is available for this file. Open the original file to read it.")}</p>
         )}
-        <button onClick={() => download(version.storage_path)}>
-          Open / download original <Download size={15} />
+        <button onClick={() => download(version.storage_path)}>{t("Open / download original")}<Download size={15} />
         </button>
-        <p className="muted">
-          This text view does not show the original file layout.
-        </p>
+        <p className="muted">{t("This text view does not show the original file layout.")}</p>
       </section>
     </div>
   );
@@ -1633,6 +1564,7 @@ function locator(loc) {
         : "No location";
 }
 function Review({ project, data, canEdit, save, action, go, runId, changeReview, pendingReviewIds, staleEpochs, reviewErrors }) {
+  const { t } = useLanguage();
   const [source, setSource] = useState(null),
     [feedback, setFeedback] = useState(""),
     [omit, setOmit] = useState(false),
@@ -1704,23 +1636,17 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
   if (!run)
     return (
       <section className="card">
-        <Empty title="No analysis yet">
-          Add a description and sample files in Documents first.
-        </Empty>
+        <Empty title={t("No analysis yet")}>{t("Add a description and sample files in Documents first.")}</Empty>
         <button
           className="secondary"
           onClick={() => go("workspace", { tab: "documents" })}
-        >
-          Go to Documents
-        </button>
+        >{t("Go to Documents")}</button>
       </section>
     );
   return (
     <>
       <div className="section-head">
-        <label className="run-select">
-          Analysis history
-          <select
+        <label className="run-select">{t("Analysis history")}<select
             value={run.id}
             onChange={(e) =>
               go("workspace", { tab: "review", run: e.target.value })
@@ -1733,26 +1659,21 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
             ))}
           </select>
         </label>
-        <Badge>Sample analysis</Badge>
+        <Badge>{t("Sample analysis")}</Badge>
       </div>
-      <nav className="analysis-tabs" aria-label="Analysis screens">{stages.map(([key,name]) => <button key={key} className={stage===key?"selected":""} onClick={()=>onStage(key)}>{name}{key==="selected"?` (${approved.length})`:""}</button>)}</nav>
+      <nav className="analysis-tabs" aria-label={t("Analysis screens")}>{stages.map(([key,name]) => <button key={key} className={stage===key?"selected":""} onClick={()=>onStage(key)}>{name}{key==="selected"?` (${approved.length})`:""}</button>)}</nav>
       {active ? (
         <section className="card processing">
           <RefreshCw className="spin" />
           <h2>Analysing the sample files</h2>
-          <p>You can leave this page and return to check progress.</p>
+          <p>{t("You can leave this page and return to check progress.")}</p>
           <Badge>{run.status}</Badge>
         </section>
       ) : (
         <>
-          <div className="notice">
-            These results come from sample files.
-            They are not an engineering approval or material certification.
-          </div>
+          <div className="notice">{t("These results come from sample files. They are not an engineering approval or material certification.")}</div>
           {stale && (
-            <div className="error">
-              Source data changed. Run analysis again before finalizing.
-            </div>
+            <div className="error">{t("Source data changed. Run analysis again before finalizing.")}</div>
           )}
           {(run.result?.warnings || run.warnings)?.filter(w => !String(typeof w === "string" ? w : w.message || "").startsWith("SIMULATED:")).map((w, i) => (
             <p className="notice warning" key={i}>
@@ -1770,13 +1691,8 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                   type="checkbox"
                   checked={omit}
                   onChange={(e) => setOmit(e.target.checked)}
-                />
-                Leave out the failed sources
-                and keep a warning in the final revision.
-              </label>
-              <label className="stack">
-                Reason for skipping
-                <textarea
+                />{t("Leave out the failed sources and keep a warning in the final revision.")}</label>
+              <label className="stack">{t("Reason for skipping")}<textarea
                   value={omissionReason}
                   onChange={(e) => setOmissionReason(e.target.value)}
                 />
@@ -1801,9 +1717,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                     }),
                   )
                 }
-              >
-                Retry this analysis
-              </button>
+              >{t("Retry this analysis")}</button>
             </section>
           )}
           {["overview", "hotspots", "summary", "completion"].includes(stage) && <div className="stats">
@@ -1833,17 +1747,11 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
             ))}
           </div>}
           {cost.known < cost.total || carbon.known < carbon.total ? (
-            <p className="notice warning">
-              Some estimates are missing. Totals include only known values.
-              Missing values are not counted as zero.
-            </p>
+            <p className="notice warning">{t("Some estimates are missing. Totals include only known values. Missing values are not counted as zero.")}</p>
           ) : null}
           {!recs.length && !active && (
             <section className="card">
-              <Empty title="No changes found in this sample">
-                You can finalize Feature 1 with no selected changes
-                and no project work.
-              </Empty>
+              <Empty title={t("No changes found in this sample")}>{t("You can finalize Feature 1 with no selected changes and no project work.")}</Empty>
             </section>
           )}
           <F1Screens {...{ stage, recs, reviews, run, final, canEdit, onStage, project }} options={data.recommendation_options || []} historyRuns={runs} decisionSets={data.decision_sets || []} onRun={(id)=>go("workspace",{tab:"review",run:id,stage:"overview"})} FormComponent={Form} onSource={setSource}
@@ -1857,10 +1765,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
               <p>
                 {stamp(final.finalized_at)}
               </p>
-              <p>
-                Revision complete
-                You can export the results without creating a revised document or project work.
-              </p>
+              <p>{t("Revision complete You can export the results without creating a revised document or project work.")}</p>
               <h3>Choose approved changes to send to project work</h3>
               {data.decision_items
                 .filter(
@@ -1909,7 +1814,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                             </p>
                           </div>
                           <div>
-                            <small>This revision</small>
+                            <small>{t("This revision")}</small>
                             <p>
                               {item.snapshot.final_wording || item.snapshot.proposed_material} ·{" "}
                               {money(item.snapshot.quantity?.value)}{" "}
@@ -1930,14 +1835,8 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                     </div>
                   );
                 })}
-              <p className="muted">
-                Changed items already in progress cannot be replaced here.
-                Uncheck them to send the other items.
-                Existing work and history are kept.
-              </p>
-              <label className="stack">
-                Reason for replacing work that has not started
-                <textarea
+              <p className="muted">{t("Changed items already in progress cannot be replaced here. Uncheck them to send the other items. Existing work and history are kept.")}</p>
+              <label className="stack">{t("Reason for replacing work that has not started")}<textarea
                   value={replaceReason}
                   onChange={(e) => setReplaceReason(e.target.value)}
                 />
@@ -1954,9 +1853,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                       ),
                     })
                   }
-                >
-                  Download JSON
-                </button>
+                >{t("Download JSON")}</button>
                 <button
                   className="secondary"
                   onClick={() => {
@@ -1986,9 +1883,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                       "text/csv;charset=utf-8",
                     );
                   }}
-                >
-                  Download CSV
-                </button>
+                >{t("Download CSV")}</button>
                 <button
                   disabled={!canEdit}
                   onClick={() => {
@@ -2015,15 +1910,12 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                         result && go("workspace", { tab: "execution" }),
                     );
                   }}
-                >
-                  Send to project work <ArrowRight size={15} />
+                >{t("Send to project work")}<ArrowRight size={15} />
                 </button>
                 <button
                   className="secondary"
                   onClick={() => go("workspace", { tab: "revision" })}
-                >
-                  Create revised document (optional)
-                </button>
+                >{t("Create revised document (optional)")}</button>
                 <button
                   className="ghost"
                   disabled={!canEdit}
@@ -2040,17 +1932,13 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                       });
                     });
                   }}
-                >
-                  Start a new draft
-                </button>
+                >{t("Start a new draft")}</button>
               </div>
             </section>
           ) : (
             <section className="card">
               <h2>Feedback for the next round</h2>
-              <label className="stack">
-                What would you like to change?
-                <textarea
+              <label className="stack">{t("What would you like to change?")}<textarea
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   disabled={!canEdit}
@@ -2095,9 +1983,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                       });
                     });
                   }}
-                >
-                  Request another round
-                </button>
+                >{t("Request another round")}</button>
                 <button
                   disabled={
                     pendingReviewIds.size > 0 || staleEpochs.has(run.id) || !canEdit ||
@@ -2123,17 +2009,13 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                       }),
                     );
                   }}
-                >
-                  Finalize revision <ShieldCheck size={16} />
+                >{t("Finalize revision")}<ShieldCheck size={16} />
                 </button>
               </div>
               {finalizeReason && (
                 <p className="muted">Cannot finalize yet: {finalizeReason}</p>
               )}
-              <p className="muted">
-                A new round keeps only locked, unchanged approved choices.
-                Review new or changed items again.
-              </p>
+              <p className="muted">{t("A new round keeps only locked, unchanged approved choices. Review new or changed items again.")}</p>
             </section>
           ))}
         </>
@@ -2151,13 +2033,14 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
               onClose={() => setSource(null)}
             />
           ) : (
-            <div className="error">Source is not available</div>
+            <div className="error">{t("Source is not available")}</div>
           );
         })()}
     </>
   );
 }
 function Revisions({ project, data, canEdit, action }) {
+  const { t } = useLanguage();
   const sets = (data.decision_sets ?? []).sort(
     (a, b) => b.version_no - a.version_no,
   );
@@ -2172,15 +2055,10 @@ function Revisions({ project, data, canEdit, action }) {
     <>
       <section className="card">
         <h2>Create a document from the final revision</h2>
-        <p>
-          Optional for Feature 1 or project work. Supports only DOCX
-          samples with known text locations.
-        </p>
+        <p>{t("Optional for Feature 1 or project work. Supports only DOCX samples with known text locations.")}</p>
         {sets.length ? (
           <>
-            <label className="stack">
-              Final revision
-              <select
+            <label className="stack">{t("Final revision")}<select
                 value={decision.id}
                 onChange={(e) => setSetId(e.target.value)}
               >
@@ -2203,19 +2081,12 @@ function Revisions({ project, data, canEdit, action }) {
                   }),
                 );
               }}
-            >
-              Create revised document
-            </button>
+            >{t("Create revised document")}</button>
           </>
         ) : (
-          <Empty title="No final revision yet">
-            Finalize your choices in TOR Analysis first.
-          </Empty>
+          <Empty title={t("No final revision yet")}>{t("Finalize your choices in TOR Analysis first.")}</Empty>
         )}
-        <p className="notice">
-          The original file is kept. A separate document is created.
-          Check the final document layout before use.
-        </p>
+        <p className="notice">{t("The original file is kept. A separate document is created. Check the final document layout before use.")}</p>
       </section>
       {revisions.map((r) => (
         <section className="card" key={r.id}>
@@ -2224,25 +2095,23 @@ function Revisions({ project, data, canEdit, action }) {
             <Badge>{r.status}</Badge>
           </div>
           {r.outdated && (
-            <div className="notice warning">
-              This document may not match the current final revision.
-            </div>
+            <div className="notice warning">{t("This document may not match the current final revision.")}</div>
           )}
           {(r.changes || r.report?.changes || []).map((c, i) => (
             <div className="grid two compare" key={i}>
               <div>
-                <small>Before change</small>
+                <small>{t("Before change")}</small>
                 <p>{c.before || c.original_text}</p>
               </div>
               <div>
-                <small>After change</small>
+                <small>{t("After change")}</small>
                 <p>{c.after || c.proposed_text}</p>
               </div>
             </div>
           ))}
           {(r.unapplied || r.report?.unapplied || []).map((u, i) => (
             <div className="notice warning" key={i}>
-              <b>Could not apply</b>
+              <b>{t("Could not apply")}</b>
               <p>{u.reason || "This change could not be applied."}</p>
               <label className="check">
                 <input
@@ -2258,16 +2127,12 @@ function Revisions({ project, data, canEdit, action }) {
                           ),
                     )
                   }
-                />
-                Skip this item
-              </label>
+                />{t("Skip this item")}</label>
             </div>
           ))}
           {["PARTIAL", "READY_FOR_REVIEW"].includes(r.status) && (
             <>
-              <label className="stack">
-                Reason for skipping this change
-                <textarea
+              <label className="stack">{t("Reason for skipping this change")}<textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                 />
@@ -2293,9 +2158,7 @@ function Revisions({ project, data, canEdit, action }) {
                     }),
                   );
                 }}
-              >
-                Approve revised document
-              </button>
+              >{t("Approve revised document")}</button>
             </>
           )}
           <div className="actions">
@@ -2308,9 +2171,7 @@ function Revisions({ project, data, canEdit, action }) {
                     reload: false,
                   })
                 }
-              >
-                Download DOCX
-              </button>
+              >{t("Download DOCX")}</button>
             )}
             <button
               className="secondary"
@@ -2320,9 +2181,7 @@ function Revisions({ project, data, canEdit, action }) {
                   ...r,
                 })
               }
-            >
-              Download comparison report JSON
-            </button>
+            >{t("Download comparison report JSON")}</button>
           </div>
         </section>
       ))}
@@ -2330,6 +2189,7 @@ function Revisions({ project, data, canEdit, action }) {
   );
 }
 function Members({ project, data, canEdit, save, action, role }) {
+  const { t } = useLanguage();
   return (
     <section className="card">
       <h2>Project members</h2>
@@ -2337,16 +2197,16 @@ function Members({ project, data, canEdit, save, action, role }) {
         <table>
           <thead>
             <tr>
-              <th>User</th>
-              <th>Access</th>
+              <th>{t("User")}</th>
+              <th>{t("Access")}</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {(data.project_members ?? []).map((m) => (
               <tr key={m.user_id}>
-                <td>{m.email || m.user_id}</td>
-                <td>{m.role}</td>
+                <td>{m.email || `${t("Guest")} ${m.user_id.slice(0, 6)}`}</td>
+                <td>{t(({owner:"Owner",editor:"Editor",viewer:"Read only"})[m.role] || m.role)}</td>
                 <td>
                   {role === "owner" && !project.archived_at && (
                     <button
@@ -2359,9 +2219,7 @@ function Members({ project, data, canEdit, save, action, role }) {
                           }),
                         )
                       }
-                    >
-                      Remove
-                    </button>
+                    >{t("Remove")}</button>
                   )}
                 </td>
               </tr>
@@ -2372,7 +2230,8 @@ function Members({ project, data, canEdit, save, action, role }) {
       {role === "owner" && !project.archived_at && (
         <>
           <h3>Add member / change access</h3>
-          <p>Use the email of an existing account. This does not send an invitation.</p>
+          <p>{t("Use the email of an existing account. This does not send an invitation.")}</p>
+          <p className="muted">{t("Guest accounts have no email. Email invitations are only for existing registered accounts.")}</p>
           <Form
             fields={[
               field("email", "Registered user's email", "email"),
@@ -2407,15 +2266,14 @@ function Members({ project, data, canEdit, save, action, role }) {
                   }),
                 );
             }}
-          >
-            Archive project
-          </button>
+          >{t("Archive project")}</button>
         </>
       )}
     </section>
   );
 }
 function OutcomeComparison({ packages, actuals }) {
+  const { t } = useLanguage();
   const metrics = [
     {
       metric: "cost",
@@ -2443,11 +2301,11 @@ function OutcomeComparison({ packages, actuals }) {
         <table>
           <thead>
             <tr>
-              <th>items</th>
-              <th>Original (sample)</th>
-              <th>Selected material (sample)</th>
-              <th>Known actual results</th>
-              <th>Actual result completeness</th>
+              <th>{t("items")}</th>
+              <th>{t("Original (sample)")}</th>
+              <th>{t("Selected material (sample)")}</th>
+              <th>{t("Known actual results")}</th>
+              <th>{t("Actual result completeness")}</th>
             </tr>
           </thead>
           <tbody>
@@ -2498,14 +2356,8 @@ function OutcomeComparison({ packages, actuals }) {
           </tbody>
         </table>
       </div>
-      <p className="muted">
-        Actual totals include only sourced values. Missing results stay unknown.
-        Estimates are not used to fill missing results.
-      </p>
-      <p className="notice">
-        Actual carbon savings cannot be compared yet. Confirm that the source,
-        method, and scope match the baseline sample figures; not calculated from installed quantity
-      </p>
+      <p className="muted">{t("Actual totals include only sourced values. Missing results stay unknown. Estimates are not used to fill missing results.")}</p>
+      <p className="notice">{t("Actual carbon savings cannot be compared yet. Confirm that the source, method, and scope match the baseline sample figures; not calculated from installed quantity")}</p>
     </section>
   );
 }
@@ -2519,12 +2371,13 @@ function Execution({
   packageId,
   session,
 }) {
+  const { t } = useLanguage();
   const [source, setSource] = useState(null);
   const packages = (data.packages ?? []).filter((p) => !p.superseded_at);
   const pack = packages.find((p) => p.id === packageId);
   const members = (data.project_members ?? [])
     .filter((m) => m.role !== "viewer")
-    .map((m) => ({ value: m.user_id, label: m.email || m.user_id }));
+    .map((m) => ({ value: m.user_id, label: m.email || `${t("Guest")} ${m.user_id.slice(0, 6)}` }));
   const memberOptions = [{ value: "", label: "Not assigned" }, ...members];
   const complete = packages.filter(
     (p) => p.execution_status === "COMPLETE",
@@ -2591,18 +2444,15 @@ function Execution({
         <section className="card">
           <h2>Material work packages</h2>
           {!packages.length ? (
-            <Empty title="No work packages yet">
-              Finalize the revision, then choose approved items to send to project work.
-              Approving an item does not create project work automatically.
-            </Empty>
+            <Empty title={t("No work packages yet")}>{t("Finalize the revision, then choose approved items to send to project work. Approving an item does not create project work automatically.")}</Empty>
           ) : (
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Selected material</th>
-                    <th>Work progress</th>
-                    <th>Check</th>
+                    <th>{t("Selected material")}</th>
+                    <th>{t("Work progress")}</th>
+                    <th>{t("Check")}</th>
                     <th />
                   </tr>
                 </thead>
@@ -2628,8 +2478,7 @@ function Execution({
                           onClick={() =>
                             go("workspace", { tab: "execution", package: p.id })
                           }
-                        >
-                          Open package <ArrowRight size={14} />
+                        >{t("Open package")}<ArrowRight size={14} />
                         </button>
                       </td>
                     </tr>
@@ -2647,9 +2496,7 @@ function Execution({
         className="ghost back"
         onClick={() => go("workspace", { tab: "execution" })}
       >
-        <ArrowLeft size={14} />
-        All work packages
-      </button>
+        <ArrowLeft size={14} />{t("All work packages")}</button>
       <div className="page-title">
         <div>
           <p className="eyebrow">SUSTAINABILITY PACKAGE</p>
@@ -2664,10 +2511,7 @@ function Execution({
           {pack.execution_status} / {pack.verification_status}
         </Badge>
       </div>
-      <div className="notice">
-        Cost and carbon targets come from sample analysis.
-        Actual results need their own source and calculation method.
-      </div>
+      <div className="notice">{t("Cost and carbon targets come from sample analysis. Actual results need their own source and calculation method.")}</div>
       <Form
         key={pack.row_version}
         fields={[select("owner_id", "Package owner", memberOptions)]}
@@ -2702,7 +2546,7 @@ function Execution({
               Carbon reduction {money(pack.snapshot?.impacts?.carbon_reduction_tco2e)}{" "}
               tCO₂e
             </p>
-            <small>These targets are not actual results or evidence of completion.</small>
+            <small>{t("These targets are not actual results or evidence of completion.")}</small>
           </div>
         </div>
       </section>
@@ -2746,6 +2590,7 @@ function PackageDetail({
   memberOptions,
   session,
 }) {
+  const { t } = useLanguage();
   const [section, setSection] = useState("tasks"),
     [evidence, setEvidence] = useState([]),
     [verifyNotes, setVerifyNotes] = useState(""),
@@ -2875,10 +2720,7 @@ function PackageDetail({
       {section === "procurement" && (
         <section className="card">
           <h2>Save purchase</h2>
-          <p>
-            Use the supplier chosen by your team. Supplier recommendation
-            Not available yet
-          </p>
+          <p>{t("Use the supplier chosen by your team. Supplier recommendation Not available yet")}</p>
           <Form
             key={procurement?.row_version ?? 0}
             fields={[
@@ -2933,10 +2775,7 @@ function PackageDetail({
               )
             }
           />
-          <p className="muted">
-            The system checks quantities, supplier, order number,
-            and required dates before saving each step.
-          </p>
+          <p className="muted">{t("The system checks quantities, supplier, order number, and required dates before saving each step.")}</p>
         </section>
       )}
       {section === "implementation" && (
@@ -2944,13 +2783,13 @@ function PackageDetail({
           <h2>Delivery and installation</h2>
           <div className="stats compact">
             <section className="stat">
-              <small>Received / target</small>
+              <small>{t("Received / target")}</small>
               <strong>
                 {money(delivered)} / {money(quantity)} {unit}
               </strong>
             </section>
             <section className="stat">
-              <small>Installed / target</small>
+              <small>{t("Installed / target")}</small>
               <strong>
                 {money(installed)} / {money(quantity)} {unit}
               </strong>
@@ -2984,10 +2823,7 @@ function PackageDetail({
               })
             }
           />
-          <p className="notice">
-            Partial quantities are not complete. Installed quantity cannot exceed received quantity.
-            Corrections are saved as new records. Earlier records are kept.
-          </p>
+          <p className="notice">{t("Partial quantities are not complete. Installed quantity cannot exceed received quantity. Corrections are saved as new records. Earlier records are kept.")}</p>
           {entries.map((e) => (
             <article className="record" key={e.id}>
               <b>
@@ -2996,7 +2832,7 @@ function PackageDetail({
               <p>{e.notes}</p>
               <small>{stamp(e.occurred_at)}</small>
               <details>
-                <summary>Correct a quantity with a new record</summary>
+                <summary>{t("Correct a quantity with a new record")}</summary>
                 <Form
                   fields={[
                     field("quantity", "Correct quantity", "number"),
@@ -3092,13 +2928,8 @@ function PackageDetail({
       {section === "proof" && (
         <section className="card">
           <h2>Evidence and checks</h2>
-          <p>
-            To pass, add at least one ready evidence file, a checker,
-            notes, the full installed quantity, and clear all blocking issues.
-          </p>
-          <label className={`button secondary ${!canEdit ? "disabled" : ""}`}>
-            Upload evidence
-            <input
+          <p>{t("To pass, add at least one ready evidence file, a checker, notes, the full installed quantity, and clear all blocking issues.")}</p>
+          <label className={`button secondary ${!canEdit ? "disabled" : ""}`}>{t("Upload evidence")}<input
               disabled={!canEdit}
               type="file"
               accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg"
@@ -3162,14 +2993,10 @@ function PackageDetail({
                     reload: false,
                   })
                 }
-              >
-                View file
-              </button>
+              >{t("View file")}</button>
             </div>
           ))}
-          <label className="stack">
-            Checker's notes
-            <textarea
+          <label className="stack">{t("Checker's notes")}<textarea
               value={verifyNotes}
               onChange={(e) => setVerifyNotes(e.target.value)}
             />
@@ -3187,9 +3014,7 @@ function PackageDetail({
                   }),
                 )
               }
-            >
-              Save as passed
-            </button>
+            >{t("Save as passed")}</button>
             <button
               className="secondary"
               disabled={!canEdit || !verifyNotes.trim()}
@@ -3203,9 +3028,7 @@ function PackageDetail({
                   }),
                 )
               }
-            >
-              Save as failed / needs changes
-            </button>
+            >{t("Save as failed / needs changes")}</button>
           </div>
           {pick("verifications").map((v) => (
             <article className="record" key={v.id}>
@@ -3266,10 +3089,7 @@ function PackageDetail({
                       save("actual_results", { ...common, metric, ...v }, row)
                     }
                   />
-                  <p className="muted">
-                    Estimates are not used to fill missing results.
-                    Result completeness is separate from work progress.
-                  </p>
+                  <p className="muted">{t("Estimates are not used to fill missing results. Result completeness is separate from work progress.")}</p>
                 </section>
               );
             })}
@@ -3279,16 +3099,14 @@ function PackageDetail({
       {section === "activity" && (
         <section className="card">
           <h2>Comments and history</h2>
-          <label className="stack">
-            Comment in
-            <select
+          <label className="stack">{t("Comment in")}<select
               value={commentKind}
               onChange={(e) => setCommentKind(e.target.value)}
             >
-              <option value="packages">This work package</option>
-              <option value="tasks">Tasks</option>
-              <option value="issues">Issue</option>
-              <option value="verifications">Checks</option>
+              <option value="packages">{t("This work package")}</option>
+              <option value="tasks">{t("Tasks")}</option>
+              <option value="issues">{t("Issue")}</option>
+              <option value="verifications">{t("Checks")}</option>
             </select>
           </label>
           <Form
@@ -3346,7 +3164,7 @@ function PackageDetail({
                 {e.actor_id} · {stamp(e.created_at)}
               </small>
               <details>
-                <summary>Details</summary>
+                <summary>{t("Details")}</summary>
                 <pre>
                   {JSON.stringify(
                     { before: e.before, after: e.after },
@@ -3362,6 +3180,6 @@ function PackageDetail({
     </>
   );
 }
-createRoot(document.getElementById("root")).render(<App />);
+createRoot(document.getElementById("root")).render(<LanguageProvider><App /></LanguageProvider>);
 
 

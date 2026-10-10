@@ -104,3 +104,23 @@ User requested moving only their newly created root Markdown documents into agen
 ## Approved documentation cleanup — 2026-10-10
 
 User corrected the scope: keep AGENTS.md at the repository root and push the cleanup. Restored AGENTS.md to root, retaining its updated agents/IMPLEMENTATION_WORK_LOG.md reference and automatic repository-wide discovery. The other six implementation Markdown documents remain in agents/. Existing shared README.md and all 27 protected original files remain unchanged. Verified document paths and original-file preservation. No application code changed; no runtime tests needed for this documentation-only change. Committing and pushing the approved cleanup to main.
+
+
+## 2026-10-10 — Thai default and MVP guest entry
+
+- Added persistent Thai/English controls on Landing and app headers. Thai is the default; large headings and sidebar menu labels remain English. Static labels/help/status/forms switch language while source text, project values and edited wording remain unchanged. HTML lang metadata follows the selected interface language; uploaded document content stays unchanged.
+- Landing entry/demo/pilot actions now open Home using an existing Supabase session or a new anonymous user. Existing permanent sessions are retained. Browser storage is checked before creation; single-flight entry and Web Locks avoid duplicates within/across supported browser tabs. Entry errors stay visible and allow retry. Returning to Landing retains the account.
+- Guest labels replace absent email in account/member/assignee displays. Email member invitations remain for registered accounts; the interface explains this guest limitation.
+- Enabled only auth.enable_anonymous_sign_ins on the existing cloud project after reviewing the diff. Kept existing RLS, checked operations and unrelated remote configuration. Local config declares the same flag.
+- Used Luna for straightforward localization and browser QA per the user's preference; retained parent review for auth/session behavior. Updated AGENTS.md with language, guest-entry and delegation preferences.
+- Verification: production build PASS clean. Full browser run 28/29 passed; adapted the obsolete session-revocation test to the new no-login UI, then targeted rerun 3/3 passed including that case, concurrent browser-tab identity and mobile pending layout. All 31 distinct browser cases verified across those runs. Existing A/B, wording, renewed review, finalize, request counts, concurrency, polling, recovery, viewer access and Feature2 regressions passed. See qa/guest-verification.log.
+- Real Supabase smoke test PASS: anonymous Auth, session restoration to same account, project ownership, unauthenticated access denial and forbidden direct write. Archived only the synthetic project and soft-deleted only its test account. See qa/guest-cloud-verification.log.
+- Original-file verifier PASS: all 27 protected files unchanged. Restored previous tracked screenshots and kept new guest captures. No commit/push/deployment.
+- Limit: identity belongs to a browser profile and website origin while its session remains valid; clearing storage, switching browser/device or private-session renewal creates a new account. No cross-device recovery code is included. Setup and limitations: agents/GUEST_ACCESS_AND_LANGUAGE.md.
+
+
+## 2026-10-10 — Inter throughout the interface
+
+- Promoted the four existing locally hosted Inter weights (400/500/600/700) from Landing CSS to global CSS. Both root font rules use Inter first; Landing inherits the same stack. Form controls already inherit; pre/code views now inherit too. Existing sizes/weights remain unchanged.
+- Retained Noto Sans Thai as the fallback for Thai text. Inspected the local Inter font cmap: Latin A is present and Thai U+0E01 is absent. No new font dependency/download.
+- Production build PASS; three existing desktop/mobile Landing and mobile Home/compare browser checks PASS. Original-file verifier PASS for all 27 protected files. Restored generated baseline screenshots. No commit or push.

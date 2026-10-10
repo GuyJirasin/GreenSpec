@@ -19,3 +19,9 @@ User-authorized implementation on 2026-10-09.
 
 Latest user instructions override the earlier Thai/new-UI-only notes above: reuse historical demo UX/UI for Feature1, Home layout from latest attached screenshot, forest/emerald/mint palette throughout. All interface text simple English; source/document content preserves its original language. Home after sign-in, only real sidebar sections. Add real persisted A/B choices and editable final wording. All items must be reviewed before finalize. Feature2 workflow stays unchanged; palette and interface language may change. User permits subagents when useful. Do not commit or push GitHub until expressly instructed. Supabase cloud configuration was previously authorized; apply only scoped reviewed changes, preserve user data, and report actual verification evidence. Existing original repo files/documents remain read-only.
 
+
+## User-approved language and MVP guest entry — 2026-10-10
+
+- Default interface language is Thai; offer a persistent Thai/English switch. Keep large headings and sidebar menu labels in English. Preserve document/source text and user-entered content in their original language.
+- Landing entry and demo actions open Home using Supabase anonymous Auth. Reuse an existing session, including permanent users; browser-local sessions define returning guests. Return-to-landing must retain the session. Never use IP/fingerprinting to identify a guest.
+- For useful delegated work, use gpt-6-luna for straightforward tasks. Keep the normal model for difficult reasoning tasks. Do not commit or push without an explicit request.

@@ -1,0 +1,5 @@
+2026-10-10
+PASS real anonymous Auth: unique user and session without email
+PASS restored session uses same guest account
+PASS guest project ownership, session persistence and existing RLS/direct-write protection
+PASS cleanup: synthetic project archived and guest account soft-deleted

@@ -120,12 +120,13 @@ test('an older background read cannot overwrite a later acknowledged review',asy
 test('signing out during a read clears user cache and a new user cannot inherit its delayed data',async({page})=>{
  const f=await fixture(page,{run:true}),oldName=f.tables.projects[0].name;
  const delayed=f.holdNext(r=>r.method==='GET'&&r.table==='analysis_runs');
- await page.goto('/#home');await delayed.reached;await page.getByRole('button',{name:'Sign out',exact:true}).click();
- await expect(page.getByRole('textbox',{name:'Email',exact:true})).toBeVisible();
+ await page.goto('/#home');await delayed.reached;
+ // Simulate session revocation; the MVP return action intentionally retains its session.
+ await page.evaluate(async()=>{const {db}=await import('/src/api.js');await db.auth.signOut();});
+ await expect(page.locator('.lp-login')).toBeVisible();
  f.signInAs('00000000-0000-4000-8000-000000000098','second@example.test');
  for(const rows of Object.values(f.tables))rows.splice(0);
- await page.getByRole('textbox',{name:'Email',exact:true}).fill('second@example.test');await page.getByLabel('Password',{exact:true}).fill('A-test-password-123');
- await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.evaluate(async()=>{const {db}=await import('/src/api.js');await db.auth.signInWithPassword({email:'second@example.test',password:'synthetic-test-only'});});
  await expect(page.getByRole('heading',{name:'Build better. Specify greener.'})).toBeVisible();await expect(page.getByRole('heading',{name:'No analysis yet'})).toBeVisible();
  delayed.release();await page.waitForLoadState('networkidle');
  await expect(page.getByText(oldName,{exact:true})).not.toBeVisible();await expect(page.getByRole('heading',{name:'No analysis yet'})).toBeVisible();
