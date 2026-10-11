@@ -41,3 +41,9 @@ For the fastest credible pitch, limit the promise to concrete specification revi
 - Normal git diff --check passed (Windows line-ending notices only).
 
 No push, deployment, database update, or cloud record deletion was performed. Read-only Vercel/Supabase inspections supplied the deployment findings above.
+
+## Supabase rollout update — 2026-10-11
+
+The cloud blockers described above are now partly resolved: migrations 0011/0012 were applied, SERVER_AI_URL was set to https://green-spec-demo.vercel.app, and analyze/document/revision were deployed through the existing CLI without Docker. All are ACTIVE (versions 4/3/4); preflight returned 204 for each. No user records were deleted.
+
+Vercel settings now use repository root . and output frontend/dist. However, the live /api/health endpoint still returns 404 and production is still the old 14:24 deployment. GitHub main d853062 merged guy but does not contain local main bcf4e9e (the current UI/live-only implementation). Integrate/push the latest main and deploy before real AI end-to-end verification. The user reports TYPHOON_API_KEY was added; no paid provider call was made in this rollout.
