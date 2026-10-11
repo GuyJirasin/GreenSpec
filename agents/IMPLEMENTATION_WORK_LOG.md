@@ -192,3 +192,8 @@ User requested pushing branch guy. Publish the reviewed JavaScript/Supabase inte
 
 Integrated origin/main d853062 with the current redesigned live-only main. Retained the already integrated JavaScript engine and newer source, option, pricing and no-fallback safeguards; preserved remote deployment documentation and both work logs. The user explicitly requested pushing main. Supabase live migrations/functions are already deployed. Verification and push status recorded after checks.
 Pre-push verification: root client/server build passed; all three Edge function import compilations passed; 20 focused live-only API/workflow/database/provider tests passed. Merge resolution changed only instructions/history documentation relative to the reviewed local implementation.
+
+## Vercel route validation fix — 2026-10-11
+
+GitHub's Vercel status on f4582e0 reports failure with invalid-route-source-pattern before a new deployment exists. Production still serves the old 14:24 deployment. Replaced the RegExp-style SPA source with a grouped path-to-regexp pattern, preserving API exclusion. This syntax requirement is documented in https://vercel.com/docs/errors/error-list#invalid-route-source-pattern . Local build success did not validate Vercel route syntax. Deployment verification follows this fix.
+
