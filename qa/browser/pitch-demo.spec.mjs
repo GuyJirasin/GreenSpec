@@ -8,7 +8,17 @@ test('prepared demo flow: ready real file, A/B, wording, complete review, final,
  await expect(page.locator('.unified-project-nav')).toHaveCount(1);await expect(page.locator('.sidebar').getByText(/demo/i)).toHaveCount(0);expect(await page.locator('main').innerText()).not.toMatch(/demo/i);await expect(page.locator('main > .tabs')).toHaveCount(0);
  await page.getByRole('button',{name:'Analyze project'}).click();
  await expect(page.getByRole('heading',{name:'Material hotspots'})).toBeVisible();
+ // An existing browser-saved round must get the new presentation without rewriting its data.
+ await page.evaluate(()=>{const key=Object.keys(localStorage).find(k=>k.startsWith('greenspec:pitch-demo:v1:'));const rounds=JSON.parse(localStorage.getItem(key));for(const r of rounds[0].recs)r.payload.rationale='ตัวอย่างสำหรับการสาธิต: ตรวจสอบวัสดุก่อนเลือก';for(const o of rounds[0].options)o.payload.rationale='ตัวอย่างสำหรับการสาธิต: ตรวจสอบวัสดุก่อนเลือก';localStorage.setItem(key,JSON.stringify(rounds));});
+ await page.reload();
  await page.locator('.unified-project-nav').getByRole('link',{name:'Recommendations',exact:true}).click();
+ await expect(page.locator('.standard-references').getByRole('link',{name:/213-2560/})).toBeVisible();
+ await expect(page.locator('.standard-references').getByRole('link',{name:/24-2559/})).toBeVisible();
+ await expect(page.locator('.standard-references').getByRole('link',{name:/1505-2541/})).toBeVisible();
+ expect(await page.locator('main').innerText()).not.toContain('ตัวอย่างสำหรับการสาธิต');
+ expect(await page.locator('.unified-project-nav').evaluate(el=>getComputedStyle(el,'::-webkit-scrollbar').display)).toBe('none');
+ expect(await page.evaluate(()=>{const key=Object.keys(localStorage).find(k=>k.startsWith('greenspec:pitch-demo:v1:'));return JSON.parse(localStorage.getItem(key))[0].options[0].payload.rationale;})).toContain('ตัวอย่างสำหรับการสาธิต');
+ mkdirSync('screenshots',{recursive:true});await page.screenshot({path:'screenshots/material-references-desktop.png',fullPage:true});
  await page.getByRole('button',{name:'Compare options',exact:true}).first().click();
  await page.getByRole('button',{name:'Select Option B',exact:true}).click();
  await page.getByRole('button',{name:'Approve',exact:true}).click();

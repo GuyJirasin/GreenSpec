@@ -210,3 +210,11 @@ Production verification after c127a93: deployment dpl_FbNpUHeDeHBrrrWin7XQ2eTzut
 - No agy or built-in agents were used. No push/deployment performed for this task.
 
 - Follow-up: user requested Demo text only in the topbar and authorized push. Removed sidebar/banners and mode wording from UI actions, round labels and headings. Topbar badge retains explanatory hover text; example-source notices and machine-readable demo provenance remain accurate.
+
+## 2026-10-11 — Clean workflow navigation and TIS references
+- Hid the horizontal workflow scrollbar while keeping swipe, horizontal scrolling and keyboard navigation available.
+- Removed the Thai demonstration prefix from recommendation rationales, including previously stored rounds via a read-only presentation adapter. Persisted decisions and finalized snapshots are not rewritten.
+- Added related product-quality standards with official TISI links in recommendations, details and A/B comparison: concrete 213-2560 and fly ash 2135-2545; deformed steel bars 24-2559; AAC option A 1505-2541; non-loadbearing hollow blocks option B 58-2560, with applicability notes. Unspecified insulation explicitly needs a material type before selecting a standard.
+- These references do not claim certification or that prepared carbon/cost figures or fly-ash percentages come from TIS. No fabricated clause citations or uploaded-document attribution.
+- Validation: production client build, 2 existing demo state tests and browser pitch workflow passed; browser checks cover links and hidden scrollbar. Follow-up browser regression also checks existing saved text is cleaned for display without mutating storage.
+- No agents used. Changes are local; no commit, push or deployment requested in this follow-up.

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 
 const translations = {
   th: {
+    "Related standards": "มาตรฐานที่เกี่ยวข้อง",
     "Upload a project document": "อัปโหลดเอกสารโครงการ",
     "Ready for analysis": "พร้อมวิเคราะห์",
     "Upload a ready project document": "อัปโหลดเอกสารโครงการให้เสร็จก่อน",
