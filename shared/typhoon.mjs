@@ -7,19 +7,20 @@ export class TyphoonClient {
   constructor({ apiKey = "", baseUrl = "https://api.opentyphoon.ai/v1", model = "typhoon-v2.5-30b-a3b-instruct" } = {}) {
     this.apiKey = apiKey || process.env.TYPHOON_API_KEY || "";
     this.baseUrl = baseUrl.replace(/\/$/, "");
-    this.model = model;
+    this.baseUrl = (process.env.TYPHOON_BASE_URL || this.baseUrl).replace(/\/$/, "");
+    this.model = process.env.TYPHOON_MODEL || model;
+    this.lastGenerationMode = null;
   }
 
   /**
    * Standard completion returning complete text
    */
   async chat({ messages, temperature = 0.2, maxTokens = 3500 }) {
-    if (!this.apiKey) {
-      return this._mockResponse(messages);
-    }
+    if (!this.apiKey) throw Object.assign(new Error('Set TYPHOON_API_KEY before using AI analysis.'), {code:'AI_NOT_CONFIGURED'});
 
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: "POST",
+      signal: AbortSignal.timeout(30000),
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.apiKey}`
@@ -39,6 +40,7 @@ export class TyphoonClient {
     }
 
     const data = await res.json();
+    this.lastGenerationMode = "live";
     return data.choices?.[0]?.message?.content || "";
   }
 
@@ -46,13 +48,11 @@ export class TyphoonClient {
    * Streaming completion returning an async iterator of token chunks (SSE)
    */
   async *chatStream({ messages, temperature = 0.2, maxTokens = 3500 }) {
-    if (!this.apiKey) {
-      yield this._mockResponse(messages);
-      return;
-    }
+    if (!this.apiKey) throw Object.assign(new Error('Set TYPHOON_API_KEY before using AI analysis.'), {code:'AI_NOT_CONFIGURED'});
 
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: "POST",
+      signal: AbortSignal.timeout(30000),
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.apiKey}`
@@ -71,6 +71,7 @@ export class TyphoonClient {
       throw new Error(`OpenTyphoon streaming error (${res.status}): ${errText}`);
     }
 
+    this.lastGenerationMode = "live";
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -170,16 +171,4 @@ ${standardsContext.map(s => `- ${s}`).join("\n")}
     return { thPart: content.trim(), enPart: content.trim() };
   }
 
-  _mockResponse(messages) {
-    const userMsg = messages[messages.length - 1]?.content || "";
-    return `หมวดที่ 03 30 00 งานคอนกรีตโครงสร้างหล่อในที่ (คอนกรีตคาร์บอนต่ำ)
-ส่วนที่ 1 - ทั่วไป: ผู้รับจ้างต้องเสนอ Mix Design และผลทดสอบ Trial Mix ล่วงหน้าไม่น้อยกว่า 35 วันก่อนเทจริง
-ส่วนที่ 2 - วัสดุ: ปูนซีเมนต์ไฮดรอลิก มอก. 2594 ผสมเถ้าลอย มอก. 2135 ชั้น F
-ส่วนที่ 3 - การก่อสร้าง: ต้องเทให้เสร็จภายใน 90 นาที และบ่มชื้นต่อเนื่องไม่น้อยกว่า 14 วัน
----
-SECTION 03 30 00 - CAST-IN-PLACE CONCRETE (LOW-CARBON MIX SPECIFICATION)
-PART 1 - GENERAL: Submit trial mix reports conforming to ASTM C39 / TIS 213 at least 35 days prior to placement.
-PART 2 - PRODUCTS: Hydraulic cement (TIS 2594) with Class F fly ash (TIS 2135).
-PART 3 - EXECUTION: Complete discharge within 90 minutes. Moist cure for minimum 14 days.`;
-  }
 }

@@ -11,8 +11,7 @@ from greenspec_core.knowledge_indexer import HybridGraphRAGRetriever
 
 def analyze_and_draft_spec(
     payload: Dict[str, Any],
-    retriever: Optional[BaseRetriever] = None,
-    use_mock: bool = False
+    retriever: Optional[BaseRetriever] = None
 ) -> Dict[str, Any]:
     project = ProjectInput(
         project_name=payload.get("project_name", "Untitled Project"),
@@ -36,7 +35,7 @@ def analyze_and_draft_spec(
         guardrail=guardrail,
         chosen_option=opt_a,
         retriever=retriever or HybridGraphRAGRetriever(),
-        typhoon_client=TyphoonClient(use_mock=use_mock)
+        typhoon_client=TyphoonClient()
     )
 
     from dataclasses import asdict
@@ -67,8 +66,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         else:
             payload = body_str
 
-        use_mock = payload.get("use_mock", False)
-        result = analyze_and_draft_spec(payload, use_mock=use_mock)
+        result = analyze_and_draft_spec(payload)
         return {
             "statusCode": 200,
             "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},

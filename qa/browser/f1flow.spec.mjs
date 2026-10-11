@@ -14,7 +14,7 @@ test('Home uses saved projects and only implemented navigation',async({page})=>{
 });
 test('Option B and edited source-language wording survive reload, require renewed review and freeze at finalization',async({page})=>{
  const f=await fixture(page,{run:true});await page.goto(route('recommendations'));
- await expect(page.getByRole('heading',{name:'Recommended material changes',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Recommendations',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Compare options',exact:true}).first().click();
  await page.getByRole('button',{name:'Select Option B',exact:true}).click();
  await expect.poll(()=>f.tables.reviews[0].selected_option).toBe('B');await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:'screenshots/f1-compare-desktop.png',fullPage:true});

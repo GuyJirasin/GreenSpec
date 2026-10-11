@@ -1,4 +1,4 @@
-import { readdir,readFile,writeFile,mkdir } from 'node:fs/promises';
+import { readdir,readFile,writeFile,mkdir,unlink } from 'node:fs/promises';
 import { dirname,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -7,6 +7,7 @@ const source=resolve(backend,'../shared');
 const destination=resolve(backend,'supabase/functions/_shared/domain');
 await mkdir(destination,{recursive:true});
 const checksums={};
+for(const name of ['fixtures.mjs','fixture-bytes.mjs','options.mjs'])await unlink(resolve(destination,name)).catch(e=>{if(e.code!=='ENOENT')throw e});
 for(const name of (await readdir(source)).filter(f=>f.endsWith('.mjs')&&!f.endsWith('.test.mjs')).sort()){
  const bytes=await readFile(resolve(source,name));
  await writeFile(resolve(destination,name),bytes);

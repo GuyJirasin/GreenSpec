@@ -1,0 +1,16 @@
+legacy/
+qa/
+docs/
+agents/
+backend/tests/
+frontend/vercel.json
+.vercel/
+.env
+.env.*
+app.py
+requirements.txt
+greenspec_core/
+backend/
+tests/
+AGENTS.md
+README*.md

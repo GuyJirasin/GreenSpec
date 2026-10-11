@@ -25,6 +25,7 @@ import {
   X,
   RefreshCw,
   AlertCircle,
+  UploadCloud,
 } from "lucide-react";
 import {
   db,
@@ -41,7 +42,9 @@ import {
   money,
   stamp,
 } from "./api";
+import { liveData } from "./live-data.mjs";
 import "./style.css";
+import "./analysis-ui.css";
 import F1Screens, { HomeDashboard, stages, selectedPayload } from "./F1Screens";
 import LandingPage from "./LandingPage";
 import { enterGuest } from "./guest";
@@ -334,7 +337,7 @@ function App() {
   const tab = params.get("tab") || "documents";
   const group = projectId ? tab === "execution" ? "execution" : tab === "members" ? "members" : "feature1" : page.startsWith("#home") ? "home" : "projects";
   const scopeKey = `${session?.user.id || ""}:${projectId || "all"}`;
-  const data = dataScope === scopeKey ? storedData : projectCache.get(scopeKey)?.data || {};
+  const data = liveData(dataScope === scopeKey ? storedData : projectCache.get(scopeKey)?.data || {});
   view.current = { key: scopeKey, user: session?.user.id, project: projectId, group, generation: authGeneration.current };
   authUser.current = session?.user.id;
   const project = projects.find((p) => p.id === projectId);
@@ -590,8 +593,8 @@ function App() {
             )}
           </nav>
           <div className="sidebar-bottom">
-            <Badge>● SAMPLE ANALYSIS</Badge>
-            <p>{t("Sample results are not engineering approval.")}</p>
+            <Badge>● LIVE ANALYSIS</Badge>
+            <p>{t("Review document evidence before approval.")}</p>
             <button className="ghost" onClick={() => go("landing")}>
               <ArrowLeft size={15} />
               {t("Back to landing")}
@@ -770,11 +773,11 @@ function App() {
                                                   v.id ===
                                                     d.current_version_id &&
                                                   v.upload_state === "READY" &&
-                                                  v.fixture_id,
+                                                  !v.fixture_id,
                                               ),
                                           )
-                                          ? "Ready for sample analysis"
-                                          : "Add a sample document"
+                                          ? "Ready for analysis"
+                                          : "Upload a project document"
                                         : "Setup incomplete"}
                                   </Badge>
                                 </td>
@@ -890,7 +893,7 @@ function App() {
             ) : (
               <Empty title={t("Project not found")}>{t("Check the link or ask the owner for access.")}</Empty>
             )}
-            <footer>{t("GREEN SPEC · Estimates use sample data · Actual results need their own sources")}</footer>
+            <footer>{t("GREEN SPEC · Document analysis · Review estimates and sources")}</footer>
           </main>
         </div>
         {showBell && (
@@ -1067,7 +1070,7 @@ function Auth({ onBack, onDone }) {
     </div>
   );
 }
-import { fixtures } from "../../shared/fixtures.mjs";
+
 function fileMime(file) {
   const extension = file.name.split(".").at(-1)?.toLowerCase();
   return (
@@ -1129,29 +1132,37 @@ async function uploadBytes(bucket, path, file, signal) {
 
 function Documents({ project, data, canEdit, save, action, go }) {
   const { t } = useLanguage();
-  const [scenario, setScenario] = useState("success"),
-    [selected, setSelected] = useState([]),
+  const [selected, setSelected] = useState([]),
     [uploadState, setUploadState] = useState({}),
     [preview, setPreview] = useState(null);
   const controls = useRef({});
+  const fileInput = useRef(null), batchLock = useRef(false);
+  const [adding,setAdding]=useState(false),[dragging,setDragging]=useState(false);
+  const [displayOrder,setDisplayOrder]=useState(()=>{try{return localStorage.getItem(`gs-display-order-${project.id}`)||'carbon'}catch{return 'carbon'}});
+  async function addFiles(files) {
+    if (!canEdit || running || batchLock.current) return;
+    const list=Array.from(files||[]); if(!list.length)return;
+    batchLock.current=true;setAdding(true);
+    try {
+      for(const file of list) {
+        if(file.size>25*1024*1024||! /\.(pdf|docx|xlsx)$/i.test(file.name)) {
+          await action(async()=>{throw new Error(file.size>25*1024*1024?'Files must be no larger than 25 MiB':'Supports only PDF, DOCX and XLSX')});
+          break;
+        }
+        const fileHash=await checksum(file);
+        const duplicate=versions.find(v=>v.checksum===fileHash&&v.upload_state==='READY');
+        if(duplicate&&!confirm(t('This file matches a saved version. Create another document anyway?'))) {setPreview(duplicate);continue;}
+        const doc=await save('documents',{title:file.name,type:'SPEC'});
+        if(!doc?.id) break;
+        const uploaded=await upload(doc,file,true);
+        if(!uploaded)break;
+      }
+    } finally { batchLock.current=false;setAdding(false);if(fileInput.current)fileInput.current.value=''; }
+  }
   const versions = data.document_versions ?? [],
     docs = (data.documents ?? []).filter((d) => !d.retired_at);
-  const eligible = versions.filter(
-    (v) =>
-      v.upload_state === "READY" &&
-      v.fixture_id &&
-      (
-        {
-          success: ["office-spec"],
-          zero: ["zero-spec"],
-          partial: ["partial-spec", "partial-boq"],
-        }[scenario] || []
-      ).includes(v.fixture_id),
-  );
-  const missing = [
-    !project.description?.trim() && "Add a project description",
-    !eligible.length && "Load a supported sample file",
-  ].filter(Boolean);
+  const eligible = versions.filter(v=>v.upload_state==='READY'&&!v.fixture_id&&v.provenance!=='fixture'&&docs.some(d=>d.current_version_id===v.id));
+  const missing = [!eligible.length && 'Upload a ready project document'].filter(Boolean);
   const running = (data.analysis_runs ?? []).some((r) =>
     ["QUEUED", "PROCESSING"].includes(r.status),
   );
@@ -1159,25 +1170,14 @@ function Documents({ project, data, canEdit, save, action, go }) {
     () => setSelected(eligible.map((v) => v.id)),
     [eligible.map((v) => v.id).join(",")],
   );
-  async function loadFixture(f) {
-    const key = requestId();
-    await action(() =>
-      invoke("document", {
-        operation: "fixture",
-        project_id: project.id,
-        fixture_id: f.fixture_id,
-        request_id: key,
-      }),
-    );
-  }
-  async function upload(doc, file) {
+  async function upload(doc, file, duplicateAccepted = false) {
     if (!file) return;
     const hash = await checksum(file);
     const duplicate = versions.find(
       (v) => v.checksum === hash && v.upload_state === "READY",
     );
     if (
-      duplicate &&
+      duplicate && !duplicateAccepted &&
       !confirm(
         "This file matches a saved version. Create another document anyway?",
       )
@@ -1212,49 +1212,24 @@ function Documents({ project, data, canEdit, save, action, go }) {
       [doc.id]: { status: result ? "Ready" : "Upload failed", file },
     }));
     delete controls.current[doc.id];
+    return result;
   }
 
   return (
-    <>
-      <div className="grid two">
-        <section className="card">
-          <h2>Project details</h2>
-          <Form
-            key={project.row_version}
-            fields={[
-              field("name", "Project name"),
-              field("description", "Project description", "textarea", false),
-            ]}
-            initial={project}
-            autoSave
-            disabled={!canEdit || running}
-            onSubmit={(v) => save("projects", v, project)}
-          />
-          {running && (
-            <p className="notice">{t("Analysis is running. Its source files are temporarily locked.")}</p>
-          )}
-        </section>
-        <section className="card">
-          <h2>Add document</h2>
-          <p>{t("Add a document name, then upload the file.")}</p>
-          <Form
-            fields={[
-              field("title", "Document title"),
-              select("type", "Type", ["TOR", "BOQ", "SPEC", "OTHER"]),
-            ]}
-            disabled={!canEdit}
-            label="Add document"
-            onSubmit={(v) => save("documents", { type: "TOR", ...v })}
-          />
-        </section>
-      </div>
-      <section className="card">
+    <div className="document-page">
+      <div className="page-title"><div><h2>Project documents</h2><p>{t('Upload TOR, specifications, BOQ and supporting evidence.')}</p></div></div>
+      {running&&<p className="notice">{t('Analysis is running. Its source files are temporarily locked.')}</p>}
+      <div className="document-layout">      <section className="card">
         <div className="section-head">
-          <h2>Project documents</h2>
+          <h3>Documents</h3>
           <Badge>{t("PDF · DOCX · XLSX / 25 MiB")}</Badge>
         </div>
+
+        <div className={`upload-dropzone ${dragging?'dragging':''}`} onDragOver={e=>{e.preventDefault();if(canEdit&&!running&&!adding)setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);addFiles(e.dataTransfer.files)}}>
+          <UploadCloud size={38}/><h3>{t('Drop your project documents here')}</h3><p>{t('PDF · DOCX · XLSX / 25 MiB')}</p><input ref={fileInput} className="file-hidden" type="file" multiple accept=".pdf,.docx,.xlsx" aria-label={t('Browse files')} disabled={!canEdit||running||adding} onChange={e=>addFiles(e.target.files)}/><button disabled={!canEdit||running||adding} onClick={()=>fileInput.current?.click()}>{t(adding?'Uploading…':'Browse files')}</button>
+        </div>
         {!docs.length ? (
-          <Empty title={t("No documents yet")}>{t("Add a document or load a sample below.")}</Empty>
+          <Empty title={t("No documents yet")}>{t("Upload your project files to begin.")}</Empty>
         ) : (
           docs.map((doc) => {
             const version =
@@ -1276,17 +1251,11 @@ function Documents({ project, data, canEdit, save, action, go }) {
                     </small>
                     <p>
                       <Badge tone={version ? "" : "warning"}>
-                        {uploadState[doc.id]?.status ||
+                        {t(uploadState[doc.id]?.status ||
                           version?.upload_state ||
-                          "No file"}
+                          "No file")}
                       </Badge>{" "}
-                      {version?.fixture_id ? (
-                        <Badge>{t("Supported sample")}</Badge>
-                      ) : (
-                        version && (
-                          <Badge tone="warning">{t("Stored file · analysis not available")}</Badge>
-                        )
-                      )}
+                      {version?.upload_state==='READY'&&<Badge>{t('Upload complete')}</Badge>}
                     </p>
                   </div>
                 </div>
@@ -1317,10 +1286,10 @@ function Documents({ project, data, canEdit, save, action, go }) {
                       }
                     >{t("Cancel upload")}</button>
                   )}
-                  {canEdit && (
+                  {canEdit && !running && (
                     <>
                       <label className="button secondary">
-                        {version ? "Upload new version" : "Upload file"}
+                        {t(version ? "Upload new version" : "Upload file")}
                         <input
                           className="file-hidden"
                           aria-label={`Upload ${doc.title}`}
@@ -1357,7 +1326,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
                       select("type", "Type", ["TOR", "BOQ", "SPEC", "OTHER"]),
                     ]}
                     initial={doc}
-                    disabled={!canEdit}
+                    disabled={!canEdit || running}
                     onSubmit={(v) => save("documents", v, doc)}
                   />
                 </details>
@@ -1365,33 +1334,32 @@ function Documents({ project, data, canEdit, save, action, go }) {
             );
           })
         )}
+<details><summary>{t("Add document without a file")}</summary>          <Form
+            fields={[
+              field("title", "Document title"),
+              select("type", "Type", ["TOR", "BOQ", "SPEC", "OTHER"]),
+            ]}
+            disabled={!canEdit || running || adding}
+            label="Add document"
+            onSubmit={(v) => save("documents", { type: "TOR", ...v })}
+          />
+</details>
       </section>
-      <section className="card">
-        <h2>Analyse sample files</h2>
-        <div className="notice">{t("Sample analysis only. Your own files are stored but are not analysed. Sources are never replaced without your choice.")}</div>
-        <div className="actions">
-          {fixtures.map((f) => (
-            <button
-              key={f.fixture_id}
-              className="secondary"
-              disabled={!canEdit}
-              onClick={() => loadFixture(f)}
-            >
-              <Plus size={15} />
-              {f.title}
-            </button>
-          ))}
-        </div>
-        <label className="stack">{t("Sample scenario")}<select
-            value={scenario}
-            onChange={(e) => setScenario(e.target.value)}
-          >
-            <option value="success">{t("Success — Material choices")}</option>
-            <option value="zero">{t("Zero opportunities — No recommendations")}</option>
-            <option value="partial">{t("Partial — Some sources failed")}</option>
-          </select>
-        </label>
-        <h3>Files included in analysis</h3>
+<aside>      <section className="card">
+        <h3>Analysis configuration</h3><label className="stack">{t('Analysis display order')}<select value={displayOrder} onChange={e=>{setDisplayOrder(e.target.value);try{localStorage.setItem(`gs-display-order-${project.id}`,e.target.value)}catch{}}}><option value="carbon">{t('Highest carbon reduction')}</option><option value="cost">{t('Highest cost saving')}</option></select></label><p>{t('Display order only. It does not change the analysis.')}</p><details className="project-settings"><summary>{t("Project details")}</summary>          <Form
+            key={project.row_version}
+            fields={[
+              field("name", "Project name"),
+              field("description", "Project description", "textarea", false),
+            ]}
+            initial={project}
+            autoSave
+            disabled={!canEdit || running || adding}
+            onSubmit={(v) => save("projects", v, project)}
+          />
+</details>
+        <div className="notice">{t("Analysis uses the project documents you select. DOCX, text PDF and XLSX are supported. Scanned PDFs need readable text.")}</div>
+        <h3>{t("Files included in analysis")}</h3>
         {eligible.map((v) => (
           <label className="check" key={v.id}>
             <input
@@ -1410,14 +1378,14 @@ function Documents({ project, data, canEdit, save, action, go }) {
           </label>
         ))}
         <p className="muted">
-          Files not included:{" "}
+          {t("Files not included")}: {" "}
           {versions
             .filter((v) => !selected.includes(v.id))
             .map(
               (v) =>
                 docs.find((d) => d.id === v.document_id)?.title || v.filename,
             )
-            .join(", ") || "None"}
+            .join(", ") || t("None")}
         </p>
         {missing.length > 0 && (
           <div className="notice warning">
@@ -1440,28 +1408,30 @@ function Documents({ project, data, canEdit, save, action, go }) {
                 const result = await invoke("analyze", {
                   project_id: project.id,
                   request_id: key,
-                  scenario,
+                  scenario: 'live',
+                  generation_mode: 'live',
                   document_version_ids: selected,
                 });
                 go("workspace", {
                   tab: "review",
                   run: result.run_id || result.id,
+                  stage: "hotspots",
                 });
               },
               { message: "Analysis requested" },
             );
           }}
-        >{t("Start sample analysis")}<ArrowRight size={16} />
+        >{t("Analyze project")}<ArrowRight size={16} />
         </button>
       </section>
-      {preview && (
+</aside></div>      {preview && (
         <SourceViewer
           version={preview}
           documents={data.documents}
           onClose={() => setPreview(null)}
         />
       )}
-    </>
+    </div>
   );
 }
 function SourceViewer({ version, source, documents, onClose }) {
@@ -1636,7 +1606,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
   if (!run)
     return (
       <section className="card">
-        <Empty title={t("No analysis yet")}>{t("Add a description and sample files in Documents first.")}</Empty>
+        <Empty title={t("No analysis yet")}>{t("Upload your project files in Documents first.")}</Empty>
         <button
           className="secondary"
           onClick={() => go("workspace", { tab: "documents" })}
@@ -1659,23 +1629,23 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
             ))}
           </select>
         </label>
-        <Badge>{t("Sample analysis")}</Badge>
+        <Badge>{t("Document analysis")}</Badge>
       </div>
-      <nav className="analysis-tabs" aria-label={t("Analysis screens")}>{stages.map(([key,name]) => <button key={key} className={stage===key?"selected":""} onClick={()=>onStage(key)}>{name}{key==="selected"?` (${approved.length})`:""}</button>)}</nav>
+      <nav className="analysis-tabs" aria-label={t("Analysis screens")}>{[["documents","Documents"],...stages].map(([key,name]) => <button key={key} className={stage===key?"selected":""} onClick={()=>key==="documents"?go("workspace",{tab:"documents"}):onStage(key)}>{name}{key==="selected"?` (${approved.length})`:""}</button>)}</nav>
       {active ? (
         <section className="card processing">
           <RefreshCw className="spin" />
-          <h2>Analysing the sample files</h2>
+          <h2>Analysing your documents</h2>
           <p>{t("You can leave this page and return to check progress.")}</p>
           <Badge>{run.status}</Badge>
         </section>
       ) : (
         <>
-          <div className="notice">{t("These results come from sample files. They are not an engineering approval or material certification.")}</div>
+          <div className="notice">{t("These results come from your selected documents. Check the source text and estimates before approving.")}</div>
           {stale && (
             <div className="error">{t("Source data changed. Run analysis again before finalizing.")}</div>
           )}
-          {(run.result?.warnings || run.warnings)?.filter(w => !String(typeof w === "string" ? w : w.message || "").startsWith("SIMULATED:")).map((w, i) => (
+          {(run.result?.warnings || run.warnings || []).map((w, i) => (
             <p className="notice warning" key={i}>
               {typeof w === "string" ? w : w.message || w.reason || "Check this source before using the result."}
             </p>
@@ -1709,7 +1679,8 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                     invoke("analyze", {
                       project_id: project.id,
                       request_id: run.request_id,
-                      scenario: run.scenario,
+                      scenario: "live",
+                        generation_mode: "live",
                       document_version_ids:
                         run.input_snapshot?.document_versions?.map(
                           (v) => v.id,
@@ -1720,7 +1691,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
               >{t("Retry this analysis")}</button>
             </section>
           )}
-          {["overview", "hotspots", "summary", "completion"].includes(stage) && <div className="stats">
+          {["overview", "completion"].includes(stage) && <div className="stats">
             {[
               ["Approve", approved.length, "Selected changes"],
               [
@@ -1751,7 +1722,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
           ) : null}
           {!recs.length && !active && (
             <section className="card">
-              <Empty title={t("No changes found in this sample")}>{t("You can finalize Feature 1 with no selected changes and no project work.")}</Empty>
+              <Empty title={t("No supported changes found")}>{t("You can finalize Feature 1 with no selected changes and no project work.")}</Empty>
             </section>
           )}
           <F1Screens {...{ stage, recs, reviews, run, final, canEdit, onStage, project }} options={data.recommendation_options || []} historyRuns={runs} decisionSets={data.decision_sets || []} onRun={(id)=>go("workspace",{tab:"review",run:id,stage:"overview"})} FormComponent={Form} onSource={setSource}
@@ -1846,7 +1817,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                   className="secondary"
                   onClick={() =>
                     exportFile(`greenspec-decisions-${final.version_no}.json`, {
-                      generation_mode: "simulated",
+                      generation_mode: "live",
                       ...final,
                       items: data.decision_items.filter(
                         (x) => x.decision_set_id === final.id,
@@ -1868,7 +1839,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                         items
                           .map((i) =>
                             [
-                              "simulated",
+                              "live",
                               i.decision,
                               i.snapshot.selected_option || "A",
                               i.snapshot.proposed_material,
@@ -1958,7 +1929,8 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                       const result = await invoke("analyze", {
                         project_id: project.id,
                         request_id: key,
-                        scenario: run.scenario,
+                        scenario: "live",
+                        generation_mode: "live",
                         document_version_ids:
                           run.input_snapshot?.document_versions?.map(
                             (v) => v.id || v.document_version_id,
@@ -2055,7 +2027,7 @@ function Revisions({ project, data, canEdit, action }) {
     <>
       <section className="card">
         <h2>Create a document from the final revision</h2>
-        <p>{t("Optional for Feature 1 or project work. Supports only DOCX samples with known text locations.")}</p>
+        <p>{t("Optional for Feature 1 or project work. Rewriting supports DOCX with exact source paragraphs.")}</p>
         {sets.length ? (
           <>
             <label className="stack">{t("Final revision")}<select
@@ -2177,7 +2149,7 @@ function Revisions({ project, data, canEdit, action }) {
               className="secondary"
               onClick={() =>
                 exportFile("revision-report.json", {
-                  generation_mode: "simulated",
+                  generation_mode: "live",
                   ...r,
                 })
               }
@@ -2302,8 +2274,8 @@ function OutcomeComparison({ packages, actuals }) {
           <thead>
             <tr>
               <th>{t("items")}</th>
-              <th>{t("Original (sample)")}</th>
-              <th>{t("Selected material (sample)")}</th>
+              <th>{t("Original estimate")}</th>
+              <th>{t("Selected material estimate")}</th>
               <th>{t("Known actual results")}</th>
               <th>{t("Actual result completeness")}</th>
             </tr>
@@ -2357,7 +2329,7 @@ function OutcomeComparison({ packages, actuals }) {
         </table>
       </div>
       <p className="muted">{t("Actual totals include only sourced values. Missing results stay unknown. Estimates are not used to fill missing results.")}</p>
-      <p className="notice">{t("Actual carbon savings cannot be compared yet. Confirm that the source, method, and scope match the baseline sample figures; not calculated from installed quantity")}</p>
+      <p className="notice">{t("Actual carbon savings cannot be compared yet. Confirm that the source, method, and scope match the baseline estimates; not calculated from installed quantity")}</p>
     </section>
   );
 }
@@ -2422,7 +2394,7 @@ function Execution({
             [
               "Actual carbon data",
               `${carbonComplete}/${packages.length}`,
-              "separate from sample estimates",
+              "separate from analysis estimates",
             ],
             [
               "Active work packages",
@@ -2465,7 +2437,7 @@ function Execution({
                         </strong>
                         <small>
                           {p.snapshot?.quantity?.value}{" "}
-                          {p.snapshot?.quantity?.unit} · Sample targets
+                          {p.snapshot?.quantity?.unit} · Analysis targets
                         </small>
                       </td>
                       <td>
@@ -2511,7 +2483,7 @@ function Execution({
           {pack.execution_status} / {pack.verification_status}
         </Badge>
       </div>
-      <div className="notice">{t("Cost and carbon targets come from sample analysis. Actual results need their own source and calculation method.")}</div>
+      <div className="notice">{t("Cost and carbon targets come from document analysis. Actual results need their own source and calculation method.")}</div>
       <Form
         key={pack.row_version}
         fields={[select("owner_id", "Package owner", memberOptions)]}
@@ -2538,7 +2510,7 @@ function Execution({
             ))}
           </div>
           <div>
-            <h3>Estimates from sample analysis</h3>
+            <h3>Estimates from document analysis</h3>
             <p>
               Cost saving ฿{money(pack.snapshot?.impacts?.cost_saving_thb)}
             </p>
@@ -3080,7 +3052,6 @@ function PackageDetail({
                       ),
                       select("provenance", "Data source", [
                         "recorded",
-                        "simulated",
                       ]),
                     ]}
                     initial={row || { unit, provenance: "recorded" }}

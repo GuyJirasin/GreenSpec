@@ -1,6 +1,6 @@
-import {fixtures} from '../../shared/fixtures.mjs';
-import {createAnalysis} from '../../shared/domain.mjs';
-import {proposalOptions} from '../../shared/options.mjs';
+import {fixtures} from '../simulation/fixtures.mjs';
+import {createAnalysis} from '../simulation/domain.mjs';
+import {proposalOptions} from '../simulation/options.mjs';
 export const id='00000000-0000-4000-8000-000000000010',user='00000000-0000-4000-8000-000000000001';
 export const now=new Date().toISOString();
 export async function fixture(page,{role='owner',project=true,run=false}={}){
@@ -14,7 +14,7 @@ export async function fixture(page,{role='owner',project=true,run=false}={}){
   tables.projects[0].description='Controlled fixture project';tables.documents.push({id:did,project_id:id,title:f.title,type:f.type,current_version_id:vid,row_version:1});
   const version={id:vid,document_id:did,project_id:id,filename:f.filename,title:f.title,type:f.type,fixture_id:f.fixture_id,checksum:f.checksum,extraction:f.extraction,upload_state:'READY',provenance:'fixture',version_no:1,storage_path:`${id}/${did}/${vid}`};tables.document_versions.push(version);
   const input={contract_version:'1.0',project_id:id,request_id:rid,run_id:rid,context:{name:tables.projects[0].name,description:tables.projects[0].description},generation_mode:'simulated',fixture_scenario_id:'success',document_versions:[version],operation:'initial'};
-  const result=createAnalysis(input,[version]);tables.analysis_runs.push({id:rid,project_id:id,status:'COMPLETED',scenario:'success',review_epoch:1,input_snapshot:input,result,created_at:now,request_id:rid,stale:false});
+  const result=createAnalysis(input,[version]);version.fixture_id=null;version.provenance='uploaded';input.generation_mode='live';input.fixture_scenario_id=null;result.generation_mode='live';result.fixture_scenario_id=null;tables.analysis_runs.push({id:rid,project_id:id,status:'COMPLETED',mode:'live',scenario:'live',review_epoch:1,input_snapshot:input,result,created_at:now,request_id:rid,stale:false});
   result.recommendations.forEach((payload,i)=>{const recid=`00000000-0000-4000-8000-${String(50+i).padStart(12,'0')}`;tables.recommendation_options.push(...proposalOptions({...payload,id:recid}).map(o=>({...o,recommendation_id:recid,project_id:id,run_id:rid})));tables.recommendations.push({id:recid,project_id:id,run_id:rid,payload:{...payload,id:recid},lineage_id:payload.lineage_id,work_scope_key:payload.work_scope_key});tables.reviews.push({id:`00000000-0000-4000-8000-${String(60+i).padStart(12,'0')}`,project_id:id,recommendation_id:recid,decision:'UNREVIEWED',reason:'',locked:false,selected_option:'A',draft_wording:null,row_version:1});});
  }
  const calls=[],requests=[],gates=[];let conflict=false,authIdentity={id:user,email:'owner@example.test'};
@@ -49,9 +49,9 @@ export async function fixture(page,{role='owner',project=true,run=false}={}){
    }else if(name==='gs_create_project'){value={id:crypto.randomUUID(),name:args.p_name,description:args.p_description,row_version:1,created_by:user,created_at:now,updated_at:now};tables.projects.push(value);tables.project_members.push({project_id:value.id,user_id:user,role:'owner'});}
    else if(name==='gs_finalize'){
     if(tables.reviews.some(r=>r.decision==='UNREVIEWED'))return route.fulfill({status:400,headers,body:JSON.stringify({message:'REVIEW_INCOMPLETE'})});
-    value={id:crypto.randomUUID(),project_id:id,run_id:args.p_run_id,version_no:1,finalized_by:user,finalized_at:now,summary_snapshot:{generation_mode:'simulated'}};tables.decision_sets.push(value);tables.analysis_runs[0].finalized=true;
+    value={id:crypto.randomUUID(),project_id:id,run_id:args.p_run_id,version_no:1,finalized_by:user,finalized_at:now,summary_snapshot:{generation_mode:'live'}};tables.decision_sets.push(value);tables.analysis_runs[0].finalized=true;
     tables.recommendations.forEach(rec=>{const review=tables.reviews.find(r=>r.recommendation_id===rec.id),option=tables.recommendation_options.find(o=>o.recommendation_id===rec.id&&o.option_key===review.selected_option);
-     tables.decision_items.push({id:crypto.randomUUID(),project_id:id,decision_set_id:value.id,recommendation_id:rec.id,decision:review.decision,snapshot:{...(option?.payload??rec.payload),generation_mode:'simulated',selected_option:review.selected_option,final_wording:review.draft_wording??option?.default_wording??rec.payload.proposed_material,wording_edited:review.draft_wording!==null}});
+     tables.decision_items.push({id:crypto.randomUUID(),project_id:id,decision_set_id:value.id,recommendation_id:rec.id,decision:review.decision,snapshot:{...(option?.payload??rec.payload),generation_mode:'live',selected_option:review.selected_option,final_wording:review.draft_wording??option?.default_wording??rec.payload.proposed_material,wording_edited:review.draft_wording!==null}});
     });
    }else if(name==='gs_handoff'){const items=tables.decision_items.filter(i=>args.p_item_ids.includes(i.id));for(const item of items){if(!tables.packages.some(p=>p.origin_decision_item_id===item.id))tables.packages.push({id:crypto.randomUUID(),project_id:id,origin_decision_item_id:item.id,snapshot:item.snapshot,owner_id:user,row_version:1,execution_status:'APPROVED',verification_status:'PENDING'});}value={packages:tables.packages};}
    else if(name==='gs_list_members')value=tables.project_members.map(m=>({...m,email:'owner@example.test'}));

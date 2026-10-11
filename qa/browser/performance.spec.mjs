@@ -18,7 +18,7 @@ test('Feature 1 loads its own data; stage navigation, source, search and filters
  await page.getByRole('textbox',{name:'Find a material'}).fill('');
  await page.getByRole('combobox',{name:'Review status',exact:true}).selectOption('UNREVIEWED');
  await page.getByRole('button',{name:'Review revision summary',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Revision Summary',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Final analysis summary',exact:true})).toBeVisible();
  expect(f.requests.slice(start)).toEqual([]);expect(f.errors).toEqual([]);
 });
 
@@ -71,6 +71,7 @@ test('an in-flight save updates its original project cache without replacing the
  await load(page,f);const delayed=f.holdNext(r=>r.table==='gs_mutate');
  await page.locator('.recommendation').first().getByRole('button',{name:'Approve',exact:true}).click();await delayed.reached;
  await page.evaluate(hash=>{location.hash=hash},`workspace?project=${other}&tab=documents`);
+ await page.locator(".project-settings > summary").click();
  await expect(page.getByRole('textbox',{name:'Project name',exact:true})).toHaveValue('Second project only');
  delayed.release();await expect.poll(()=>f.tables.reviews[0].decision).toBe('APPROVED');await page.waitForLoadState('networkidle');
  await expect(page.getByRole('textbox',{name:'Project name',exact:true})).toHaveValue('Second project only');
@@ -137,7 +138,7 @@ test('terminal polling retries missing result data before marking the analysis r
  const f=await fixture(page,{run:true});f.tables.analysis_runs[0].status='PROCESSING';await page.goto(route('overview'));await page.waitForLoadState('networkidle');
  f.failNext(r=>r.method==='GET'&&r.table==='recommendations','Temporary result download failed');f.tables.analysis_runs[0].status='COMPLETED';
  await expect(page.getByRole('alert')).toContainText('Temporary result download failed');
- await expect(page.getByRole('heading',{name:'Analysing the sample files',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Analysing your documents',exact:true})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Project overview',exact:true})).toBeVisible({timeout:7000});await expect(page.getByRole('alert')).not.toBeVisible();
  await page.getByRole('button',{name:'Review recommendations',exact:true}).click();await expect(page.locator('.recommendation')).toHaveCount(3);
  expect(f.requests.filter(r=>r.method==='GET'&&r.table==='recommendations').length).toBeGreaterThanOrEqual(3);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { app } from '../api/server.mjs';
+import { app } from '../server/server.mjs';
 
 test('Hono API - /health endpoint', async () => {
   const res = await app.request('/health');
@@ -13,8 +13,7 @@ test('Hono API - /api/catalog endpoint', async () => {
   const res = await app.request('/api/catalog');
   assert.equal(res.status, 200);
   const data = await res.json();
-  assert.ok(data.length >= 5);
-  assert.ok(data.some(p => p.brand.includes('CPAC')));
+  assert.deepEqual(data, []);
 });
 
 test('Hono API - /api/tools/mix-design endpoint', async () => {
@@ -36,34 +35,17 @@ test('Hono API - /api/tools/strength-convert endpoint', async () => {
   assert.ok(data.cylinder_15x30cm.strength_mpa > 27.0);
 });
 
-test('Hono API - /api/analyze endpoint with mock fallback', async () => {
-  const res = await app.request('/api/analyze', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      project_name: 'Riverside Tower',
-      element_type: 'mat_foundation',
-      volume_m3: 1500,
-      fc_prime_mpa: 35
-    })
-  });
-  assert.equal(res.status, 200);
-  const data = await res.json();
-  assert.equal(data.status, 'success');
-  assert.ok(data.options.option_a.carbon_reduction_percent > 15.0);
-  assert.ok(data.technical_package.spec_clause_th.length > 50);
+
+
+
+
+
+
+
+
+test('AI endpoints fail honestly without a configured provider',async()=>{
+ const saved=process.env.TYPHOON_API_KEY;delete process.env.TYPHOON_API_KEY;
+ try {for(const [url,body] of [['/api/analyze',{volume_m3:100,fc_prime_mpa:35}],['/api/chat',{stream:false,messages:[]}]]) {const response=await app.request(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});assert.equal(response.status,503);assert.equal((await response.json()).code,'AI_NOT_CONFIGURED');}}finally{if(saved!==undefined)process.env.TYPHOON_API_KEY=saved;}
 });
 
-test('Hono API - /api/chat non-streaming endpoint', async () => {
-  const res = await app.request('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messages: [{ role: 'user', content: 'ขอคำแนะนำเรื่องปูนซีเมนต์ไฮดรอลิก' }],
-      stream: false
-    })
-  });
-  assert.equal(res.status, 200);
-  const data = await res.json();
-  assert.ok(data.reply.length > 20);
-});
+test('unverified pricing cannot return fabricated savings',async()=>{const response=await app.request('/api/tools/cost-estimate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({volume_m3:100})});assert.equal(response.status,422);assert.equal((await response.json()).code,'PRICING_NOT_CONFIGURED');});

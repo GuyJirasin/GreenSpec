@@ -25,7 +25,7 @@ if __name__ == "__main__":
     }
 
     print("Analyzing project and drafting specification...")
-    result = analyze_and_draft_spec(payload, retriever=CustomProjectRAG(), use_mock=True)
+    result = analyze_and_draft_spec(payload, retriever=CustomProjectRAG())
 
     print("\n[Baseline Carbon]:", result["baseline"]["total_carbon_tco2e"], "tCO2e")
     print("[Option A Carbon Cut]:", result["options"]["option_a"]["carbon_reduction_tco2e"], "tCO2e", f"({result['options']['option_a']['carbon_reduction_percent']}%)")

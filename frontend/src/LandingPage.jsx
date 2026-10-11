@@ -31,7 +31,7 @@ export default function LandingPage({ onEnter, configured, entering = false, ent
     destination?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
     destination?.focus({ preventScroll: true });
   };
-  const demo = (className, icon = null) => <button className={`lp-button ${className}`} onClick={onEnter} disabled={entering}>{t(entering ? "Opening your workspace…" : "Try demo")}{icon}</button>;
+  const demo = (className, icon = null) => <button className={`lp-button ${className}`} onClick={onEnter} disabled={entering}>{t(entering ? "Opening your workspace…" : "Start analysis")}{icon}</button>;
 
   return <div className="figma-landing">
     <a className="lp-skip" href="#landing-content" onClick={jumpTo("landing-content")}>{t("Skip to content")}</a>
@@ -76,6 +76,6 @@ export default function LandingPage({ onEnter, configured, entering = false, ent
       <section className="lp-final" aria-labelledby="lp-final-title"><div><h2 id="lp-final-title">Turn your specifications into lower-carbon reality.</h2><p>{t("See how GREEN SPEC can support your next project.")}</p></div><div className="lp-final-actions">{demo("lp-final-demo", <span aria-hidden="true">→</span>)}<button className="lp-button lp-outline" onClick={onEnter} disabled={entering}>{t(entering ? "Opening your workspace…" : "Start a pilot")} <span aria-hidden="true">→</span></button></div></section>
       {entryError && <p className="lp-entry-error" role="alert">{t(entryError)}</p>}
     </main>
-    <footer className="lp-footer"><strong>GREEN SPEC</strong><p>{t("MVP: analysis uses supported sample files and illustrative carbon and cost estimates. Review source documents before using the results.")}</p><p>{t("Your workspace is saved in this browser. Use the same browser profile to return to it.")}</p>{!configured && <p>{t("Sign in will be available when the service is connected.")}</p>}</footer>
+    <footer className="lp-footer"><strong>GREEN SPEC</strong><p>{t("Analyze your project documents and review each proposed change. Estimates need engineer review before use.")}</p><p>{t("Your workspace is saved in this browser. Use the same browser profile to return to it.")}</p>{!configured && <p>{t("Sign in will be available when the service is connected.")}</p>}</footer>
   </div>;
 }

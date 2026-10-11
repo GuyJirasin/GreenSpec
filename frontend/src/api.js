@@ -4,6 +4,7 @@ export const configured = Boolean(
     import.meta.env.VITE_SUPABASE_ANON_KEY &&
     !import.meta.env.VITE_SUPABASE_ANON_KEY.includes("replace-"),
 );
+export const liveAIEnabled = import.meta.env.VITE_AI_ENABLED === "true";
 export const db = configured
   ? createClient(
       import.meta.env.VITE_SUPABASE_URL,
@@ -35,8 +36,26 @@ export async function checked(request) {
 export const rows = (table, project) =>
   checked(db.from(table).select("*").eq("project_id", project));
 export const rpc = (name, args) => checked(db.rpc(name, args));
-export const invoke = (name, args) =>
-  checked(db.functions.invoke(name, { body: args }));
+export async function invoke(name, args) {
+  try {
+    return await checked(db.functions.invoke(name, { body: args }));
+  } catch (error) {
+    if (name === "analyze" && args?.generation_mode === "live") {
+      const detail = `${error.code || ""} ${error.message || ""}`.toLowerCase();
+      if (/ai_not_configured|ai.?not.?configured|provider.?not.?configured/.test(detail)) {
+        const thai = (() => {
+          try { return localStorage.getItem("greenspec-language") !== "en"; } catch { return true; }
+        })();
+        throw Object.assign(error, {
+          message: thai
+            ? "ยังไม่ได้ตั้งค่า Live AI โปรดติดต่อผู้ดูแลระบบ"
+            : "Live AI is not configured. Contact the administrator.",
+        });
+      }
+    }
+    throw error;
+  }
+}
 export async function mutate(project, kind, data, record, key = requestId()) {
   return rpc("gs_mutate", {
     p_project_id: project,

@@ -135,3 +135,21 @@ Implemented the user-approved AIlaw architecture pattern (Hono + TypeScript Dete
 - Configured root `package.json` with esbuild server bundling (`api/index.js`, 35.3kb in 13ms) and `vercel.json` rewrites.
 - Frontend left 100% clean and untouched for the frontend developer as explicitly instructed.
 
+
+## Feature 1 reference UI on main — 2026-10-11
+
+Implemented the five supplied screen references in frontend only. Project documents now have a two-column drop area/configuration layout, multi-file browse/drop using existing document mutation/upload endpoints, supported-file validation, duplicate confirmation, sequential uploads, and existing cancellation/retry/version/source controls. Document types and metadata remain editable. Display-order preference is local and never represented as an AI optimization input. Own documents remain stored-only under the current main backend; analysis is honestly labelled as supported samples.
+
+Hotspots show known work-scope baseline shares with a paired breakdown table and material-filter navigation. Recommendations use wide cards with original/proposed wording, A/B-specific cost/carbon side panels, material/known-estimate/cost/status/search/sort filters and reset. Selected Spec and Summary share display totals, account for the selected A/B option, count each scope once, preserve missing estimates, and refuse proposed totals for overlapping selected scopes. Remove resets review to UNREVIEWED using the existing server operation. Summary includes original/proposed totals, review progress, decision log, print/PDF, and existing finalize/export workflow.
+
+Preserved Thai default, English headings/navigation, document language and Inter. No backend/schema, cloud data, live provider, Git push, or deployment changes. The guy branch integration remains separate. Files: frontend/src/{F1Screens,AnalysisPanels,main,i18n}.jsx, analysis-ui.css, analysis-display.mjs, and focused QA updates.
+
+Verification: production frontend build passed; display-estimate tests 3/3; browser tests 19/19 with local intercepted Supabase API only (five screens at 1440/390 widths, upload and invalid files, hotspot/filter cache, selected removal, A/B wording/review/finalization, save conflicts, cache/session isolation and polling). Original tests were updated only for renamed headings and the collapsed project-details control. Screenshots are qa/screenshots/redesign-*.png. Main dev server is http://127.0.0.1:5173; first mock demo stays at http://127.0.0.1:5174. Backend configuration/integration follows in the next task; real cloud end-to-end behavior was not retested here.
+
+## 2026-10-11 — Live-only MVP cleanup and readiness audit
+
+Removed runtime scenarios/sample files/fixture ingestion, simulated result generation, synthetic options, unverified supplier catalog, AI fallbacks (JS/Python), and guessed shipped-API financial impacts. Historical cloud data is preserved and hidden from live views; QA-only test fixtures remain excluded from deployment. Integrated the JavaScript document pipeline into main while preserving the five-page redesign, caching, A/B, edited source-language wording and review-all finalization. Added live-only migration 0012 and fixed reopen preservation of selected B/edited wording.
+
+Verification: production client/server build and three Edge import compilations passed; 12 API/workflow, 9 shared, 5 backend/PGlite and 3 display tests passed. 21 distinct browser cases passed across runs (one old sample-heading expectation updated and rerun). No live paid provider/cloud E2E claimed. Normal git diff --check passed with Windows line-ending notices only.
+
+Read-only cloud audit: Vercel green-spec-demo root remains frontend and Production has only two VITE_SUPABASE_* variables; TYPHOON_API_KEY is absent. Supabase remote migrations stop at 0010 and SERVER_AI_URL is absent. Prepared 0011/0012 and updated functions have not been deployed. See agents/MVP_READINESS.md for rollout order, real document rehearsal and pitch scope limitations. Local UI restarted on 5173. No commit, push, deployment or cloud data deletion in this task.

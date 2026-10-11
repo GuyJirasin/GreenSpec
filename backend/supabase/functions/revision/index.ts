@@ -19,7 +19,7 @@ Deno.serve(async(req)=>{
    const prior=await rpc(user,'gs_begin_revision',{p_decision_set_id:set.id,p_source_version_id:doc.id,p_request_id:body.request_id});if(!['REQUESTED','GENERATING'].includes(prior.status)){results.push(prior);continue;}
    const {data:claimed,error:claimError}=await admin.from('document_revisions').update({status:'GENERATING'}).eq('id',prior.id).eq('status','REQUESTED').select('id');if(claimError)throw claimError;if(!claimed?.length){results.push(prior);continue;}
    try {
-   if(doc.provenance!=='fixture'||!doc.fixture_id)throw {code:'DEMO_SOURCE_UNSUPPORTED',message:'Arbitrary files cannot be rewritten by simulation.'};
+   if(set.summary_snapshot?.generation_mode!=='live'||doc.fixture_id||doc.provenance==='fixture'||!doc.extraction?.length)throw {code:'INPUT_INCOMPLETE',message:'Only uploaded sources from live analysis can be revised.'};
    const plan=revisionPlan(items,doc);
    const {data:blob,error:downloadError}=await admin.storage.from('documents').download(doc.storage_path);if(downloadError)throw {code:'UPLOAD_FAILED',message:'Source file is unavailable.',retryable:true};
    const source=new Uint8Array(await blob.arrayBuffer());if(await sha256(source)!==doc.checksum)throw {code:'OUTPUT_INVALID',message:'Original source integrity check failed.'};
@@ -32,4 +32,3 @@ Deno.serve(async(req)=>{
   return json(results);
  }catch(e){return error(e,body?.request_id);}
 });
-

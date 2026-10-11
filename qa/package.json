@@ -5,7 +5,7 @@
   "scripts": {
     "verify:originals": "node verify-originals.mjs",
     "test:browser": "playwright test",
-    "test:sql": "node --test ../backend/tests/additional.test.mjs ../backend/tests/options.test.mjs",
+    "test:sql": "node --test ../backend/tests/live.test.mjs ../backend/tests/live-only.test.mjs ../backend/tests/live-worker.test.mjs",
     "check:edges": "node compile-edges.mjs"
   },
   "devDependencies": {
@@ -13,4 +13,3 @@
     "@playwright/test": "1.58.2"
   }
 }
-

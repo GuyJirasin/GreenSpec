@@ -28,15 +28,11 @@ export const analysisSchema = {
     },
     "generation_mode": {
       "enum": [
-        "simulated",
         "live"
       ]
     },
     "fixture_scenario_id": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "null"
     },
     "status": {
       "enum": [
@@ -341,23 +337,6 @@ export const analysisSchema = {
     {
       "if": {
         "properties": {
-          "generation_mode": {
-            "const": "simulated"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "fixture_scenario_id": {
-            "type": "string",
-            "minLength": 1
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
           "status": {
             "const": "failed"
           }
@@ -394,5 +373,4 @@ export const analysisSchema = {
       }
     }
   ]
-}
-;
+};

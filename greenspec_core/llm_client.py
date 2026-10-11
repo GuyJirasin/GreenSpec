@@ -31,12 +31,13 @@ class SpecLinter:
 class TyphoonClient:
     """Typhoon LLM API Client (OpenAI-compatible) with strict civil prompt templates."""
 
-    def __init__(self, api_key: str = "", base_url: str = "", model: str = "", use_mock: bool = False):
+    def __init__(self, api_key: str = "", base_url: str = "", model: str = ""):
         cfg = Config()
         self.api_key = api_key or cfg.typhoon_api_key
         self.base_url = (base_url or cfg.typhoon_base_url).rstrip("/")
         self.model = model or cfg.typhoon_model
-        self.use_mock = use_mock or not bool(self.api_key)
+        if not self.api_key:
+            raise RuntimeError('TYPHOON_API_KEY is not configured.')
 
     def generate_spec(
         self,
@@ -50,9 +51,6 @@ class TyphoonClient:
         curing_days: int,
         standards_context: List[str]
     ) -> Tuple[str, str]:
-        if self.use_mock:
-            return self._mock_generate(project_name, element_type, fc_mpa, age_days, scm_name, scm_pct, wb_ratio, curing_days)
-
         prompt = self._build_prompt(project_name, element_type, fc_mpa, age_days, scm_name, scm_pct, wb_ratio, curing_days, standards_context)
         try:
             req_data = json.dumps({
@@ -86,9 +84,8 @@ class TyphoonClient:
                 resp_json = json.loads(resp.read().decode("utf-8"))
                 content = resp_json["choices"][0]["message"]["content"]
                 return self._parse_llm_output(content)
-        except Exception:
-            # Fallback to deterministic mock template on API failure
-            return self._mock_generate(project_name, element_type, fc_mpa, age_days, scm_name, scm_pct, wb_ratio, curing_days)
+        except Exception as exc:
+            raise RuntimeError('Typhoon specification generation failed. No fallback result is available.') from exc
 
     def _build_prompt(self, project_name, element_type, fc_mpa, age_days, scm_name, scm_pct, wb_ratio, curing_days, standards_context):
         context_str = "\n".join(f"- {s}" for s in standards_context)
@@ -132,50 +129,3 @@ class TyphoonClient:
             return parts[0].strip(), parts[1].strip()
 
         return content.strip(), content.strip()
-
-    def _mock_generate(self, project_name, element_type, fc_mpa, age_days, scm_name, scm_pct, wb_ratio, curing_days) -> Tuple[str, str]:
-        th_clause = f"""หมวดที่ 03 30 00 งานคอนกรีตโครงสร้างหล่อในที่ (คอนกรีตคาร์บอนต่ำ)
-โครงการ: {project_name} | องค์อาคาร: {element_type}
-
-ส่วนที่ 1 - ข้อกำหนดทั่วไป (GENERAL)
-1.1 การส่งเอกสารอนุมัติ (Submittals):
-    - ผู้รับจ้างต้องเสนอผลการออกแบบส่วนผสม (Mix Design) และผลการทดสอบส่วนผสมในห้องปฏิบัติการ (Trial Mix Test Results) ล่วงหน้าไม่น้อยกว่า 35 วันก่อนเริ่มการเทคอนกรีต ตามเกณฑ์ มอก. 213
-    - แนบใบรับรองคุณภาพจากโรงงานผู้ผลิต (Mill Certificate) ของเถ้าลอยตาม มอก. 2135 ชั้นคุณภาพ F และปูนซีเมนต์ไฮดรอลิก มอก. 2594
-    - แผนงานการบ่มคอนกรีต (Curing Plan) และแผนควบคุมอุณหภูมิ (Thermal Control Plan กรณีคอนกรีตหนา)
-
-ส่วนที่ 2 - วัสดุและส่วนผสม (PRODUCTS)
-2.1 วัสดุประสาน:
-    - ปูนซีเมนต์ไฮดรอลิกตาม มอก. 2594 หรือปูนซีเมนต์ปอร์ตแลนด์ตาม มอก. 15
-    - เถ้าลอยถ่านหินตาม มอก. 2135 ชั้นคุณภาพ F (LOI <= 6.0%, ความละเอียดค้างตะแกรง 45 ไมครอน <= 34%)
-2.2 สัดส่วนผสมและคุณสมบัติทางวิศวกรรม:
-    - กำลังอัดประลัยระบุ f'c ไม่น้อยกว่า {fc_mpa:.1f} MPa (ทดสอบด้วยแท่งทรงกระบอก Cylinder) ที่อายุ {age_days} วัน
-    - การแทนที่ด้วย {scm_name} สัดส่วนไม่เกิน {scm_pct:.0f}% โดยน้ำหนักของวัสดุประสานรวม
-    - อัตราส่วนน้ำต่อวัสดุประสาน (W/B) สูงสุดไม่เกิน {wb_ratio:.2f}
-
-ส่วนที่ 3 - การดำเนินการก่อสร้าง (EXECUTION)
-3.1 การลำเลียงและเท: ต้องเทคอนกรีตให้เสร็จสิ้นภายใน 90 นาที หรือไม่เกิน 300 รอบหมุนโม่
-3.2 การบ่มคอนกรีต: ต้องดำเนินการบ่มชื้นต่อเนื่องอย่างเคร่งครัดไม่น้อยกว่า {curing_days} วัน"""
-
-        en_clause = f"""SECTION 03 30 00 - CAST-IN-PLACE CONCRETE (LOW-CARBON MIX SPECIFICATION)
-Project: {project_name} | Structural Element: {element_type}
-
-PART 1 - GENERAL
-1.1 SUBMITTAL REQUIREMENTS:
-    - Submit mix design proportions and laboratory trial batch test reports conforming to ASTM C39 / TIS 213 at least 35 days prior to concrete placement.
-    - Submit manufacturer mill test certificates for TIS 2135 Class F fly ash (LOI <= 6.0%) and TIS 2594 hydraulic cement.
-    - Submit concrete curing and temperature monitoring procedures.
-
-PART 2 - PRODUCTS
-2.1 CEMENTITIOUS MATERIALS:
-    - Hydraulic Cement conforming to TIS 2594 / ASTM C595.
-    - Coal Fly Ash conforming to TIS 2135 Class F / ASTM C618.
-2.2 MIX DESIGN CRITERIA:
-    - Specified compressive strength (f'c): >= {fc_mpa:.1f} MPa (standard cylinder) evaluated at {age_days} days.
-    - Maximum SCM replacement: {scm_pct:.0f}% by weight of total cementitious material.
-    - Maximum Water-Binder (W/B) Ratio: {wb_ratio:.2f}.
-
-PART 3 - EXECUTION
-3.1 BATCHING & PLACING: Complete discharge within 90 minutes after batching.
-3.2 CURING: Continuous moist curing for a minimum of {curing_days} days."""
-
-        return th_clause, en_clause

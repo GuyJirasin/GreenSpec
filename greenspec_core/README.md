@@ -23,7 +23,7 @@ payload = {
 }
 
 # Run with mock or configure TYPHOON_API_KEY
-result = analyze_and_draft_spec(payload, use_mock=True)
+result = analyze_and_draft_spec(payload)
 
 print("Baseline:", result["baseline"]["total_carbon_tco2e"], "tCO2e")
 print("Option A reduction:", result["options"]["option_a"]["carbon_reduction_percent"], "%")
