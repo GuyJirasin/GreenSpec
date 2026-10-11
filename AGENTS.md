@@ -25,3 +25,11 @@ Latest user instructions override the earlier Thai/new-UI-only notes above: reus
 - Default interface language is Thai; offer a persistent Thai/English switch. Keep large headings and sidebar menu labels in English. Preserve document/source text and user-entered content in their original language.
 - Landing entry and demo actions open Home using Supabase anonymous Auth. Reuse an existing session, including permanent users; browser-local sessions define returning guests. Return-to-landing must retain the session. Never use IP/fingerprinting to identify a guest.
 - For useful delegated work, use gpt-6-luna for straightforward tasks. Keep the normal model for difficult reasoning tasks. Do not commit or push without an explicit request.
+
+## User-approved JavaScript integration branch — 2026-10-10
+
+The user authorized syncing main, creating branch guy, and changing contributor code on that branch to integrate the JavaScript server. This overrides earlier contributor read-only and simulated-only restrictions for this work. Preserve main and the existing production Vercel project. Keep source grounding, user authorization, complete review before finalize, A/B choices, edited wording, and immutable snapshots. Do not push without an explicit request. Live AI requires a server-side Typhoon key; never label mock output as live. Do not modify project reference documents.
+
+## Approved server transfer — 2026-10-11
+
+For branch guy, the user explicitly approved forwarding the caller's Supabase session token and selected document data to the GreenSpec JavaScript server, and necessary source text onward to Typhoon for live analysis. The destination must come from server configuration, never browser input. Keep credentials out of logs and source control. This permission does not request pushing, replacing main, or promoting a production deployment.

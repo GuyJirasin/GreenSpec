@@ -7,7 +7,9 @@ export class TyphoonClient {
   constructor({ apiKey = "", baseUrl = "https://api.opentyphoon.ai/v1", model = "typhoon-v2.5-30b-a3b-instruct" } = {}) {
     this.apiKey = apiKey || process.env.TYPHOON_API_KEY || "";
     this.baseUrl = baseUrl.replace(/\/$/, "");
-    this.model = model;
+    this.baseUrl = (process.env.TYPHOON_BASE_URL || this.baseUrl).replace(/\/$/, "");
+    this.model = process.env.TYPHOON_MODEL || model;
+    this.lastGenerationMode = this.apiKey ? "live" : "mock";
   }
 
   /**
@@ -15,11 +17,13 @@ export class TyphoonClient {
    */
   async chat({ messages, temperature = 0.2, maxTokens = 3500 }) {
     if (!this.apiKey) {
+      this.lastGenerationMode = "mock";
       return this._mockResponse(messages);
     }
 
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: "POST",
+      signal: AbortSignal.timeout(30000),
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.apiKey}`
@@ -39,6 +43,7 @@ export class TyphoonClient {
     }
 
     const data = await res.json();
+    this.lastGenerationMode = "live";
     return data.choices?.[0]?.message?.content || "";
   }
 
@@ -53,6 +58,7 @@ export class TyphoonClient {
 
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: "POST",
+      signal: AbortSignal.timeout(30000),
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.apiKey}`

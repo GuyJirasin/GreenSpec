@@ -135,3 +135,43 @@ Implemented the user-approved AIlaw architecture pattern (Hono + TypeScript Dete
 - Configured root `package.json` with esbuild server bundling (`api/index.js`, 35.3kb in 13ms) and `vercel.json` rewrites.
 - Frontend left 100% clean and untouched for the frontend developer as explicitly instructed.
 
+
+## Vercel output directory investigation — 2026-10-10
+
+- Production deployment of 53c5407 built frontend/dist locally and on Vercel, but Vercel reported missing dist. Clean redeploy also failed; dashboard build-command diagnostics were not reflected in actual build logs.
+- Tested repository-root deployment using existing contributor vercel.json. It failed before build because api/index.js and api/index.py map to the same function path. Contributor files were preserved.
+- Restored Vercel Root Directory to frontend, default install/build commands, and explicit Output Directory dist. Removed temporary diagnostic build command.
+- Added frontend/vercel.json with Vite, npm ci, npm run build, and dist to give this app its own file-based configuration. JSON validation and local frontend build passed. Cloud validation remains pending a push; no new commit or push performed.
+
+## Vercel CLI recovery — 2026-10-10
+
+- Authenticated Vercel CLI 63.1.2 confirmed account digdugdug35-1954 and existing guydev/green-spec-demo project (Root Directory frontend).
+- Linked a temporary deployment copy containing tracked frontend/shared files plus new frontend/vercel.json. No local .env.local from the repository was copied; Vercel supplied its existing production environment.
+- Scoped production deployment dpl_53uVfaTCvJMsygir6QkvDUnixkXY reached Ready. Verified HTML and JavaScript assets, expected Supabase project, guest entry and language controls, then promoted it to green-spec-demo.vercel.app.
+- Public domain HTTP checks passed for homepage, JavaScript, stylesheet and actual Inter-400.ttf font. No new test account or user data was created. Browser automation was not used.
+- Automatic approval review rejected a follow-up upload of the entire tracked repository due to potential contributor/document egress. That command did not execute and was not bypassed. Full-repository Git deployment validation remains unverified. Existing contributor API path conflict was not edited; this deployment serves the frontend with the existing Supabase backend.
+- frontend/vercel.json and this log remain uncommitted/unpushed; the successful CLI deployment does not rewrite the historical failed GitHub check on 53c5407. A future Git deployment needs this configuration pushed and then verified with the complete repository.
+
+## JavaScript integration on guy — 2026-10-10
+
+- Synced main from origin (already current at 53c5407); created local branch guy. No commit, push, deployment or cloud database mutation during this integration.
+- Moved competing Python API entries to legacy/python; JavaScript sources now live in server/, with api/index.js as the only Vercel function entry. Kept the Python engine and its files. Root config builds frontend/dist and the bundled Hono API; explicit rewritten routes are restored by both adapters. Added scoped deployment exclusions.
+- Added private-document extraction (DOCX paragraphs, text-PDF pages, XLSX cells) and source-grounded concrete analysis adapter. Live scope requires explicit MPa and m3/m³ quantities, up to three requirements. Arbitrary text/units, fabricated quotations and mock provider output are rejected. A/B estimates and source-language editable wording are mapped to the canonical review contract. These estimates are not supplier quotes, EPDs or engineer approval.
+- Added additive live SQL migration, service-only one-time extraction attachment before any analysis references a READY source, source validation, persisted A/B/manual wording, complete review before finalize, live immutable snapshots/reopen/revision mode. Revised DOCX exports only target exact approved specification paragraphs; quantity source cells are not rewritten.
+- Frontend live selector is gated by VITE_AI_ENABLED (false by default), with honest live/sample labels and Thai interface copy. Existing sample workflow remains available.
+- Verification actually executed: 36/36 shared tests; 14/14 Node API/workflow tests; 30/30 combined local PGlite backend tests (includes shared setup cases); full root frontend+server production build; three Edge module-graph/syntax bundles; Git diff whitespace check. Started local JavaScript server at 127.0.0.1:3001 and verified health/catalog HTTP responses. Live-source/provider tests use explicit stubs, not Typhoon. No actual AI/cloud/deployment success is claimed.
+- BLOCKED: automatic approval review rejected editing the analyze Edge orchestrator to send a user bearer token/document-derived data to SERVER_AI_URL. Existing simulated analyze function was restored; live orchestrator is NOT integrated yet. Asked the user explicitly for permission to send to the GreenSpec Vercel server and necessary source text onward to Typhoon; awaiting reply. Do not deploy or enable live mode until this is resolved and orchestrator integration is tested.
+- User confirmed TYPHOON_API_KEY is not configured. Real-provider and cloud end-to-end verification remain pending, plus preview root-project setup and scoped Edge/migration deployment. Setup instructions are in agents/GUY_DEPLOYMENT.md. Existing production project remains unchanged.
+
+## Branch guy transfer approval and Edge integration — 2026-10-11
+
+- User explicitly approved the session-token/source transfer for branch guy. The prior transfer approval block is resolved. No change to main, no commit/push, no Vercel deployment, and no cloud database mutation in this continuation.
+- Implemented analyze/orchestrator.mjs plus analyze/index.ts integration. Live preparation checks project edit access, selected READY sources, provider configuration, exact extraction version/checksum, and service-only persistence before gs_begin_live_analysis. The Node destination comes exclusively from SERVER_AI_URL; HTTPS Vercel project URLs or HTTP localhost only, and redirects are rejected. Never forward a service-role credential.
+- Analysis workers claim QUEUED atomically, send heartbeat while running, validate same run/mode/fingerprint plus canonical source-grounded A/B, enforce common baselines and mandatory Option A, preserve locked approved parent proposals/options, and finish through the atomic SQL RPC. Provider errors persist an honest FAILED result. The sample workflow keeps its deterministic source validation.
+- Provider calls share a 125-second deadline (individual analysis call capped at 110 seconds) to leave room for failure persistence on Supabase Free. Real provider latency is not verified.
+- Auto-review rejected adding an orchestrator test inside protected root tests/. Used a safer workspace-only verification file without changing that directory. Actual executed verification: 9/9 orchestrator tests (explicit provider stubs, no network/credentials) covering access, destination/redirect restrictions, missing key, extraction identity, locked A/B, source/option contracts, live/sample worker success, duplicate claim skip, failed result persistence and timer cleanup; all three Edge module-graph/TypeScript syntax bundles pass; Git diff whitespace check passes. Prior 36 shared, 14 Node/API and 30 local PGlite checks remain documented above.
+- Live functionality is now integrated at code level. Real cloud end-to-end verification remains pending: user has no TYPHOON_API_KEY, no new guy preview SERVER_AI_URL has been configured, and the migration/updated Edge Functions have not been applied/deployed. Keep VITE_AI_ENABLED=false until setup is complete. See agents/GUY_DEPLOYMENT.md and backend/.env.example.
+
+## Branch publication requested — 2026-10-11
+
+User requested pushing branch guy. Publish the reviewed JavaScript/Supabase integration changes to origin/guy only. Main and the existing production Vercel project remain unchanged. No credentials are included; environment examples contain empty keys/placeholders. Real AI verification, preview environment setup, and cloud migration/Edge deployment remain pending.

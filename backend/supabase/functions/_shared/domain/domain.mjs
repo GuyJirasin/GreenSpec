@@ -100,13 +100,13 @@ export function validateAnalysis(result,documents){
   if(!r.sources?.length)e('Source evidence is required');
   for(const s of r.sources??[]){
    const d=documents.find(d=>(d.id??d.document_version_id)===s.document_version_id);const f=fixtures.find(f=>f.fixture_id===d?.fixture_id);
-   if(!d||d.upload_state!=='READY'||!f||d.checksum!==f.checksum){e('Source is not an exact ready mapped version');continue;}
+   if(!d||d.upload_state!=='READY'||(result.generation_mode==='simulated'&&(!f||d.checksum!==f.checksum))||(result.generation_mode==='live'&&(!d.checksum||!d.extraction?.length))){e('Source is not an exact ready mapped version');continue;}
    const l=s.locator;
    if(!l||!['paragraph','page','sheet_cell'].includes(l.kind))e('Invalid locator kind');
    if(l?.kind==='paragraph'&&(!Number.isInteger(l.paragraph_index)||l.paragraph_index<1))e('Invalid paragraph locator');
    if(l?.kind==='page'&&(!Number.isInteger(l.page_number)||l.page_number<1))e('Invalid page locator');
    if(l?.kind==='sheet_cell'&&(!nonempty(l.sheet_name)||!/^\$?[A-Z]+\$?[1-9]\d*(?::\$?[A-Z]+\$?[1-9]\d*)?$/.test(l.cell_range)))e('Invalid spreadsheet locator');
-   if(!f.extraction.some(x=>x.exact_text===s.exact_text&&stable(x.locator)===stable(l)))e('Exact evidence text/locator does not match fixture content');
+   if(!(result.generation_mode==='live'?d.extraction:f.extraction).some(x=>x.exact_text===s.exact_text&&stable(x.locator)===stable(l)))e('Exact evidence text/locator does not match fixture content');
   }
  }
  if(errors.length)fail('OUTPUT_INVALID','Analysis output failed contract/evidence validation.',errors);
@@ -174,14 +174,14 @@ export function projectCompletion(packages){const active=packages.filter(p=>!p.s
 export function revisionPlan(items,document){
  const fixture=fixtures.find(f=>f.fixture_id===document.fixture_id);const changes=[],unapplied=[];
  for(const item of items.filter(i=>i.decision==='APPROVED')){const r=item.snapshot??item;const sources=r.sources.filter(s=>s.document_version_id===(document.id??document.document_version_id));
-  for(const s of sources){const occurrences=fixture?.extraction.filter(x=>x.exact_text===s.exact_text)??[];
-   if(!fixture||!fixture.filename.endsWith('.docx')||s.locator.kind!=='paragraph'||occurrences.length!==1||stable(occurrences[0].locator)!==stable(s.locator)){unapplied.push({recommendation_id:r.id,reason:'Only an exact unambiguous fixture DOCX paragraph can be replaced.'});continue;}
+  for(const s of sources){const live=r.generation_mode==='live';if(live&&s!==r.sources[0])continue;const occurrences=(live?document.extraction:fixture?.extraction)?.filter(x=>x.exact_text===s.exact_text)??[];
+   if(!(document.filename??fixture?.filename)?.endsWith('.docx')||(!live&&!fixture)||s.locator.kind!=='paragraph'||occurrences.length!==1||stable(occurrences[0].locator)!==stable(s.locator)){unapplied.push({recommendation_id:r.id,reason:'Only an exact unambiguous DOCX specification paragraph can be replaced.'});continue;}
    if(changes.some(c=>c.paragraph_index===s.locator.paragraph_index)){unapplied.push({recommendation_id:r.id,reason:'Multiple approved changes target the same paragraph.'});continue;}
    if(r.final_wording!=null&&!nonempty(r.final_wording))fail('INPUT_INCOMPLETE','Approved wording cannot be empty.');
    changes.push({recommendation_id:r.id,paragraph_index:s.locator.paragraph_index,before:s.exact_text,after:r.final_wording??`${r.proposed_material} for ${r.quantity.value??'the approved quantity'} ${r.quantity.unit}.`});
   }
  }
- return {changes,unapplied,status:unapplied.length?'PARTIAL':'READY_FOR_REVIEW',generation_mode:'simulated'};
+ return {changes,unapplied,status:unapplied.length?'PARTIAL':'READY_FOR_REVIEW',generation_mode:items.some(i=>(i.snapshot??i).generation_mode==='live')?'live':'simulated'};
 }
 export function dueNotifications(pkg,now=new Date()){
  const result=[];const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);const add=(kind,target,recipient)=>{if(recipient)result.push({kind,target_id:target,recipient_id:recipient,dedup_key:`${kind}:${target}:${day}`});};
@@ -191,9 +191,3 @@ export function dueNotifications(pkg,now=new Date()){
  for(const i of pkg.issues??[])if(i.status!=='RESOLVED'&&i.blocks_verification&&now-new Date(i.created_at)>86400000)add('BLOCKING_ISSUE',i.id,i.owner_id??pkg.owner_id);
  return result;
 }
-
-
-
-
-
-

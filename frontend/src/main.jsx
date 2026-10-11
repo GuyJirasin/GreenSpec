@@ -29,6 +29,7 @@ import {
 import {
   db,
   configured,
+  liveAIEnabled,
   checked,
   rows,
   rpc,
@@ -1136,21 +1137,20 @@ function Documents({ project, data, canEdit, save, action, go }) {
   const controls = useRef({});
   const versions = data.document_versions ?? [],
     docs = (data.documents ?? []).filter((d) => !d.retired_at);
-  const eligible = versions.filter(
-    (v) =>
-      v.upload_state === "READY" &&
-      v.fixture_id &&
-      (
-        {
-          success: ["office-spec"],
-          zero: ["zero-spec"],
-          partial: ["partial-spec", "partial-boq"],
-        }[scenario] || []
-      ).includes(v.fixture_id),
-  );
+  const eligible = versions.filter((v) => {
+    if (v.upload_state !== "READY") return false;
+    if (scenario === "live") return docs.some(d => d.id === v.document_id && d.current_version_id === v.id);
+    return Boolean(v.fixture_id && (
+      {
+        success: ["office-spec"],
+        zero: ["zero-spec"],
+        partial: ["partial-spec", "partial-boq"],
+      }[scenario] || []
+    ).includes(v.fixture_id));
+  });
   const missing = [
     !project.description?.trim() && "Add a project description",
-    !eligible.length && "Load a supported sample file",
+    !eligible.length && (scenario === "live" ? "Add a ready document version" : "Load a supported sample file"),
   ].filter(Boolean);
   const running = (data.analysis_runs ?? []).some((r) =>
     ["QUEUED", "PROCESSING"].includes(r.status),
@@ -1367,8 +1367,8 @@ function Documents({ project, data, canEdit, save, action, go }) {
         )}
       </section>
       <section className="card">
-        <h2>Analyse sample files</h2>
-        <div className="notice">{t("Sample analysis only. Your own files are stored but are not analysed. Sources are never replaced without your choice.")}</div>
+        <h2>{scenario === "live" ? "Analyse project files" : "Analyse sample files"}</h2>
+        <div className="notice">{scenario === "live" ? t("Live AI analyses the selected ready files. Review every result and source before use.") : t("Sample analysis only. Your own files are stored but are not analysed. Sources are never replaced without your choice.")}</div>
         <div className="actions">
           {fixtures.map((f) => (
             <button
@@ -1382,13 +1382,14 @@ function Documents({ project, data, canEdit, save, action, go }) {
             </button>
           ))}
         </div>
-        <label className="stack">{t("Sample scenario")}<select
+        <label className="stack">{t("Analysis mode")}<select
             value={scenario}
             onChange={(e) => setScenario(e.target.value)}
           >
             <option value="success">{t("Success — Material choices")}</option>
             <option value="zero">{t("Zero opportunities — No recommendations")}</option>
             <option value="partial">{t("Partial — Some sources failed")}</option>
+            {liveAIEnabled && <option value="live">{t("Live AI")}</option>}
           </select>
         </label>
         <h3>Files included in analysis</h3>
@@ -1441,6 +1442,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
                   project_id: project.id,
                   request_id: key,
                   scenario,
+                  ...(scenario === "live" ? { generation_mode: "live" } : {}),
                   document_version_ids: selected,
                 });
                 go("workspace", {
@@ -1451,7 +1453,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
               { message: "Analysis requested" },
             );
           }}
-        >{t("Start sample analysis")}<ArrowRight size={16} />
+        >{t(scenario === "live" ? "Start live analysis" : "Start sample analysis")}<ArrowRight size={16} />
         </button>
       </section>
       {preview && (
@@ -1577,6 +1579,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
     (a, b) => new Date(b.created_at) - new Date(a.created_at),
   );
   const run = runs.find((r) => r.id === runId) || runs[0];
+  const liveRun = run?.generation_mode === "live" || run?.input_snapshot?.generation_mode === "live";
   const recs = (data.recommendations ?? []).filter((r) => r.run_id === run?.id);
   const reviews = data.reviews ?? [];
   const sets = (data.decision_sets ?? [])
@@ -1659,19 +1662,19 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
             ))}
           </select>
         </label>
-        <Badge>{t("Sample analysis")}</Badge>
+        <Badge>{t(liveRun ? "Live AI analysis" : "Sample analysis")}</Badge>
       </div>
       <nav className="analysis-tabs" aria-label={t("Analysis screens")}>{stages.map(([key,name]) => <button key={key} className={stage===key?"selected":""} onClick={()=>onStage(key)}>{name}{key==="selected"?` (${approved.length})`:""}</button>)}</nav>
       {active ? (
         <section className="card processing">
           <RefreshCw className="spin" />
-          <h2>Analysing the sample files</h2>
+          <h2>{t(liveRun ? "Analysing project files" : "Analysing the sample files")}</h2>
           <p>{t("You can leave this page and return to check progress.")}</p>
           <Badge>{run.status}</Badge>
         </section>
       ) : (
         <>
-          <div className="notice">{t("These results come from sample files. They are not an engineering approval or material certification.")}</div>
+          <div className="notice">{t(liveRun ? "Review these AI generated results against the source documents. They are not an engineering approval or material certification." : "These results come from sample files. They are not an engineering approval or material certification.")}</div>
           {stale && (
             <div className="error">{t("Source data changed. Run analysis again before finalizing.")}</div>
           )}
@@ -1710,6 +1713,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                       project_id: project.id,
                       request_id: run.request_id,
                       scenario: run.scenario,
+                      ...(liveRun ? { generation_mode: "live" } : {}),
                       document_version_ids:
                         run.input_snapshot?.document_versions?.map(
                           (v) => v.id,
@@ -1846,8 +1850,8 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                   className="secondary"
                   onClick={() =>
                     exportFile(`greenspec-decisions-${final.version_no}.json`, {
-                      generation_mode: "simulated",
                       ...final,
+                      generation_mode: liveRun ? "live" : (final.generation_mode || "simulated"),
                       items: data.decision_items.filter(
                         (x) => x.decision_set_id === final.id,
                       ),
@@ -1868,7 +1872,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                         items
                           .map((i) =>
                             [
-                              "simulated",
+                              liveRun ? "live" : (final.generation_mode || "simulated"),
                               i.decision,
                               i.snapshot.selected_option || "A",
                               i.snapshot.proposed_material,
@@ -1959,6 +1963,7 @@ function Review({ project, data, canEdit, save, action, go, runId, changeReview,
                         project_id: project.id,
                         request_id: key,
                         scenario: run.scenario,
+                        ...(liveRun ? { generation_mode: "live" } : {}),
                         document_version_ids:
                           run.input_snapshot?.document_versions?.map(
                             (v) => v.id || v.document_version_id,
@@ -2177,8 +2182,8 @@ function Revisions({ project, data, canEdit, action }) {
               className="secondary"
               onClick={() =>
                 exportFile("revision-report.json", {
-                  generation_mode: "simulated",
                   ...r,
+                  generation_mode: data.analysis_runs?.find((x) => x.id === decision?.run_id)?.generation_mode || "simulated",
                 })
               }
             >{t("Download comparison report JSON")}</button>
@@ -3181,5 +3186,3 @@ function PackageDetail({
   );
 }
 createRoot(document.getElementById("root")).render(<LanguageProvider><App /></LanguageProvider>);
-
-
