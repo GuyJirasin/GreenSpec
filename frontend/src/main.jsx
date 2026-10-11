@@ -43,6 +43,8 @@ import {
   stamp,
 } from "./api";
 import { liveData } from "./live-data.mjs";
+import DemoReview from "./DemoReview";
+import {demoStages,readDemo,startDemo} from "./demo-state.mjs";
 import "./style.css";
 import "./analysis-ui.css";
 import F1Screens, { HomeDashboard, stages, selectedPayload } from "./F1Screens";
@@ -335,6 +337,14 @@ function App() {
     packageId = params.get("package"),
     runId = params.get("run");
   const tab = params.get("tab") || "documents";
+  const stage = params.get("stage") || "overview";
+  const [,setDemoTick]=useState(0);
+  useEffect(()=>{const update=()=>setDemoTick(n=>n+1);window.addEventListener('greenspec-demo-change',update);window.addEventListener('storage',update);return()=>{window.removeEventListener('greenspec-demo-change',update);window.removeEventListener('storage',update)}},[]);
+  const demoRounds = session&&projectId ? readDemo(session.user.id,projectId) : [];
+  const demoRound = demoRounds.find(r=>r.id===runId)||demoRounds[0];
+  const demoSelected = demoRound?.reviews.filter(r=>r.decision==='APPROVED').length||0;
+  const demoHomeRounds=projects.flatMap(p=>readDemo(session?.user.id,p.id));
+  const demoHomeData={analysis_runs:demoHomeRounds,recommendations:demoHomeRounds.flatMap(r=>r.recs),reviews:demoHomeRounds.flatMap(r=>r.reviews),recommendation_options:demoHomeRounds.flatMap(r=>r.options)};
   const group = projectId ? tab === "execution" ? "execution" : tab === "members" ? "members" : "feature1" : page.startsWith("#home") ? "home" : "projects";
   const scopeKey = `${session?.user.id || ""}:${projectId || "all"}`;
   const data = liveData(dataScope === scopeKey ? storedData : projectCache.get(scopeKey)?.data || {});
@@ -568,33 +578,9 @@ function App() {
               <LayoutDashboard size={17} />
               Projects
             </a>
-            {projectId && (
-              <>
-                <p className="nav-label">WORKSPACE</p>
-                {tabs.map(([key, label]) => (
-                  <a
-                    key={key}
-                    className={tab === key ? "active" : ""}
-                    href={`#workspace?project=${projectId}&tab=${key}`}
-                  >
-                    <span>
-                      {key === "execution" ? (
-                        <Package size={17} />
-                      ) : key === "members" ? (
-                        <Users size={17} />
-                      ) : (
-                        <Files size={17} />
-                      )}
-                    </span>
-                    {label}
-                  </a>
-                ))}
-              </>
-            )}
+            {projectId && <><p className="nav-label">WORKSPACE</p><a className={['documents','review','revision'].includes(tab)?'active':''} href={`#workspace?project=${projectId}&tab=documents`}><Files size={17}/>Document analysis</a><a className={tab==='execution'?'active':''} href={`#workspace?project=${projectId}&tab=execution`}><Package size={17}/>Project work</a><a className={tab==='members'?'active':''} href={`#workspace?project=${projectId}&tab=members`}><Users size={17}/>Members</a></>}
           </nav>
           <div className="sidebar-bottom">
-            <Badge>● LIVE ANALYSIS</Badge>
-            <p>{t("Review document evidence before approval.")}</p>
             <button className="ghost" onClick={() => go("landing")}>
               <ArrowLeft size={15} />
               {t("Back to landing")}
@@ -617,7 +603,7 @@ function App() {
             >
               <Menu />
             </button>
-            <span>{project?.name || (page.startsWith("#home") ? "Home" : "Projects")}</span>
+            <div className="header-context">{project&&<a className="back" href="#projects"><ArrowLeft size={15}/>Projects</a>}<strong>{project?.name || (page.startsWith("#home") ? "Home" : "Projects")}</strong><span className="badge" title={t("Prepared results for this presentation; not analysis of uploaded files.")}>DEMO</span></div>
             <div className="header-right">
               <LanguageSwitcher />
               <button
@@ -689,7 +675,7 @@ function App() {
             {projectId && role === "viewer" && (
               <div className="notice">{t("You have read-only access. Ask the project owner for edit access.")}</div>
             )}
-            {!projectId && page.startsWith("#home") ? <HomeDashboard projects={projects} data={data} onNew={() => go("projects")} /> : !projectId ? (
+            {!projectId && page.startsWith("#home") ? <HomeDashboard projects={projects} data={demoHomeData} onNew={() => go("projects")} /> : !projectId ? (
               <>
                 <div className="page-title">
                   <div>
@@ -783,7 +769,7 @@ function App() {
                                 </td>
                                 <td>
                                   {(() => {
-                                    const latest = (data.analysis_runs || [])
+                                    const latest = demoHomeRounds
                                       .filter((r) => r.project_id === p.id)
                                       .sort(
                                         (a, b) =>
@@ -834,42 +820,14 @@ function App() {
               </>
             ) : project ? (
               <>
-                <div className="page-title">
-                  <div>
-                    <a className="back" href="#projects">
-                      <ArrowLeft size={14} />{t("All projects")}</a>
-                    <h1>{project.name}</h1>
-                    <p>
-                      {project.description ||
-                        "Add a description before analysis"}
-                    </p>
-                  </div>
-                  <Badge>{project.archived_at ? "Archived" : role}</Badge>
-                </div>
-                <div className="tabs">
-                  {tabs.map(([key, label]) => (
-                    <a
-                      key={key}
-                      className={tab === key ? "selected" : ""}
-                      href={`#workspace?project=${projectId}&tab=${key}`}
-                    >
-                      {label}
-                    </a>
-                  ))}
-                </div>
+                {['documents','review','revision'].includes(tab)&&<nav className="analysis-tabs unified-project-nav" aria-label="Project analysis navigation">{demoStages.map(([key,label])=><a key={key} className={(key==='documents'?tab==='documents':tab!=='documents'&&(stage===key||(['detail','compare'].includes(stage)&&key==='recommendations')))?'selected':''} href={`#workspace?project=${projectId}&tab=${key==='documents'?'documents':'review'}${key==='documents'?'':`&stage=${key}${demoRound?`&run=${demoRound.id}`:''}`}`}>{label}{key==='selected'?` (${demoSelected})`:''}</a>)}</nav>}
                 {tab === "documents" && (
                   <Documents
                     {...{ project, data, canEdit, save, action, go }}
+                    demoUser={session.user.id}
                   />
                 )}
-                {tab === "review" && (
-                  <Review
-                    {...{ project, data, canEdit, save, action, go, runId, changeReview, pendingReviewIds, staleEpochs, reviewErrors }}
-                  />
-                )}
-                {tab === "revision" && (
-                  <Revisions {...{ project, data, canEdit, save, action }} />
-                )}
+                {['review','revision'].includes(tab) && <DemoReview key={`${session.user.id}:${project.id}`} user={session.user.id} project={project} canEdit={canEdit} runId={runId} stage={tab==='revision'?'history':stage} FormComponent={Form} onDocuments={()=>go('workspace',{tab:'documents'})} onStage={(next,item,id)=>go('workspace',{tab:'review',stage:next,run:id||demoRound?.id,item:item||''})}/>}
                 {tab === "execution" && (
                   <Execution
                     {...{
@@ -1130,7 +1088,7 @@ async function uploadBytes(bucket, path, file, signal) {
   if (!result.ok) throw new Error("Upload failed. Please try again.");
 }
 
-function Documents({ project, data, canEdit, save, action, go }) {
+function Documents({ project, data, canEdit, save, action, go, demoUser }) {
   const { t } = useLanguage();
   const [selected, setSelected] = useState([]),
     [uploadState, setUploadState] = useState({}),
@@ -1163,9 +1121,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
     docs = (data.documents ?? []).filter((d) => !d.retired_at);
   const eligible = versions.filter(v=>v.upload_state==='READY'&&!v.fixture_id&&v.provenance!=='fixture'&&docs.some(d=>d.current_version_id===v.id));
   const missing = [!eligible.length && 'Upload a ready project document'].filter(Boolean);
-  const running = (data.analysis_runs ?? []).some((r) =>
-    ["QUEUED", "PROCESSING"].includes(r.status),
-  );
+  const running = false; // Demo analysis is local; live run history does not lock demo uploads.
   useEffect(
     () => setSelected(eligible.map((v) => v.id)),
     [eligible.map((v) => v.id).join(",")],
@@ -1358,8 +1314,8 @@ function Documents({ project, data, canEdit, save, action, go }) {
             onSubmit={(v) => save("projects", v, project)}
           />
 </details>
-        <div className="notice">{t("Analysis uses the project documents you select. DOCX, text PDF and XLSX are supported. Scanned PDFs need readable text.")}</div>
-        <h3>{t("Files included in analysis")}</h3>
+        <div className="notice">{t("Files are saved separately. This presentation uses prepared results.")}</div>
+        <h3>{t("Selected files")}</h3>
         {eligible.map((v) => (
           <label className="check" key={v.id}>
             <input
@@ -1378,7 +1334,7 @@ function Documents({ project, data, canEdit, save, action, go }) {
           </label>
         ))}
         <p className="muted">
-          {t("Files not included")}: {" "}
+          {t("Files not selected")}: {" "}
           {versions
             .filter((v) => !selected.includes(v.id))
             .map(
@@ -1402,24 +1358,8 @@ function Documents({ project, data, canEdit, save, action, go }) {
             !canEdit || running || missing.length > 0 || !selected.length
           }
           onClick={() => {
-            const key = requestId();
-            action(
-              async () => {
-                const result = await invoke("analyze", {
-                  project_id: project.id,
-                  request_id: key,
-                  scenario: 'live',
-                  generation_mode: 'live',
-                  document_version_ids: selected,
-                });
-                go("workspace", {
-                  tab: "review",
-                  run: result.run_id || result.id,
-                  stage: "hotspots",
-                });
-              },
-              { message: "Analysis requested" },
-            );
+            try {const result=startDemo(demoUser,project,selected);go('workspace',{tab:'review',run:result.id,stage:'hotspots'});}
+            catch {action(async()=>{throw new Error(t('Could not save. Check browser storage.'))},{reload:false});}
           }}
         >{t("Analyze project")}<ArrowRight size={16} />
         </button>
@@ -3152,5 +3092,3 @@ function PackageDetail({
   );
 }
 createRoot(document.getElementById("root")).render(<LanguageProvider><App /></LanguageProvider>);
-
-

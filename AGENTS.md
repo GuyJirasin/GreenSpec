@@ -37,3 +37,7 @@ The latest task removes every runtime example/mock path on main and audits readi
 ## Current main workflow — 2026-10-11
 
 All ongoing implementation is on main. The user authorized integration and push of current main in this turn. The historical guy transfer approval is retained in agents/IMPLEMENTATION_WORK_LOG.md; current live-only requirements supersede older sample workflows. Preserve other contributors' changes that remain compatible with the current user requirements.
+
+## User-approved prepared pitch demo — 2026-10-11
+
+The user now explicitly requests a prepared demonstration across Feature 1. This overrides the earlier no-runtime-mock requirement for the active UI: actual document uploads remain in Supabase, but the analysis, A/B and wording come from clearly labelled prepared examples. Demo rounds, decisions and immutable finalized snapshots stay browser-local and separated by user/project; never insert them as live cloud analysis or claim they came from uploaded files. Keep all-items-reviewed finalization. Consolidate project navigation into one workflow bar. Do not push until instructed.
