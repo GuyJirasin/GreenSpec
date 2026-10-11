@@ -392,7 +392,6 @@ ${standardsContext.map((s) => `- ${s}`).join("\n")}
 // server/workflow.mjs
 import { createHash } from "node:crypto";
 import JSZip from "jszip";
-import { PDFParse } from "pdf-parse";
 import ExcelJS from "exceljs";
 
 // shared/schema.mjs
@@ -894,7 +893,10 @@ async function extractDocument(bytes, mime) {
       if (text.trim()) extraction.push({ exact_text: text, locator: { kind: "paragraph", paragraph_index: index } });
     }
   } else if (mime === "application/pdf") {
-    const parser = new PDFParse({ data: new Uint8Array(bytes) });
+    const { CanvasFactory, getData } = await import("pdf-parse/worker");
+    const { PDFParse } = await import("pdf-parse");
+    PDFParse.setWorker(getData());
+    const parser = new PDFParse({ data: new Uint8Array(bytes), CanvasFactory });
     try {
       const result = await parser.getText();
       extraction = result.pages.filter((p) => p.text.trim()).map((p) => ({ exact_text: p.text, locator: { kind: "page", page_number: p.num } }));

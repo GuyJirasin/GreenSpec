@@ -5,7 +5,12 @@
   "outputDirectory": "frontend/dist",
   "functions": {
     "api/index.js": {
-      "maxDuration": 240
+      "maxDuration": 240,
+      "includeFiles": [
+        "node_modules/@napi-rs/**",
+        "node_modules/pdf-parse/dist/worker/**",
+        "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"
+      ]
     }
   },
   "rewrites": [
