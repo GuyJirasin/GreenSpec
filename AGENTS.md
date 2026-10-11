@@ -33,3 +33,7 @@ The user now authorizes implementation directly on main and editing contributor 
 ## User-approved live-only MVP — 2026-10-11
 
 The latest task removes every runtime example/mock path on main and audits readiness for MVP pitching. This overrides the earlier simulated-fixtures-only and frontend-only scope. Runtime generation_mode must be live, sources must be uploaded READY documents with checksum and exact extracted evidence. Missing keys or provider errors must fail honestly, never generate fallback recommendations or synthetic A/B. Unverified supplier claims are not shown; missing real prices stay null. Historical database rows are preserved and excluded from live UI. Synthetic fixtures may remain only under QA and never ship. Carbon is an engineering estimate for identified scopes, not verified whole-building emissions. No push or deployment in this task; record local checks and outstanding cloud migration/configuration separately.
+
+## Current main workflow — 2026-10-11
+
+All ongoing implementation is on main. The user authorized integration and push of current main in this turn. The historical guy transfer approval is retained in agents/IMPLEMENTATION_WORK_LOG.md; current live-only requirements supersede older sample workflows. Preserve other contributors' changes that remain compatible with the current user requirements.
