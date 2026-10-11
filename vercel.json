@@ -1,15 +1,26 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci && npm ci --prefix frontend",
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 240
+    }
+  },
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api"
+      "source": "/api/:path*",
+      "destination": "/api?__gs_path=:path*"
     },
     {
       "source": "/health",
-      "destination": "/api"
+      "destination": "/api?__gs_path=health"
+    },
+    {
+      "source": "^/(?!api/)(.*)$",
+      "destination": "/index.html"
     }
-  ]
+  ],
+  "framework": null
 }

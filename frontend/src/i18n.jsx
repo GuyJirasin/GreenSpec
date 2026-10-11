@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 
 const translations = {
   th: {
+    "Live AI": "AI จริง", "Live AI analysis": "การวิเคราะห์ด้วย AI จริง", "Feature 1 · Live AI analysis": "Feature 1 · วิเคราะห์ด้วย AI จริง", "Start live analysis": "เริ่มวิเคราะห์ด้วย AI", "Add a ready document version": "เพิ่มเอกสารที่อัปโหลดเสร็จแล้ว", "Live AI analyses the selected ready files. Review every result and source before use.": "AI วิเคราะห์เอกสารที่เลือกไว้ รองรับคอนกรีตที่ระบุกำลังอัด MPa และปริมาณ m³ ชัดเจน โปรดตรวจทุกรายการและแหล่งข้อมูลก่อนใช้งาน", "Analysing project files": "กำลังวิเคราะห์เอกสารโครงการ", "Review these AI generated results against the source documents. They are not an engineering approval or material certification.": "โปรดตรวจผลจาก AI เทียบกับเอกสารต้นทาง ผลนี้ไม่ใช่การอนุมัติทางวิศวกรรมหรือใบรับรองวัสดุ",
     "Opening…": "กำลังเปิด…",
     "Skip to content": "ข้ามไปยังเนื้อหา","Saved": "บันทึกแล้ว", "Not saved": "ยังไม่ได้บันทึก", "No file": "ไม่มีไฟล์", "Version": "เวอร์ชัน", "Guest accounts have no email. Email invitations are only for existing registered accounts.": "บัญชีผู้เยี่ยมชมไม่มีอีเมล การเชิญทางอีเมลใช้ได้เฉพาะบัญชีที่ลงทะเบียนแล้ว", "TODO": "รอดำเนินการ", "DONE": "เสร็จแล้ว", "READY": "พร้อม", "owner": "เจ้าของ", "editor": "ผู้แก้ไข", "viewer": "อ่านอย่างเดียว",  "Log in": "เข้าใช้งาน", "Enter app": "เข้าใช้งาน", "Request a demo": "ลองใช้งาน", "Try demo": "ลองใช้งาน",
     "SPECIFICATIONS FOR A LOWER CARBON BUILT ENVIRONMENT": "ข้อกำหนดเพื่ออาคารที่ปล่อยคาร์บอนต่ำ",

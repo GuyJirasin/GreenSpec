@@ -12,7 +12,12 @@ import { THAI_CERTIFIED_CATALOG } from '../shared/catalog.mjs';
 import { evaluateGuardrail } from '../shared/guardrails.mjs';
 import { TyphoonClient } from '../shared/typhoon.mjs';
 
+import { registerWorkflow, createReader } from './workflow.mjs';
+
 export const app = new Hono();
+// Paid AI endpoints require a valid account when live provider access is enabled.
+app.use('/api/analyze', async (c,next)=>{if(process.env.TYPHOON_API_KEY){try{await createReader(c.req.header('Authorization')).authenticate();}catch{return c.json({code:'UNAUTHORIZED',message:'A valid session is required.'},401);}}await next();});
+app.use('/api/chat', async (c,next)=>{if(process.env.TYPHOON_API_KEY){try{await createReader(c.req.header('Authorization')).authenticate();}catch{return c.json({code:'UNAUTHORIZED',message:'A valid session is required.'},401);}}await next();});
 
 // Enable CORS for frontend clients
 app.use('*', cors({
@@ -90,13 +95,27 @@ app.post('/api/tools/cost-estimate', async (c) => {
 // ==================== FULL SPEC ANALYSIS & TOR DRAFTING ====================
 
 app.post('/api/analyze', async (c) => {
-  const payload = await c.req.json().catch(() => ({}));
-  const projectName = payload.project_name || 'Bangkok Project';
-  const elementType = payload.element_type || 'mat_foundation';
-  const volumeM3 = Number(payload.volume_m3 || 1000.0);
-  const fcPrimeMpa = Number(payload.fc_prime_mpa || 35.0);
-  const testAgeDays = Number(payload.test_age_days || 28);
-  const notes = payload.notes || '';
+  const payload = await c.req.json().catch(() => null);
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return c.json({ status: 'error', error: 'Request body must be a JSON object.' }, 400);
+  }
+  const numeric = (key, fallback, { min = 0, max = Infinity } = {}) => {
+    const value = payload[key] === undefined ? fallback : payload[key];
+    if (typeof value === 'boolean' || value === null || value === '' || !Number.isFinite(Number(value))) return null;
+    const parsed = Number(value);
+    return parsed < min || parsed > max ? null : parsed;
+  };
+  const volumeM3 = numeric('volume_m3', 1000, { min: Number.EPSILON, max: 1_000_000 });
+  const fcPrimeMpa = numeric('fc_prime_mpa', 35, { min: 1, max: 150 });
+  const testAgeDays = numeric('test_age_days', 28, { min: 1, max: 3650 });
+  const slumpCm = numeric('slump_cm', 12, { min: 0, max: 30 });
+  const projectName = typeof payload.project_name === 'string' && payload.project_name.trim() ? payload.project_name.trim() : 'Bangkok Project';
+  const elementType = typeof payload.element_type === 'string' && payload.element_type.trim() ? payload.element_type.trim() : 'mat_foundation';
+  const notes = typeof payload.notes === 'string' ? payload.notes : '';
+  const exposureClass = payload.exposure_class ?? 'normal';
+  if ([volumeM3, fcPrimeMpa, testAgeDays, slumpCm].some(value => value === null) || !['normal', 'marine'].includes(exposureClass) || typeof payload.notes !== 'undefined' && typeof payload.notes !== 'string') {
+    return c.json({ status: 'error', error: 'Invalid analysis input: numeric values must be finite and within supported ranges; exposure_class must be normal or marine.' }, 400);
+  }
 
   // 1. Evaluate safety guardrails
   const guardrail = evaluateGuardrail({
@@ -104,20 +123,34 @@ app.post('/api/analyze', async (c) => {
     volumeM3,
     fcPrimeMpa,
     testAgeDays,
+    slumpCm,
+    exposureClass,
     notes
   });
 
   // 2. Compute baseline and proposed impacts
-  const scmPctOptA = Math.min(guardrail.max_scm_percent, 30.0);
-  const scmPctOptB = Math.min(guardrail.max_scm_percent + 5.0, 40.0);
-
-  const mixA = calculateConcreteMix({ fcTargetMpa: fcPrimeMpa, elementType, scmPercent: scmPctOptA });
-  const carbonA = calculateEmbodiedCarbon({
-    cementOpcKg: mixA.mix_proportions_per_m3.cement_opc_kg,
-    scmKg: mixA.mix_proportions_per_m3.scm_kg,
-    volumeM3
-  });
-  const costA = estimateCostImpact({ fcMpa: fcPrimeMpa, volumeM3, scmPercent: scmPctOptA });
+  const scmPctOptA = Math.round(Math.min(25, guardrail.max_scm_percent * 0.7) * 10) / 10;
+  const scmPctOptB = Math.round(Math.min(35, guardrail.max_scm_percent) * 10) / 10;
+  const scmType = payload.scm_type ?? 'fly_ash';
+  if (!['fly_ash', 'bottom_ash', 'slag_ggbs', 'hydraulic_cement'].includes(scmType)) {
+    return c.json({ status: 'error', error: 'Unsupported scm_type.' }, 400);
+  }
+  const buildOption = (scmPercent) => {
+    const mix = calculateConcreteMix({ fcTargetMpa: fcPrimeMpa, elementType, slumpCm, scmType, scmPercent });
+    const carbon = calculateEmbodiedCarbon({
+      cementOpcKg: mix.mix_proportions_per_m3.cement_opc_kg,
+      scmKg: mix.mix_proportions_per_m3.scm_kg,
+      scmType,
+      caKg: mix.mix_proportions_per_m3.coarse_aggregate_kg,
+      sandKg: mix.mix_proportions_per_m3.fine_aggregate_sand_kg,
+      waterKg: mix.mix_proportions_per_m3.water_kg,
+      volumeM3
+    });
+    const cost = estimateCostImpact({ fcMpa: fcPrimeMpa, volumeM3, scmPercent, scmType });
+    return { mix, carbon, cost };
+  };
+  const optionA = buildOption(scmPctOptA);
+  const optionB = buildOption(scmPctOptB);
 
   // 3. Draft technical specification using Typhoon LLM (or mock if offline)
   const typhoon = new TyphoonClient();
@@ -126,9 +159,9 @@ app.post('/api/analyze', async (c) => {
     elementType,
     fcMpa: fcPrimeMpa,
     ageDays: guardrail.recommended_test_age_days,
-    scmName: 'เถ้าลอยแม่เมาะ มอก. 2135',
+    scmName: scmType,
     scmPct: scmPctOptA,
-    wbRatio: mixA.max_wb_ratio,
+    wbRatio: optionA.mix.max_wb_ratio,
     curingDays: guardrail.mandatory_curing_days,
     standardsContext: [
       'มอก. 2594 ปูนซีเมนต์ไฮดรอลิก',
@@ -139,7 +172,31 @@ app.post('/api/analyze', async (c) => {
   });
 
   // 4. Match certified Thai products
-  const matched = THAI_CERTIFIED_CATALOG.find(p => p.element_suitability.includes(elementType)) || THAI_CERTIFIED_CATALOG[0];
+  const scmTerms = {
+    fly_ash: /fly ash|เถ้าลอย/i,
+    bottom_ash: /bottom ash|เถ้าหนัก/i,
+    slag_ggbs: /slag|ตะกรัน/i,
+    hydraulic_cement: /hydraulic cement|ปูนซีเมนต์ไฮดรอลิก/i
+  }[scmType];
+  const matchedProducts = THAI_CERTIFIED_CATALOG.filter(product =>
+    product.element_suitability.includes(elementType) &&
+    fcPrimeMpa >= product.fc_range_mpa[0] && fcPrimeMpa <= product.fc_range_mpa[1] &&
+    scmTerms.test(`${product.name} ${product.notes}`)
+  );
+  const checklist = [
+    'Submit trial mix results for the selected proportions before placement.',
+    `Verify certified material documentation for ${scmType} and cement.`,
+    `Maintain moist curing for at least ${guardrail.mandatory_curing_days} days.`
+  ];
+  if (guardrail.thermal_control_plan_required) checklist.push('Submit a thermal control plan with core and surface temperature monitoring and Delta T <= 20 deg C.');
+  if (guardrail.early_strength_required) checklist.push('Submit early-age strength results demonstrating the required release strength before stressing.');
+  const complianceMatrix = [
+    { requirement: 'Specified compressive strength', criterion: `${fcPrimeMpa} MPa at ${guardrail.recommended_test_age_days} days`, status: 'design_input' },
+    { requirement: 'SCM replacement limit', criterion: `<= ${guardrail.max_scm_percent}%`, status: scmPctOptB <= guardrail.max_scm_percent ? 'compliant' : 'review_required' },
+    { requirement: 'Moist curing', criterion: `>= ${guardrail.mandatory_curing_days} days`, status: 'checklist_required' }
+  ];
+  if (guardrail.thermal_control_plan_required) complianceMatrix.push({ requirement: 'Mass concrete thermal control', criterion: 'Delta T <= 20 deg C', status: 'plan_and_monitor' });
+  if (guardrail.early_strength_required) complianceMatrix.push({ requirement: 'Early strength before stressing', criterion: 'Verify project release strength at 3-7 days', status: 'test_required' });
 
   return c.json({
     status: 'success',
@@ -147,31 +204,45 @@ app.post('/api/analyze', async (c) => {
     element_type: elementType,
     guardrail,
     baseline: {
-      carbon_intensity_kg_m3: carbonA.baseline_carbon_intensity_kgco2e_m3,
-      total_carbon_tco2e: carbonA.total_baseline_carbon_tco2e,
-      estimated_cost_thb: costA.total_baseline_cost_thb
+      carbon_intensity_kg_m3: optionA.carbon.baseline_carbon_intensity_kgco2e_m3,
+      total_carbon_tco2e: optionA.carbon.total_baseline_carbon_tco2e,
+      estimated_cost_thb: optionA.cost.total_baseline_cost_thb
     },
     options: {
       option_a: {
         name: 'สูตรสมดุล (Balanced Mix Design)',
         scm_replacement_percent: scmPctOptA,
-        carbon_reduction_percent: carbonA.carbon_reduction_percent,
-        total_carbon_saved_tco2e: carbonA.total_carbon_saved_tco2e,
-        total_savings_thb: costA.total_savings_thb,
-        max_wb_ratio: mixA.max_wb_ratio,
+        carbon_reduction_percent: optionA.carbon.carbon_reduction_percent,
+        total_carbon_saved_tco2e: optionA.carbon.total_carbon_saved_tco2e,
+        total_savings_thb: optionA.cost.total_savings_thb,
+        max_wb_ratio: optionA.mix.max_wb_ratio,
         acceptance_age_days: guardrail.recommended_test_age_days,
-        proportions: mixA.mix_proportions_per_m3
+        proportions: optionA.mix.mix_proportions_per_m3,
+        cost: optionA.cost,
+        carbon: optionA.carbon
+      },
+      option_b: {
+        name: 'สูตรลดคาร์บอนสูง (Higher SCM Mix)',
+        scm_replacement_percent: scmPctOptB,
+        carbon_reduction_percent: optionB.carbon.carbon_reduction_percent,
+        total_carbon_saved_tco2e: optionB.carbon.total_carbon_saved_tco2e,
+        total_savings_thb: optionB.cost.total_savings_thb,
+        max_wb_ratio: optionB.mix.max_wb_ratio,
+        acceptance_age_days: guardrail.recommended_test_age_days,
+        proportions: optionB.mix.mix_proportions_per_m3,
+        cost: optionB.cost,
+        carbon: optionB.carbon
       }
     },
-    matched_product: matched,
+    matched_product: matchedProducts[0] ?? null,
+    matched_products: matchedProducts,
     technical_package: {
+      generation_mode: typhoon.lastGenerationMode,
+      mock_generated: typhoon.lastGenerationMode === 'mock',
       spec_clause_th: spec.thPart,
       spec_clause_en: spec.enPart,
-      submittal_checklist: [
-        'ผลการทดสอบ Trial Mix ในห้องปฏิบัติการ ล่วงหน้า 35 วัน ตาม มอก. 213',
-        'ใบรับรอง Mill Certificate เถ้าลอย มอก. 2135 ชั้น F และปูนซีเมนต์ไฮดรอลิก มอก. 2594',
-        `แผนการบ่มชื้น (Curing Plan) ต่อเนื่องอย่างน้อย ${guardrail.mandatory_curing_days} วัน`
-      ]
+      submittal_checklist: checklist,
+      compliance_matrix: complianceMatrix
     }
   });
 });
@@ -225,12 +296,16 @@ app.post('/api/chat', async (c) => {
   });
 });
 
+registerWorkflow(app);
+
 // Vercel Serverless Function compatibility adapter (like AIlaw/src/api/vercel.ts)
-const listener = getRequestListener(app.fetch);
+const listener = getRequestListener(handleFetch);
 
 export function handleFetch(req) {
   const url = new URL(req.url);
-  const matchedPath = req.headers.get('x-matched-path');
+  const routed = url.searchParams.get('__gs_path');
+  url.searchParams.delete('__gs_path');
+  const matchedPath = routed ? '/api/' + routed : req.headers.get('x-matched-path');
   if (matchedPath && matchedPath !== url.pathname) {
     url.pathname = matchedPath;
     return app.fetch(new Request(url.toString(), req));
