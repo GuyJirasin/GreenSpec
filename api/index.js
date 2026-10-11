@@ -240,6 +240,76 @@ function evaluateGuardrail({
 }
 
 // shared/typhoon.mjs
+var CIVIL_ENGINEERING_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "calculateConcreteMix",
+      description: "\u0E04\u0E33\u0E19\u0E27\u0E13\u0E2A\u0E31\u0E14\u0E2A\u0E48\u0E27\u0E19\u0E1C\u0E2A\u0E21\u0E04\u0E2D\u0E19\u0E01\u0E23\u0E35\u0E15\u0E15\u0E32\u0E21\u0E21\u0E32\u0E15\u0E23\u0E10\u0E32\u0E19 ACI 211.1 (\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01 \u0E1B\u0E39\u0E19\u0E0B\u0E35\u0E40\u0E21\u0E19\u0E15\u0E4C, \u0E40\u0E16\u0E49\u0E32\u0E25\u0E2D\u0E22 SCM, \u0E2B\u0E34\u0E19, \u0E17\u0E23\u0E32\u0E22, \u0E19\u0E49\u0E33, \u0E19\u0E49\u0E33\u0E22\u0E32\u0E25\u0E14\u0E19\u0E49\u0E33 \u0E15\u0E48\u0E2D 1 \u0E25\u0E1A.\u0E21.)",
+      parameters: {
+        type: "object",
+        properties: {
+          fcTargetMpa: { type: "number", description: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E31\u0E14\u0E23\u0E30\u0E1A\u0E38 f'c (Cylinder) \u0E43\u0E19\u0E2B\u0E19\u0E48\u0E27\u0E22 MPa \u0E40\u0E0A\u0E48\u0E19 28, 35, 40" },
+          elementType: { type: "string", enum: ["beam_slab", "column", "mat_foundation", "pt_slab"], description: "\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17\u0E0A\u0E34\u0E49\u0E19\u0E2A\u0E48\u0E27\u0E19\u0E42\u0E04\u0E23\u0E07\u0E2A\u0E23\u0E49\u0E32\u0E07" },
+          scmType: { type: "string", enum: ["fly_ash", "bottom_ash", "slag_ggbs", "hydraulic_cement"], description: "\u0E0A\u0E19\u0E34\u0E14\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E1B\u0E23\u0E30\u0E2A\u0E32\u0E19\u0E17\u0E14\u0E41\u0E17\u0E19 (SCM)" },
+          scmPercent: { type: "number", description: "\u0E23\u0E49\u0E2D\u0E22\u0E25\u0E30\u0E01\u0E32\u0E23\u0E41\u0E17\u0E19\u0E17\u0E35\u0E48\u0E14\u0E49\u0E27\u0E22 SCM \u0E40\u0E0A\u0E48\u0E19 20, 25, 30, 35%" },
+          slumpCm: { type: "number", description: "\u0E04\u0E48\u0E32\u0E22\u0E38\u0E1A\u0E15\u0E31\u0E27 (cm) \u0E40\u0E0A\u0E48\u0E19 10, 12, 15" }
+        },
+        required: ["fcTargetMpa", "elementType"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "calculateEmbodiedCarbon",
+      description: "\u0E04\u0E33\u0E19\u0E27\u0E13 Embodied Carbon \u0E02\u0E2D\u0E07\u0E04\u0E2D\u0E19\u0E01\u0E23\u0E35\u0E15\u0E15\u0E32\u0E21\u0E04\u0E48\u0E32 \u0E2D\u0E1A\u0E01. (TGO) \u0E40\u0E1B\u0E23\u0E35\u0E22\u0E1A\u0E40\u0E17\u0E35\u0E22\u0E1A\u0E01\u0E31\u0E1A\u0E2A\u0E39\u0E15\u0E23\u0E25\u0E14\u0E04\u0E32\u0E23\u0E4C\u0E1A\u0E2D\u0E19",
+      parameters: {
+        type: "object",
+        properties: {
+          cementOpcKg: { type: "number", description: "\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01\u0E1B\u0E39\u0E19\u0E0B\u0E35\u0E40\u0E21\u0E19\u0E15\u0E4C OPC (\u0E01\u0E01./\u0E25\u0E1A.\u0E21.)" },
+          scmKg: { type: "number", description: "\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01 SCM \u0E40\u0E0A\u0E48\u0E19 \u0E40\u0E16\u0E49\u0E32\u0E25\u0E2D\u0E22 (\u0E01\u0E01./\u0E25\u0E1A.\u0E21.)" },
+          scmType: { type: "string", enum: ["fly_ash", "bottom_ash", "slag_ggbs", "hydraulic_cement"] },
+          volumeM3: { type: "number", description: "\u0E1B\u0E23\u0E34\u0E21\u0E32\u0E15\u0E23\u0E04\u0E2D\u0E19\u0E01\u0E23\u0E35\u0E15\u0E23\u0E27\u0E21\u0E17\u0E31\u0E49\u0E07\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23 (\u0E25\u0E1A.\u0E21.)" }
+        },
+        required: ["cementOpcKg", "volumeM3"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "evaluateThermalMassConcrete",
+      description: "\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E04\u0E27\u0E32\u0E21\u0E23\u0E49\u0E2D\u0E19\u0E2A\u0E30\u0E2A\u0E21\u0E41\u0E25\u0E30\u0E04\u0E27\u0E32\u0E21\u0E40\u0E2A\u0E35\u0E48\u0E22\u0E07\u0E41\u0E15\u0E01\u0E23\u0E49\u0E32\u0E27\u0E43\u0E19\u0E04\u0E2D\u0E19\u0E01\u0E23\u0E35\u0E15\u0E2B\u0E25\u0E32\u0E43\u0E2B\u0E0D\u0E48 (Mass Concrete) \u0E41\u0E25\u0E30 DEF \u0E15\u0E32\u0E21 ACI 207",
+      parameters: {
+        type: "object",
+        properties: {
+          thicknessM: { type: "number", description: "\u0E04\u0E27\u0E32\u0E21\u0E2B\u0E19\u0E32\u0E02\u0E2D\u0E07\u0E42\u0E04\u0E23\u0E07\u0E2A\u0E23\u0E49\u0E32\u0E07 (\u0E40\u0E21\u0E15\u0E23)" },
+          totalBinderKgM3: { type: "number", description: "\u0E1B\u0E23\u0E34\u0E21\u0E32\u0E13\u0E27\u0E31\u0E2A\u0E14\u0E38\u0E1B\u0E23\u0E30\u0E2A\u0E32\u0E19\u0E23\u0E27\u0E21 (\u0E01\u0E01./\u0E25\u0E1A.\u0E21.)" },
+          scmPercent: { type: "number", description: "\u0E23\u0E49\u0E2D\u0E22\u0E25\u0E30 SCM" },
+          scmType: { type: "string", enum: ["fly_ash", "bottom_ash", "slag_ggbs"] },
+          placingTempC: { type: "number", description: "\u0E2D\u0E38\u0E13\u0E2B\u0E20\u0E39\u0E21\u0E34\u0E02\u0E13\u0E30\u0E40\u0E17 (\xB0C)" }
+        },
+        required: ["thicknessM"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "convertConcreteStrength",
+      description: "\u0E41\u0E1B\u0E25\u0E07\u0E2B\u0E19\u0E48\u0E27\u0E22\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E31\u0E14\u0E04\u0E2D\u0E19\u0E01\u0E23\u0E35\u0E15\u0E23\u0E30\u0E2B\u0E27\u0E48\u0E32\u0E07 Cylinder \u0E41\u0E25\u0E30 Cube \u0E17\u0E31\u0E49\u0E07 ksc \u0E41\u0E25\u0E30 MPa \u0E15\u0E32\u0E21 \u0E21\u0E22\u0E1C. 1101-64",
+      parameters: {
+        type: "object",
+        properties: {
+          value: { type: "number", description: "\u0E04\u0E48\u0E32\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E31\u0E14 \u0E40\u0E0A\u0E48\u0E19 280, 350, 35" },
+          fromFormat: { type: "string", enum: ["cylinder_ksc", "cube_ksc", "cylinder_mpa", "cube_mpa"] }
+        },
+        required: ["value", "fromFormat"]
+      }
+    }
+  }
+];
 var TyphoonClient = class {
   constructor({ apiKey = "", baseUrl = "https://api.opentyphoon.ai/v1", model = "typhoon-v2.5-30b-a3b-instruct" } = {}) {
     this.apiKey = apiKey || process.env.TYPHOON_API_KEY || "";
@@ -275,6 +345,73 @@ var TyphoonClient = class {
     const data = await res.json();
     this.lastGenerationMode = "live";
     return data.choices?.[0]?.message?.content || "";
+  }
+  /**
+   * Completion with Tool Calling (Function Calling)
+   */
+  async chatWithTools({ messages, tools = CIVIL_ENGINEERING_TOOLS, toolHandler, temperature = 0.2, maxTokens = 3500 }) {
+    if (!this.apiKey) throw Object.assign(new Error("Set TYPHOON_API_KEY before using AI analysis."), { code: "AI_NOT_CONFIGURED" });
+    const res = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: "POST",
+      signal: AbortSignal.timeout(3e4),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        tools: tools && tools.length > 0 ? tools : void 0,
+        temperature,
+        max_tokens: maxTokens,
+        stream: false
+      })
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`OpenTyphoon API error (${res.status}): ${errText}`);
+    }
+    const data = await res.json();
+    this.lastGenerationMode = "live";
+    const choice = data.choices?.[0];
+    const message = choice?.message || {};
+    const toolExecutions = [];
+    if (message.tool_calls && message.tool_calls.length > 0 && toolHandler) {
+      const updatedMessages = [...messages, message];
+      for (const call of message.tool_calls) {
+        let args = {};
+        try {
+          args = JSON.parse(call.function?.arguments || "{}");
+        } catch {
+        }
+        let result;
+        try {
+          result = await toolHandler(call.function?.name, args);
+        } catch (toolErr) {
+          result = { error: toolErr.message };
+        }
+        toolExecutions.push({
+          tool: call.function?.name,
+          args,
+          result
+        });
+        updatedMessages.push({
+          role: "tool",
+          name: call.function?.name,
+          tool_call_id: call.id,
+          content: JSON.stringify(result)
+        });
+      }
+      const finalReply = await this.chat({ messages: updatedMessages, temperature, maxTokens });
+      return {
+        reply: finalReply,
+        tool_executions: toolExecutions
+      };
+    }
+    return {
+      reply: message.content || "",
+      tool_executions: []
+    };
   }
   /**
    * Streaming completion returning an async iterator of token chunks (SSE)
@@ -1038,26 +1175,9 @@ function registerWorkflow(app2, { readerFactory = createReader, clientFactory = 
 
 // server/server.mjs
 var app = new Hono();
-app.onError((error, c) => c.json({ code: error.code === "AI_NOT_CONFIGURED" ? "AI_NOT_CONFIGURED" : "JOB_FAILED", message: error.code === "AI_NOT_CONFIGURED" ? "AI service is not configured." : "AI request could not finish." }, error.code === "AI_NOT_CONFIGURED" ? 503 : 502));
-app.use("/api/analyze", async (c, next) => {
-  if (process.env.TYPHOON_API_KEY) {
-    try {
-      await createReader(c.req.header("Authorization")).authenticate();
-    } catch {
-      return c.json({ code: "UNAUTHORIZED", message: "A valid session is required." }, 401);
-    }
-  }
-  await next();
-});
-app.use("/api/chat", async (c, next) => {
-  if (process.env.TYPHOON_API_KEY) {
-    try {
-      await createReader(c.req.header("Authorization")).authenticate();
-    } catch {
-      return c.json({ code: "UNAUTHORIZED", message: "A valid session is required." }, 401);
-    }
-  }
-  await next();
+app.onError((error, c) => {
+  if (error.code !== "AI_NOT_CONFIGURED") console.error("[API Error]:", error.message || error);
+  return c.json({ code: error.code === "AI_NOT_CONFIGURED" ? "AI_NOT_CONFIGURED" : "JOB_FAILED", message: error.code === "AI_NOT_CONFIGURED" ? "AI service is not configured." : error.message || "AI request could not finish." }, error.code === "AI_NOT_CONFIGURED" ? 503 : 502);
 });
 app.use("*", cors({
   origin: "*",
@@ -1241,8 +1361,11 @@ app.post("/api/analyze", async (c) => {
     },
     matched_product: matchedProducts[0] ?? null,
     matched_products: matchedProducts,
+    generation_mode: typhoon.lastGenerationMode,
+    model: typhoon.model || "typhoon-v2.5-30b-a3b-instruct",
     technical_package: {
       generation_mode: typhoon.lastGenerationMode,
+      model: typhoon.model || "typhoon-v2.5-30b-a3b-instruct",
       spec_clause_th: spec.thPart,
       spec_clause_en: spec.enPart,
       submittal_checklist: checklist,
@@ -1250,30 +1373,203 @@ app.post("/api/analyze", async (c) => {
     }
   });
 });
+async function executeCivilTool(name, args = {}) {
+  const num = (v, fallback, min = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n >= min ? n : fallback;
+  };
+  if (name === "calculateConcreteMix") {
+    return calculateConcreteMix({
+      fcTargetMpa: num(args.fcTargetMpa, 35, 1),
+      elementType: typeof args.elementType === "string" ? args.elementType : "beam_slab",
+      slumpCm: num(args.slumpCm, 12, 1),
+      scmType: typeof args.scmType === "string" ? args.scmType : "fly_ash",
+      scmPercent: num(args.scmPercent, 25, 0)
+    });
+  }
+  if (name === "calculateEmbodiedCarbon") {
+    return calculateEmbodiedCarbon({
+      cementOpcKg: num(args.cementOpcKg, 270, 0),
+      scmKg: num(args.scmKg, 90, 0),
+      scmType: typeof args.scmType === "string" ? args.scmType : "fly_ash",
+      volumeM3: num(args.volumeM3, 100, 0.1)
+    });
+  }
+  if (name === "evaluateThermalMassConcrete") {
+    return evaluateThermalMassConcrete({
+      thicknessM: num(args.thicknessM, 1.5, 0.1),
+      totalBinderKgM3: num(args.totalBinderKgM3, 380, 50),
+      scmPercent: num(args.scmPercent, 30, 0),
+      scmType: typeof args.scmType === "string" ? args.scmType : "fly_ash",
+      placingTempC: num(args.placingTempC, 30, 0)
+    });
+  }
+  if (name === "convertConcreteStrength") {
+    return convertConcreteStrength({
+      value: num(args.value, 280, 1),
+      fromFormat: typeof args.fromFormat === "string" ? args.fromFormat : "cylinder_ksc"
+    });
+  }
+  throw new Error(`Unknown civil tool: ${name}`);
+}
+function extractRequirementsDeterministic(text) {
+  const items = [];
+  const mpaRegex = /(?:f'?c\s*=?\s*|กำลังอัด\s*(?:ระบุ\s*)?)?(\d+(?:\.\d+)?)\s*(?:MPa|เมกะปาสคาล)/i;
+  const kscRegex = /(?:f'?c\s*=?\s*|กำลังอัด\s*(?:ระบุ\s*)?)?(\d+(?:\.\d+)?)\s*(?:ksc|กก\.\/ตร\.ซม\.)/i;
+  const volRegex = /(?:ปริมาตร\s*|จำนวน\s*|volume\s*)?(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:m3|m³|ลบ\.ม\.|ลูกบาศก์เมตร)/i;
+  let currentElem = null;
+  if (/ฐานราก|mat|footing|foundation/i.test(text)) currentElem = "mat_foundation";
+  else if (/เสา|column/i.test(text)) currentElem = "column";
+  else if (/โพสเทนชัน|post-?tension|pt\s*slab/i.test(text)) currentElem = "pt_slab";
+  else if (/คาน|พื้น|beam|slab/i.test(text)) currentElem = "beam_slab";
+  let mpaVal = null;
+  const mpaMatch = text.match(mpaRegex);
+  if (mpaMatch) {
+    mpaVal = parseFloat(mpaMatch[1]);
+  } else {
+    const kscMatch = text.match(kscRegex);
+    if (kscMatch) {
+      mpaVal = Math.round(parseFloat(kscMatch[1]) / 10.1972 * 10) / 10;
+    }
+  }
+  let volVal = null;
+  const volMatch = text.match(volRegex);
+  if (volMatch) {
+    volVal = parseFloat(volMatch[1].replace(/,/g, ""));
+  }
+  if (mpaVal || volVal || currentElem || /คอนกรีต|concrete/i.test(text)) {
+    items.push({
+      element_type: currentElem,
+      fc_prime_mpa: mpaVal,
+      volume_m3: volVal,
+      quote: text.slice(0, 150)
+    });
+  }
+  return items;
+}
+app.post("/api/extract-requirements", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const text = typeof body.text === "string" ? body.text.trim() : "";
+  const extractions = Array.isArray(body.extractions) ? body.extractions : [];
+  const combinedText = text || extractions.map((e) => e.exact_text || "").join("\n");
+  if (!combinedText) {
+    return c.json({ status: "error", error: "Text or extractions are required." }, 400);
+  }
+  const typhoon = new TyphoonClient();
+  let items = [];
+  if (typhoon.apiKey) {
+    try {
+      const resp = await typhoon.chat({
+        messages: [
+          { role: "system", content: 'You are a civil engineering parser. Extract concrete requirements as JSON {"items":[{"element_type":"mat_foundation|beam_slab|column|pt_slab","fc_prime_mpa":number,"volume_m3":number,"quote":"..."}]}. If field is missing, set to null.' },
+          { role: "user", content: combinedText }
+        ],
+        maxTokens: 2500
+      });
+      const parsed = JSON.parse(resp.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, ""));
+      items = parsed.items || [];
+    } catch {
+      items = extractRequirementsDeterministic(combinedText);
+    }
+  } else {
+    items = extractRequirementsDeterministic(combinedText);
+  }
+  const validatedItems = items.map((item, index) => {
+    const missing = [];
+    if (!item.element_type || !["mat_foundation", "beam_slab", "column", "pt_slab"].includes(item.element_type)) {
+      missing.push("element_type");
+    }
+    if (!Number.isFinite(item.fc_prime_mpa) || item.fc_prime_mpa <= 0) {
+      missing.push("fc_prime_mpa");
+    }
+    if (!Number.isFinite(item.volume_m3) || item.volume_m3 <= 0) {
+      missing.push("volume_m3");
+    }
+    return {
+      id: `req-${index + 1}`,
+      element_type: item.element_type || null,
+      fc_prime_mpa: item.fc_prime_mpa || null,
+      volume_m3: item.volume_m3 || null,
+      slump_cm: item.slump_cm || 12,
+      scm_type: item.scm_type || "fly_ash",
+      quote: item.quote || item.original_text || combinedText.slice(0, 100),
+      missing_fields: missing,
+      status: missing.length === 0 ? "READY" : "NEEDS_INPUT"
+    };
+  });
+  return c.json({
+    status: "success",
+    total_found: validatedItems.length,
+    all_ready: validatedItems.every((i) => i.status === "READY"),
+    items: validatedItems
+  });
+});
 app.post("/api/chat", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const messages = body.messages || [];
   const stream = body.stream !== false;
+  const useTools = body.tools !== false;
   const typhoon = new TyphoonClient();
   const systemPrompt = `\u0E04\u0E38\u0E13\u0E04\u0E37\u0E2D GreenSpec Senior Civil AI Copilot \u0E27\u0E34\u0E28\u0E27\u0E01\u0E23\u0E1C\u0E39\u0E49\u0E40\u0E0A\u0E35\u0E48\u0E22\u0E27\u0E0A\u0E32\u0E0D\u0E14\u0E49\u0E32\u0E19\u0E04\u0E2D\u0E19\u0E01\u0E23\u0E35\u0E15\u0E04\u0E32\u0E23\u0E4C\u0E1A\u0E2D\u0E19\u0E15\u0E48\u0E33 \u0E01\u0E32\u0E23\u0E2D\u0E2D\u0E01\u0E41\u0E1A\u0E1A\u0E2A\u0E48\u0E27\u0E19\u0E1C\u0E2A\u0E21 ACI 211.1 \u0E41\u0E25\u0E30\u0E21\u0E32\u0E15\u0E23\u0E10\u0E32\u0E19 \u0E21\u0E2D\u0E01., \u0E21\u0E22\u0E1C., \u0E27\u0E2A\u0E17. \u0E02\u0E2D\u0E07\u0E44\u0E17\u0E22
-\u0E43\u0E2B\u0E49\u0E15\u0E2D\u0E1A\u0E04\u0E33\u0E16\u0E32\u0E21\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E01\u0E23\u0E30\u0E0A\u0E31\u0E1A \u0E2A\u0E38\u0E20\u0E32\u0E1E \u0E40\u0E1B\u0E47\u0E19\u0E21\u0E37\u0E2D\u0E2D\u0E32\u0E0A\u0E35\u0E1E \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E2D\u0E49\u0E32\u0E07\u0E2D\u0E34\u0E07\u0E21\u0E32\u0E15\u0E23\u0E10\u0E32\u0E19\u0E17\u0E35\u0E48\u0E40\u0E01\u0E35\u0E48\u0E22\u0E27\u0E02\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E21\u0E2D`;
+\u0E04\u0E38\u0E13\u0E21\u0E35\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D\u0E04\u0E33\u0E19\u0E27\u0E13\u0E27\u0E34\u0E28\u0E27\u0E01\u0E23\u0E23\u0E21 (Civil Engineering Tools) \u0E40\u0E0A\u0E48\u0E19 calculateConcreteMix, calculateEmbodiedCarbon, evaluateThermalMassConcrete, convertConcreteStrength
+\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E43\u0E0A\u0E49\u0E16\u0E32\u0E21\u0E43\u0E2B\u0E49\u0E04\u0E33\u0E19\u0E27\u0E13\u0E2B\u0E23\u0E37\u0E2D\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E48\u0E27\u0E19\u0E1C\u0E2A\u0E21\u0E04\u0E2D\u0E19\u0E01\u0E23\u0E35\u0E15 \u0E08\u0E07\u0E40\u0E23\u0E35\u0E22\u0E01\u0E43\u0E0A\u0E49\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D\u0E17\u0E35\u0E48\u0E40\u0E2B\u0E21\u0E32\u0E30\u0E2A\u0E21\u0E40\u0E2A\u0E21\u0E2D
+\u0E2B\u0E32\u0E01\u0E1C\u0E39\u0E49\u0E43\u0E0A\u0E49\u0E23\u0E30\u0E1A\u0E38\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E04\u0E23\u0E1A\u0E16\u0E49\u0E27\u0E19 (\u0E40\u0E0A\u0E48\u0E19 \u0E02\u0E32\u0E14\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E31\u0E14 f'c \u0E2B\u0E23\u0E37\u0E2D\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17\u0E42\u0E04\u0E23\u0E07\u0E2A\u0E23\u0E49\u0E32\u0E07) \u0E43\u0E2B\u0E49\u0E16\u0E32\u0E21\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E2A\u0E38\u0E20\u0E32\u0E1E\u0E01\u0E48\u0E2D\u0E19\u0E40\u0E23\u0E35\u0E22\u0E01\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D`;
   const fullMessages = [
     { role: "system", content: systemPrompt },
     ...messages
   ];
   if (!stream) {
+    if (useTools && typhoon.apiKey) {
+      try {
+        const result = await typhoon.chatWithTools({
+          messages: fullMessages,
+          toolHandler: executeCivilTool
+        });
+        return c.json(result);
+      } catch (err) {
+        if (err.code === "AI_NOT_CONFIGURED") throw err;
+      }
+    }
     const reply = await typhoon.chat({ messages: fullMessages });
-    return c.json({ reply });
+    return c.json({ reply, tool_executions: [] });
   }
   const textStream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
       try {
-        for await (const chunk of typhoon.chatStream({ messages: fullMessages })) {
-          const payload = JSON.stringify({ chunk });
-          controller.enqueue(encoder.encode(`data: ${payload}
+        let toolExecutions = [];
+        let finalReply = "";
+        if (useTools && typhoon.apiKey) {
+          try {
+            const toolResult = await typhoon.chatWithTools({
+              messages: fullMessages,
+              toolHandler: executeCivilTool
+            });
+            toolExecutions = toolResult.tool_executions || [];
+            finalReply = toolResult.reply || "";
+          } catch (toolErr) {
+          }
+        }
+        if (toolExecutions.length > 0 || finalReply) {
+          if (toolExecutions.length > 0) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "tool_executions", tool_executions: toolExecutions })}
 
 `));
+          }
+          const chunkSize = 25;
+          for (let i = 0; i < finalReply.length; i += chunkSize) {
+            const chunk = finalReply.slice(i, i + chunkSize);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chunk })}
+
+`));
+          }
+        } else {
+          for await (const chunk of typhoon.chatStream({ messages: fullMessages })) {
+            const payload = JSON.stringify({ chunk });
+            controller.enqueue(encoder.encode(`data: ${payload}
+
+`));
+          }
         }
         controller.enqueue(encoder.encode(`data: [DONE]
 
@@ -1327,5 +1623,7 @@ export {
   PUT,
   app,
   handler as default,
+  executeCivilTool,
+  extractRequirementsDeterministic,
   handleFetch
 };

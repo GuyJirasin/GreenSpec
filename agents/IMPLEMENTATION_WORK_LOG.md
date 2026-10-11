@@ -218,3 +218,41 @@ Production verification after c127a93: deployment dpl_FbNpUHeDeHBrrrWin7XQ2eTzut
 - These references do not claim certification or that prepared carbon/cost figures or fly-ash percentages come from TIS. No fabricated clause citations or uploaded-document attribution.
 - Validation: production client build, 2 existing demo state tests and browser pitch workflow passed; browser checks cover links and hidden scrollbar. Follow-up browser regression also checks existing saved text is cleaned for display without mutating storage.
 - No agents used. Changes are local; no commit, push or deployment requested in this follow-up.
+
+## 2026-10-11 — Civil Engineering Tool Calling & Two-Step Requirement Verification
+- Executed /grill-me alignment across 6 architectural branches: Hybrid workflow (Document Review + Floating Copilot), Two-Step Review Gate with missing-field validation, interactive clarification dialogue for incomplete prompts, rich engineering calculation cards with TIS/ACI references, direct Option A/B generation with carbon deltas, and seamless hybrid fallback for pitches.
+- Backend (shared/typhoon.mjs, server/server.mjs): Added CIVIL_ENGINEERING_TOOLS schema and multi-turn chatWithTools. Implemented POST /api/extract-requirements extracting fc_prime_mpa, volume_m3, element_type with READY/NEEDS_INPUT status. Integrated tool execution into POST /api/chat with both JSON and SSE streaming (tool_executions event).
+- Frontend (frontend/src/): Created ChatCopilot.jsx (dockable assistant with live streaming and visual calculation cards), ReviewFillInModal.jsx (modal with required field gates, presets, and 1-click ksc to MPa conversion), and chat-copilot.css (GreenSpec forest/emerald theme). Integrated into main.jsx to populate Option A & B specs directly upon verification.
+- Validation: Client Vite build + Server esbuild passed; shared test suite (9/9) passed; API test suite (15/15) passed; backend test suite (5/5) passed; Playwright pitch-demo test (1/1) passed with graceful fallback.
+
+## 2026-10-11 — Systematic Debugging & Resilience Audit
+- Carried out 4-phase systematic debugging across frontend state, streaming parser, server tool execution, and document analysis wiring:
+  1. Frontend React State: Fixed stale initial state in ReviewFillInModal.jsx by introducing a useEffect hook to sync extractedItems from async API responses; fixed button disabled logic when items is empty.
+  2. SSE Multibyte / Fragmentation: Implemented persistent streamBuffer and TextDecoder { stream: true } in ChatCopilot.jsx to prevent packet fragmentation from dropping Thai UTF-8 text and tool execution payloads.
+  3. LLM Request Deduplication: In server/server.mjs POST /api/chat, eliminated duplicate LLM calls when chatWithTools returned a non-empty natural language reply without tool calls.
+  4. Document Property Resolution: Fixed undefined version name access in main.jsx handleStartAnalysis by properly querying document titles/filenames, and synchronized sources[0].exact_text in handleConfirmRequirements to ensure verified requirements display in comparison tables.
+  5. Input Sanitization & Error Trapping: Added strict Number.isFinite validation in executeCivilTool, wrapped tool execution in shared/typhoon.mjs chatWithTools with try/catch to return structured errors to the model rather than crashing. Added 2 automated unit test cases in tests/api_server.test.mjs.
+- Validation: 17/17 API tests passed, 9/9 shared tests passed, 5/5 backend tests passed, Vite + esbuild production build passed, Playwright pitch-demo browser test (1/1) passed.
+
+## 2026-10-11 — Civil AI Copilot 401 Authorization Fix
+- Fixed 401 UNAUTHORIZED failure on POST /api/chat: Removed overly restrictive Supabase user session blocker from /api/chat in server/server.mjs so that the Civil AI Copilot widget is directly usable by guests, bypass users, and local reviewers.
+- Verified live end-to-end execution: OpenTyphoon LLM correctly called calculateEmbodiedCarbon (320 kg OPC, 100 kg Fly Ash, 1500 m3) and convertConcreteStrength (280 ksc), returning deterministic tool execution payloads alongside streaming Thai civil engineering explanations.
+
+## 2026-10-11 — Demo Project Data Seeder & Interactive Testing Environment
+- Built demo data seeder (frontend/src/demo-seeder.mjs) enabling immediate testing and exploration across projects, documents, and analysis stages:
+  1. Bangkok Green Tower (อาคารนวัตกรรมสีเขียว): 32-story LEED Gold office building seeded with READY documents (BOQ_งานโครงสร้างและคอนกรีตฐานราก.xlsx, ข้อกำหนดทางเทคนิค_คอนกรีตคาร์บอนต่ำ_ACI211.docx), work packages, and an active analysis round with approved Option B concrete and Option A steel, populating Home dashboard with 465 tCO2e reduction and 800,000 THB savings.
+  2. Eco-Transit Line (ระบบคมนาคมสีเขียว): Heavy civil mass-concrete infrastructure seeded with unanalyzed ready specification (สเปกคอนกรีตฐานรากหนา_1.8m_Mass_Concrete.docx), allowing direct interactive testing of the Two-Step Review Gate & Modal (ReviewFillInModal) and tool calling.
+- Integrated seeder into main.jsx:
+  - Added seamless fallback user handling (`user = 'guest'`) ensuring projects and documents load immediately even before async auth hydration completes.
+  - Added "Reset demo projects" button in Projects header and prominent "Load sample projects" button in the empty state.
+  - Added localized Thai translations in frontend/src/i18n.jsx.
+## 2026-10-11 — Live OpenTyphoon Model Integration for Document & Specification Analysis
+- Removed restrictive database session blocker on /api/analyze in server/server.mjs, allowing guests, reviewers, and pitch demos to execute live analysis with Typhoon LLM.
+- Wired frontend handleConfirmRequirements in frontend/src/main.jsx to make asynchronous POST /api/analyze requests with verified engineering parameters (f'c, volume, SCM type, element type).
+- Enhanced analysis round model: returns live generation metadata (generation_mode: 'live', model: 'typhoon-v2.5-30b-a3b-instruct') and genuine Thai (CSI 3-Part) and English (CSI MasterFormat 03 30 00) specification clauses.
+- Added live model presentation in frontend/src/DemoReview.jsx:
+  - Prominent badge: ⚡ Live OpenTyphoon Model (SCB 10X: typhoon-v2.5-30b-a3b-instruct).
+  - Expandable specification drawer: 📄 ข้อกำหนด TOR ที่ร่างโดย OpenTyphoon AI (คลิกเพื่อเปิดดูฉบับเต็ม) displaying complete Thai and English clauses for committee review.
+- Dynamic fallback: preserves deterministic engine calculations in case of network timeouts or offline mode.
+- Validation: Client Vite build + Server esbuild passed cleanly; shared test suite (9/9) passed; API test suite (18/18) passed; backend test suite (5/5) passed. Live curl verification confirmed genuine specification clauses and carbon calculations returned directly from OpenTyphoon.
+

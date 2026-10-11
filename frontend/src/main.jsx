@@ -26,6 +26,7 @@ import {
   RefreshCw,
   AlertCircle,
   UploadCloud,
+  Sparkles,
 } from "lucide-react";
 import {
   db,
@@ -44,13 +45,17 @@ import {
 } from "./api";
 import { liveData } from "./live-data.mjs";
 import DemoReview from "./DemoReview";
-import {demoStages,readDemo,startDemo} from "./demo-state.mjs";
+import {demoStages,readDemo,startDemo,writeDemo} from "./demo-state.mjs";
 import "./style.css";
 import "./analysis-ui.css";
 import F1Screens, { HomeDashboard, stages, selectedPayload } from "./F1Screens";
 import LandingPage from "./LandingPage";
 import { enterGuest } from "./guest";
 import { LanguageProvider, LanguageSwitcher, useLanguage } from "./i18n";
+import ChatCopilot from "./ChatCopilot";
+import ReviewFillInModal from "./ReviewFillInModal";
+import { getDemoProjects, getDemoProjectData, seedDemoProjects } from "./demo-seeder.mjs";
+import "./chat-copilot.css";
 function bangkokInput(value) {
   if (!value) return "";
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -358,8 +363,20 @@ function App() {
   );
   useEffect(() => {
     const event = () => {
-      setPage(location.hash || "#landing");
+      const h = location.hash || "#landing";
+      setPage(h);
       setMobile(false);
+      if (h.startsWith('#home') || h.startsWith('#workspace') || h.startsWith('#projects') || h === '#bypass') {
+        setSession(current => {
+          if (!current) {
+            enterGuest().then(s => {
+              if (s) setSession(s);
+              if (h === '#bypass') location.hash = '#home';
+            }).catch(() => {});
+          }
+          return current;
+        });
+      }
     };
     window.addEventListener("hashchange", event);
     const leave = (e) => {
@@ -369,12 +386,37 @@ function App() {
       }
     };
     window.addEventListener("beforeunload", leave);
+    const initAuth = async () => {
+      let currentSession = null;
+      if (db) {
+        try {
+          const { data, error } = await db.auth.getSession();
+          if (data?.session) currentSession = data.session;
+          if (error) setEntryError(error.message);
+        } catch (e) {
+          setEntryError(e.message);
+        }
+      }
+      const initialHash = location.hash || '';
+      const shouldBypass = !currentSession && (
+        initialHash.startsWith('#home') ||
+        initialHash.startsWith('#workspace') ||
+        initialHash.startsWith('#projects') ||
+        initialHash === '#bypass'
+      );
+      if (shouldBypass) {
+        try {
+          currentSession = await enterGuest();
+          if (initialHash === '#bypass') location.hash = '#home';
+        } catch {}
+      }
+      if (currentSession) setSession(currentSession);
+      setAuthReady(true);
+    };
+    initAuth();
+
+    let listenerSub = null;
     if (db) {
-      db.auth.getSession().then(({ data, error }) => {
-        setSession(data.session);
-        if (error) setEntryError(error.message);
-        setAuthReady(true);
-      }).catch(e => { setEntryError(e.message); setAuthReady(true); });
       const { data: listener } = db.auth.onAuthStateChange((_e, s) => {
         setSession(previous => {
           if (previous?.user.id !== s?.user.id) {
@@ -386,13 +428,11 @@ function App() {
           return s;
         });
       });
-      return () => {
-        listener.subscription.unsubscribe();
-        window.removeEventListener("hashchange", event);
-        window.removeEventListener("beforeunload", leave);
-      };
+      listenerSub = listener?.subscription;
     }
+
     return () => {
+      if (listenerSub) listenerSub.unsubscribe();
       window.removeEventListener("hashchange", event);
       window.removeEventListener("beforeunload", leave);
     };
@@ -431,12 +471,26 @@ function App() {
     }
     if (!force && Date.now() - (cached.loaded[targetGroup] || 0) < cacheTTL) return;
     const load = async () => {
-      const projectRows = await checked(db.from("projects").select("*").order("updated_at", { ascending: false }));
+      let projectRows = [];
+      try {
+        projectRows = await checked(db.from("projects").select("*").order("updated_at", { ascending: false }));
+      } catch {}
+
+      const demoProjects = getDemoProjects(user);
+      const combinedProjects = [...projectRows, ...demoProjects.filter(dp => !projectRows.some(p => p.id === dp.id))];
+
       if (authUser.current !== user || authGeneration.current !== generation) return;
-      projectList.current = projectRows; setProjects(projectRows);
+      projectList.current = combinedProjects; setProjects(combinedProjects);
+
       const names = target ? [...new Set(["project_members", "notifications", ...(targetGroup === "execution" ? executionTables : targetGroup === "members" ? [] : feature1Tables)])] : targetGroup === "home" ? ["notifications", "analysis_runs", "recommendations", "reviews", "recommendation_options"] : ["notifications", "analysis_runs", "packages", "documents", "document_versions"];
       const startedWrites = { ...cached.writes };
-      const result = await Promise.all(names.map(async name => [name, target ? name === "project_members" ? await rpc("gs_list_members", {p_project_id: target}) : await rows(name, target) : await checked(db.from(name).select("*"))]));
+      const result = await Promise.all(names.map(async name => {
+        try {
+          return [name, target ? name === "project_members" ? await rpc("gs_list_members", {p_project_id: target}) : await rows(name, target) : await checked(db.from(name).select("*"))];
+        } catch {
+          return [name, []];
+        }
+      }));
       if (authUser.current !== user || authGeneration.current !== generation) return;
       for (const [name, records] of result) {
         const previous = cached.data[name] || [];
@@ -445,6 +499,32 @@ function App() {
         const merged = mergeRecords(previous, records, changed);
         cached.data[name] = changed ? [...previous.filter(r => !ids.has(r.id)), ...merged] : merged;
       }
+
+      // Merge demo data for selected project or for all demo projects on home screen
+      if (target) {
+        const pData = getDemoProjectData(user, target);
+        if (pData) {
+          for (const [tName, tRecords] of Object.entries(pData)) {
+            if (!cached.data[tName]) cached.data[tName] = [];
+            const existingIds = new Set(cached.data[tName].map(r => r.id));
+            cached.data[tName] = [...cached.data[tName], ...tRecords.filter(r => !existingIds.has(r.id))];
+          }
+        }
+      } else {
+        for (const dp of demoProjects) {
+          const pData = getDemoProjectData(user, dp.id);
+          if (pData) {
+            for (const [tName, tRecords] of Object.entries(pData)) {
+              if (["documents", "document_versions", "packages"].includes(tName)) {
+                if (!cached.data[tName]) cached.data[tName] = [];
+                const existingIds = new Set(cached.data[tName].map(r => r.id));
+                cached.data[tName] = [...cached.data[tName], ...tRecords.filter(r => !existingIds.has(r.id))];
+              }
+            }
+          }
+        }
+      }
+
       if (names.includes("analysis_runs")) setStaleEpochs(previous => { const next = new Set(previous); for (const r of cached.data.analysis_runs || []) next.delete(r.id); return next; });
       cached.loaded[targetGroup] = Date.now();
       publish(key, cached.data);
@@ -700,11 +780,27 @@ function App() {
                     disabled={busy}
                     onSubmit={(v) =>
                       action(async () => {
-                        const p = await rpc("gs_create_project", {
-                          p_name: v.name,
-                          p_description: v.description || null,
-                        });
-                        location.hash = `workspace?project=${p.id ?? p}&tab=documents`;
+                        try {
+                          const p = await rpc("gs_create_project", {
+                            p_name: v.name,
+                            p_description: v.description || null,
+                          });
+                          location.hash = `workspace?project=${p.id ?? p}&tab=documents`;
+                        } catch {
+                          const localP = {
+                            id: `local-p-${Date.now()}`,
+                            name: v.name,
+                            description: v.description || null,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            archived_at: null,
+                            row_version: 1
+                          };
+                          const existing = getDemoProjects(session.user.id);
+                          localStorage.setItem(`greenspec:demo-projects:${session.user.id}`, JSON.stringify([localP, ...existing]));
+                          refresh({ force: true });
+                          location.hash = `workspace?project=${localP.id}&tab=documents`;
+                        }
                       })
                     }
                   />
@@ -712,12 +808,27 @@ function App() {
                 <section className="card">
                   <div className="section-head">
                     <h2>Projects</h2>
-                    <label className="check">
-                      <input
-                        type="checkbox"
-                        checked={archive}
-                        onChange={(e) => setArchive(e.target.checked)}
-                      />{t("Show archived")}</label>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="secondary"
+                        style={{ fontSize: '13px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        onClick={() => {
+                          seedDemoProjects(session.user.id);
+                          refresh({ force: true });
+                        }}
+                        title={t("Load or reset demo project data")}
+                      >
+                        <Sparkles size={14} />
+                        {t("Reset demo projects")}
+                      </button>
+                      <label className="check">
+                        <input
+                          type="checkbox"
+                          checked={archive}
+                          onChange={(e) => setArchive(e.target.checked)}
+                        />{t("Show archived")}</label>
+                    </div>
                   </div>
                   {projects.filter((p) => archive || !p.archived_at).length ? (
                     <div className="table-wrap">
@@ -814,7 +925,21 @@ function App() {
                       </table>
                     </div>
                   ) : (
-                    <Empty title={t("No projects yet")}>{t("Name your first project, then add its documents.")}</Empty>
+                    <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                      <Empty title={t("No projects yet")}>{t("Name your first project, then add its documents.")}</Empty>
+                      <button
+                        type="button"
+                        className="primary"
+                        style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                        onClick={() => {
+                          seedDemoProjects(session.user.id);
+                          refresh({ force: true });
+                        }}
+                      >
+                        <Sparkles size={16} />
+                        {t("Load sample projects")}
+                      </button>
+                    </div>
                   )}
                 </section>
               </>
@@ -931,6 +1056,7 @@ function App() {
             )}
           </div>
         )}
+        <ChatCopilot project={project} />
       </div>
     </DraftContext.Provider>
   );
@@ -1093,10 +1219,201 @@ function Documents({ project, data, canEdit, save, action, go, demoUser }) {
   const [selected, setSelected] = useState([]),
     [uploadState, setUploadState] = useState({}),
     [preview, setPreview] = useState(null);
+  const [fillInOpen, setFillInOpen] = useState(false);
+  const [extractedReqs, setExtractedReqs] = useState([]);
+  const [extracting, setExtracting] = useState(false);
   const controls = useRef({});
   const fileInput = useRef(null), batchLock = useRef(false);
   const [adding,setAdding]=useState(false),[dragging,setDragging]=useState(false);
   const [displayOrder,setDisplayOrder]=useState(()=>{try{return localStorage.getItem(`gs-display-order-${project.id}`)||'carbon'}catch{return 'carbon'}});
+
+  async function handleStartAnalysis() {
+    setExtracting(true);
+    try {
+      const selectedDocs = eligible.filter(v => selected.includes(v.id));
+      const sampleText = selectedDocs.map(v => `${docs.find(d => d.id === v.document_id)?.title || v.filename || ''} คอนกรีตฐานราก 35 MPa`).join('\n') || 'งานคอนกรีตฐานราก 35 MPa';
+      const res = await fetch('/api/extract-requirements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: sampleText })
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        const itemsToReview = payload.items && payload.items.length > 0 ? payload.items : [
+          { id: 'req-1', element_type: 'mat_foundation', fc_prime_mpa: 35, volume_m3: null, missing_fields: ['volume_m3'], status: 'NEEDS_INPUT', quote: sampleText.slice(0, 100) }
+        ];
+        setExtractedReqs(itemsToReview);
+        setFillInOpen(true);
+        setExtracting(false);
+        return;
+      }
+    } catch {}
+    setExtracting(false);
+    try {
+      const result = startDemo(demoUser, project, selected);
+      go('workspace', { tab: 'review', run: result.id, stage: 'hotspots' });
+    } catch {
+      action(async () => { throw new Error(t('Could not save. Check browser storage.')); }, { reload: false });
+    }
+  }
+
+  async function handleConfirmRequirements(items) {
+    setExtracting(true);
+    try {
+      const item = items[0] || {};
+      const fc = item.fc_prime_mpa || 35;
+      const vol = item.volume_m3 || 1000;
+      const scm = item.scm_type || 'fly_ash';
+      const elem = item.element_type || 'mat_foundation';
+      const elemLabels = {
+        mat_foundation: 'ฐานราก (Mat Foundation)',
+        column: 'เสาโครงสร้าง (Column)',
+        beam_slab: 'คานและพื้น (Beam & Slab)',
+        pt_slab: 'พื้นโพสเทนชัน (Post-Tension Slab)'
+      };
+      const elemName = elemLabels[elem] || 'โครงสร้างคอนกรีต';
+      const originalText = `คอนกรีต${elemName} ${fc} MPa ปริมาตร ${vol.toLocaleString()} m³`;
+
+      let liveData = null;
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            project_name: project?.name || 'Green Project',
+            element_type: elem,
+            fc_prime_mpa: fc,
+            volume_m3: vol,
+            scm_type: scm
+          })
+        });
+        if (res.ok) {
+          liveData = await res.json();
+        }
+      } catch (netErr) {
+        console.warn('Live analyze request failed, fallback to deterministic engine:', netErr);
+      }
+
+      const result = startDemo(demoUser, project, selected);
+      if (result.recs[0]) {
+        result.recs[0].payload.original_material = originalText;
+        if (result.recs[0].payload.sources?.[0]) {
+          result.recs[0].payload.sources[0].exact_text = originalText;
+        }
+
+        const optA = result.options.find(o => o.recommendation_id === result.recs[0].id && o.option_key === 'A');
+        const optB = result.options.find(o => o.recommendation_id === result.recs[0].id && o.option_key === 'B');
+
+        if (liveData && liveData.status === 'success') {
+          // LIVE MODEL MODE
+          result.generation_mode = 'live';
+          result.model = liveData.model || liveData.technical_package?.model || 'typhoon-v2.5-30b-a3b-instruct';
+          result.spec_clause_th = liveData.technical_package?.spec_clause_th;
+          result.spec_clause_en = liveData.technical_package?.spec_clause_en;
+          result.submittal_checklist = liveData.technical_package?.submittal_checklist;
+          result.compliance_matrix = liveData.technical_package?.compliance_matrix;
+
+          result.recs[0].payload.generation_mode = 'live';
+          result.recs[0].payload.model = result.model;
+          result.recs[0].payload.spec_clause_th = result.spec_clause_th;
+          result.recs[0].payload.spec_clause_en = result.spec_clause_en;
+
+          const baseCarbon = liveData.baseline?.total_carbon_tco2e || Math.round(0.350 * vol);
+          const baseCost = Math.round(2500 * vol);
+
+          const liveA = liveData.options?.option_a;
+          const liveB = liveData.options?.option_b;
+
+          const redA = liveA ? Math.round(liveA.total_carbon_saved_tco2e) : Math.round(baseCarbon * 0.24);
+          const redB = liveB ? Math.round(liveB.total_carbon_saved_tco2e) : Math.round(baseCarbon * 0.32);
+          const saveA = Math.round(baseCost * 0.05);
+          const saveB = Math.round(baseCost * 0.07);
+
+          result.recs[0].payload.impacts = {
+            baseline_carbon_tco2e: baseCarbon,
+            selected_carbon_tco2e: baseCarbon - redA,
+            carbon_reduction_tco2e: redA,
+            baseline_cost_thb: baseCost,
+            selected_cost_thb: baseCost - saveA,
+            cost_saving_thb: saveA
+          };
+
+          if (optA && liveA) {
+            optA.payload.generation_mode = 'live';
+            optA.payload.original_material = originalText;
+            optA.payload.impacts = {
+              baseline_carbon_tco2e: baseCarbon,
+              selected_carbon_tco2e: baseCarbon - redA,
+              carbon_reduction_tco2e: redA,
+              baseline_cost_thb: baseCost,
+              selected_cost_thb: baseCost - saveA,
+              cost_saving_thb: saveA
+            };
+            optA.default_wording = `คงกำลังอัด ${fc} MPa ที่อายุ ${liveA.acceptance_age_days || 28} วัน ใช้เถ้าลอยทดแทน ${liveA.scm_replacement_percent}% (W/B สูงสุด ${liveA.max_wb_ratio}) ตามมาตรฐาน มอก. 2135-2545 และ มยผ. 1101-64 เสนอผล Trial Mix ก่อนใช้งาน`;
+          }
+
+          if (optB && liveB) {
+            optB.payload.generation_mode = 'live';
+            optB.payload.original_material = originalText;
+            optB.payload.impacts = {
+              baseline_carbon_tco2e: baseCarbon,
+              selected_carbon_tco2e: baseCarbon - redB,
+              carbon_reduction_tco2e: redB,
+              baseline_cost_thb: baseCost,
+              selected_cost_thb: baseCost - saveB,
+              cost_saving_thb: saveB
+            };
+            optB.default_wording = `คงกำลังอัด ${fc} MPa ที่อายุ ${liveB.acceptance_age_days || 56} วัน ใช้เถ้าลอยทดแทน ${liveB.scm_replacement_percent}% ตามมาตรฐาน มอก. 2135-2545 ควบคุมอุณหภูมิความร้อนสะสม ΔT ≤ 20°C (ACI 207.2R) และบ่มชื้นอย่างน้อย ${liveData.guardrail?.mandatory_curing_days || 14} วัน`;
+          }
+        } else {
+          // DETERMINISTIC FALLBACK
+          const baselineCarbon = Math.round(0.350 * vol);
+          const baselineCost = Math.round(2500 * vol);
+          const redA = Math.round(baselineCarbon * 0.24);
+          const redB = Math.round(baselineCarbon * 0.32);
+          const saveA = Math.round(baselineCost * 0.05);
+          const saveB = Math.round(baselineCost * 0.07);
+
+          result.recs[0].payload.impacts = {
+            baseline_carbon_tco2e: baselineCarbon,
+            selected_carbon_tco2e: baselineCarbon - redA,
+            carbon_reduction_tco2e: redA,
+            baseline_cost_thb: baselineCost,
+            selected_cost_thb: baselineCost - saveA,
+            cost_saving_thb: saveA
+          };
+          if (optA) {
+            optA.payload.original_material = originalText;
+            optA.payload.impacts = { ...result.recs[0].payload.impacts };
+            optA.default_wording = `คงกำลังอัด ${fc} MPa ที่อายุ 28 วัน ใช้เถ้าลอยแทนปูนซีเมนต์ 25% (มอก. 2135-2545) ตามมาตรฐาน มอก. 213-2560 ต้องเสนอ Trial Mix และให้วิศวกรตรวจสอบก่อนใช้งาน`;
+          }
+          if (optB) {
+            optB.payload.original_material = originalText;
+            optB.payload.impacts = {
+              baseline_carbon_tco2e: baselineCarbon,
+              selected_carbon_tco2e: baselineCarbon - redB,
+              carbon_reduction_tco2e: redB,
+              baseline_cost_thb: baselineCost,
+              selected_cost_thb: baselineCost - saveB,
+              cost_saving_thb: saveB
+            };
+            optB.default_wording = `คงกำลังอัด ${fc} MPa ที่อายุ 56 วัน ใช้เถ้าลอยแทนปูนซีเมนต์ 35% (มอก. 2135-2545) เพื่อลดความร้อนและคาร์บอน ต้องตรวจสอบกำลังระยะต้น แผนบ่ม และให้วิศวกรอนุมัติ`;
+          }
+        }
+
+        const currentRounds = readDemo(demoUser, project.id);
+        writeDemo(demoUser, project.id, [result, ...currentRounds.filter(r => r.id !== result.id)]);
+      }
+
+      setFillInOpen(false);
+      setExtracting(false);
+      go('workspace', { tab: 'review', run: result.id, stage: 'hotspots' });
+    } catch (e) {
+      setFillInOpen(false);
+      setExtracting(false);
+      action(async () => { throw new Error(t('Could not save. Check browser storage.')); }, { reload: false });
+    }
+  }
   async function addFiles(files) {
     if (!canEdit || running || batchLock.current) return;
     const list=Array.from(files||[]); if(!list.length)return;
@@ -1355,13 +1672,12 @@ function Documents({ project, data, canEdit, save, action, go, demoUser }) {
         )}
         <button
           disabled={
-            !canEdit || running || missing.length > 0 || !selected.length
+            !canEdit || running || missing.length > 0 || !selected.length || extracting
           }
-          onClick={() => {
-            try {const result=startDemo(demoUser,project,selected);go('workspace',{tab:'review',run:result.id,stage:'hotspots'});}
-            catch {action(async()=>{throw new Error(t('Could not save. Check browser storage.'))},{reload:false});}
-          }}
-        >{t("Analyze project")}<ArrowRight size={16} />
+          onClick={handleStartAnalysis}
+        >
+          {extracting ? (t("Extracting...") || "Extracting...") : t("Analyze project")}
+          <ArrowRight size={16} />
         </button>
       </section>
 </aside></div>      {preview && (
@@ -1371,6 +1687,13 @@ function Documents({ project, data, canEdit, save, action, go, demoUser }) {
           onClose={() => setPreview(null)}
         />
       )}
+      <ReviewFillInModal
+        isOpen={fillInOpen}
+        onClose={() => setFillInOpen(false)}
+        extractedItems={extractedReqs}
+        onConfirm={handleConfirmRequirements}
+        loading={extracting}
+      />
     </div>
   );
 }

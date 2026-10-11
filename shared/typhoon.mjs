@@ -3,6 +3,77 @@
  * Supports both standard JSON responses and Server-Sent Events (SSE) Streaming.
  */
 
+export const CIVIL_ENGINEERING_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "calculateConcreteMix",
+      description: "คำนวณสัดส่วนผสมคอนกรีตตามมาตรฐาน ACI 211.1 (น้ำหนัก ปูนซีเมนต์, เถ้าลอย SCM, หิน, ทราย, น้ำ, น้ำยาลดน้ำ ต่อ 1 ลบ.ม.)",
+      parameters: {
+        type: "object",
+        properties: {
+          fcTargetMpa: { type: "number", description: "กำลังอัดระบุ f'c (Cylinder) ในหน่วย MPa เช่น 28, 35, 40" },
+          elementType: { type: "string", enum: ["beam_slab", "column", "mat_foundation", "pt_slab"], description: "ประเภทชิ้นส่วนโครงสร้าง" },
+          scmType: { type: "string", enum: ["fly_ash", "bottom_ash", "slag_ggbs", "hydraulic_cement"], description: "ชนิดวัสดุประสานทดแทน (SCM)" },
+          scmPercent: { type: "number", description: "ร้อยละการแทนที่ด้วย SCM เช่น 20, 25, 30, 35%" },
+          slumpCm: { type: "number", description: "ค่ายุบตัว (cm) เช่น 10, 12, 15" }
+        },
+        required: ["fcTargetMpa", "elementType"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "calculateEmbodiedCarbon",
+      description: "คำนวณ Embodied Carbon ของคอนกรีตตามค่า อบก. (TGO) เปรียบเทียบกับสูตรลดคาร์บอน",
+      parameters: {
+        type: "object",
+        properties: {
+          cementOpcKg: { type: "number", description: "น้ำหนักปูนซีเมนต์ OPC (กก./ลบ.ม.)" },
+          scmKg: { type: "number", description: "น้ำหนัก SCM เช่น เถ้าลอย (กก./ลบ.ม.)" },
+          scmType: { type: "string", enum: ["fly_ash", "bottom_ash", "slag_ggbs", "hydraulic_cement"] },
+          volumeM3: { type: "number", description: "ปริมาตรคอนกรีตรวมทั้งโครงการ (ลบ.ม.)" }
+        },
+        required: ["cementOpcKg", "volumeM3"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "evaluateThermalMassConcrete",
+      description: "ตรวจสอบความร้อนสะสมและความเสี่ยงแตกร้าวในคอนกรีตหลาใหญ่ (Mass Concrete) และ DEF ตาม ACI 207",
+      parameters: {
+        type: "object",
+        properties: {
+          thicknessM: { type: "number", description: "ความหนาของโครงสร้าง (เมตร)" },
+          totalBinderKgM3: { type: "number", description: "ปริมาณวัสดุประสานรวม (กก./ลบ.ม.)" },
+          scmPercent: { type: "number", description: "ร้อยละ SCM" },
+          scmType: { type: "string", enum: ["fly_ash", "bottom_ash", "slag_ggbs"] },
+          placingTempC: { type: "number", description: "อุณหภูมิขณะเท (°C)" }
+        },
+        required: ["thicknessM"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "convertConcreteStrength",
+      description: "แปลงหน่วยกำลังอัดคอนกรีตระหว่าง Cylinder และ Cube ทั้ง ksc และ MPa ตาม มยผ. 1101-64",
+      parameters: {
+        type: "object",
+        properties: {
+          value: { type: "number", description: "ค่ากำลังอัด เช่น 280, 350, 35" },
+          fromFormat: { type: "string", enum: ["cylinder_ksc", "cube_ksc", "cylinder_mpa", "cube_mpa"] }
+        },
+        required: ["value", "fromFormat"]
+      }
+    }
+  }
+];
+
 export class TyphoonClient {
   constructor({ apiKey = "", baseUrl = "https://api.opentyphoon.ai/v1", model = "typhoon-v2.5-30b-a3b-instruct" } = {}) {
     this.apiKey = apiKey || process.env.TYPHOON_API_KEY || "";
@@ -43,6 +114,79 @@ export class TyphoonClient {
     this.lastGenerationMode = "live";
     return data.choices?.[0]?.message?.content || "";
   }
+
+  /**
+   * Completion with Tool Calling (Function Calling)
+   */
+  async chatWithTools({ messages, tools = CIVIL_ENGINEERING_TOOLS, toolHandler, temperature = 0.2, maxTokens = 3500 }) {
+    if (!this.apiKey) throw Object.assign(new Error('Set TYPHOON_API_KEY before using AI analysis.'), {code:'AI_NOT_CONFIGURED'});
+
+    const res = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: "POST",
+      signal: AbortSignal.timeout(30000),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        tools: tools && tools.length > 0 ? tools : undefined,
+        temperature,
+        max_tokens: maxTokens,
+        stream: false
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`OpenTyphoon API error (${res.status}): ${errText}`);
+    }
+
+    const data = await res.json();
+    this.lastGenerationMode = "live";
+    const choice = data.choices?.[0];
+    const message = choice?.message || {};
+    const toolExecutions = [];
+
+    if (message.tool_calls && message.tool_calls.length > 0 && toolHandler) {
+      const updatedMessages = [...messages, message];
+      for (const call of message.tool_calls) {
+        let args = {};
+        try { args = JSON.parse(call.function?.arguments || "{}"); } catch {}
+        let result;
+        try {
+          result = await toolHandler(call.function?.name, args);
+        } catch (toolErr) {
+          result = { error: toolErr.message };
+        }
+        toolExecutions.push({
+          tool: call.function?.name,
+          args,
+          result
+        });
+        updatedMessages.push({
+          role: "tool",
+          name: call.function?.name,
+          tool_call_id: call.id,
+          content: JSON.stringify(result)
+        });
+      }
+
+      // Second turn: LLM synthesizes natural language response using tool results
+      const finalReply = await this.chat({ messages: updatedMessages, temperature, maxTokens });
+      return {
+        reply: finalReply,
+        tool_executions: toolExecutions
+      };
+    }
+
+    return {
+      reply: message.content || "",
+      tool_executions: []
+    };
+  }
+
 
   /**
    * Streaming completion returning an async iterator of token chunks (SSE)

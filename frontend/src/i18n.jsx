@@ -115,6 +115,9 @@ const translations = {
 };
 
 const supplementalThai = {
+  "Reset demo projects": "รีเซ็ตโครงการตัวอย่าง",
+  "Load sample projects": "โหลดโครงการตัวอย่างเพื่อทดลองเล่น",
+  "Load or reset demo project data": "โหลดหรือรีเซ็ตข้อมูลโครงการตัวอย่าง",
   "A new round keeps only locked, unchanged approved choices. Review new or changed items again.": "รอบใหม่จะเก็บเฉพาะรายการที่อนุมัติและล็อกไว้โดยไม่มีการเปลี่ยนแปลง โปรดตรวจรายการใหม่หรือรายการที่แก้ไขอีกครั้ง",
   "Access": "สิทธิ์เข้าใช้งาน",
   "Actual result completeness": "ความครบถ้วนของผลจริง", "Actual totals include only sourced values. Missing results stay unknown. Estimates are not used to fill missing results.": "ยอดรวมจริงนับเฉพาะค่าที่มีแหล่งข้อมูล ค่าที่ขาดจะคงเป็นไม่ทราบ และจะไม่นำค่าประมาณมาเติม",

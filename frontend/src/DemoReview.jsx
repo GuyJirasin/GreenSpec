@@ -20,6 +20,38 @@ export default function DemoReview({project,user,runId,stage,onStage,canEdit,For
   const remaining=round.reviews.filter(r=>r.decision==='UNREVIEWED').length,approved=round.reviews.filter(r=>r.decision==='APPROVED').length;
   return <>
     <div className="demo-round-toolbar"><label>{th?'รอบการวิเคราะห์':'Analysis round'} <select value={round.id} onChange={e=>onStage('overview',null,e.target.value)}>{rounds.map((r,i)=><option value={r.id} key={r.id}>{stamp(r.created_at)} · {r.final?'Final':'Draft'}</option>)}</select></label><span className="badge">{th?'ตรวจทานแล้ว':'Reviewed'} {round.reviews.length-remaining}/{round.reviews.length}</span></div>
+    {round.generation_mode === 'live' && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#e6f4ea', border: '1px solid #137333', borderRadius: '8px', marginBottom: '14px', color: '#137333', fontSize: '13px', fontWeight: 600 }}>
+        <span>⚡</span>
+        <span>{th ? `วิเคราะห์สดโดย OpenTyphoon (${round.model || 'typhoon-v2.5-30b-a3b-instruct'})` : `Live Analysis by OpenTyphoon (${round.model || 'typhoon-v2.5-30b-a3b-instruct'})`}</span>
+      </div>
+    )}
+    {(round.spec_clause_th || round.spec_clause_en) && (
+      <details style={{ background: '#f8fdf9', border: '1px solid #c2e7cc', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600, color: '#0d652d', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>📄</span>
+          <span>{th ? 'ข้อกำหนด TOR ที่ร่างโดย OpenTyphoon AI (คลิกเพื่อเปิดดูฉบับเต็ม)' : 'Technical Specifications Drafted by OpenTyphoon AI (Click to inspect)'}</span>
+        </summary>
+        <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+          {round.spec_clause_th && (
+            <div style={{ background: '#ffffff', padding: '12px', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#137333' }}>🇹🇭 ข้อกำหนดภาษาไทย (CSI 3-Part)</h4>
+              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '12px', fontFamily: 'inherit', color: '#333', maxHeight: '280px', overflowY: 'auto' }}>
+                {round.spec_clause_th}
+              </pre>
+            </div>
+          )}
+          {round.spec_clause_en && (
+            <div style={{ background: '#ffffff', padding: '12px', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#137333' }}>🇬🇧 English Specification (CSI MasterFormat 03 30 00)</h4>
+              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '12px', fontFamily: 'inherit', color: '#333', maxHeight: '280px', overflowY: 'auto' }}>
+                {round.spec_clause_en}
+              </pre>
+            </div>
+          )}
+        </div>
+      </details>
+    )}
     {error&&<p className="error" role="alert">{error}</p>}
     <F1Screens {...{project,stage,FormComponent}} run={round} recs={round.recs.map(r=>({...r,payload:presentPreparedPayload(r.payload)}))} options={round.options.map(o=>({...o,payload:presentPreparedPayload(o.payload,o.option_key)}))} reviews={round.reviews} final={round.final} canEdit={canEdit&&!round.final} onStage={onStage} onSource={s=>setSource(s)} onDecision={(r,decision,locked,reason)=>edit(round.reviews.find(v=>v.recommendation_id===r.id).id,{decision,locked,...(reason===undefined?{}:{reason})})} onChange={(review,option,wording)=>edit(review.id,{selected_option:option,draft_wording:wording,decision:'UNREVIEWED',locked:false})} historyRuns={rounds} decisionSets={rounds.filter(r=>r.final).map(r=>r.final)} onRun={id=>onStage('overview',null,id)}/>
     {stage==='summary'&&<section className="card demo-finalize"><h3>{round.final?'Final revision':'Review & finalize'}</h3><p>{round.final?(th?'บันทึกฉบับสุดท้ายแล้ว การแก้ไขต้องเริ่มรอบใหม่':'This revision is saved. Start a new round to make changes.'):(th?`เหลือ ${remaining} รายการที่ต้องตรวจทาน เลือกอนุมัติอย่างน้อย 1 รายการก่อน Finalize`:`Review ${remaining} remaining items and approve at least one change before finalizing.`)}</p><div className="actions"><button className="secondary" onClick={()=>exportFile('greenspec-analysis.json',{demo:true,notice:'Prepared example; not analysis of uploaded files.',project:{id:project.id,name:project.name},round})}><Download size={16}/>{th?'ดาวน์โหลดผลวิเคราะห์':'Download analysis'}</button><button className="secondary" disabled={!approved} onClick={()=>exportFile('greenspec-specification.txt',specification(),'text/plain;charset=utf-8')}><Download size={16}/>{th?'ดาวน์โหลดข้อกำหนด':'Download specification'}</button>{!round.final&&<button disabled={!canEdit||remaining>0||!approved} onClick={finish}><Check size={16}/>Finalize</button>}<button className="secondary" onClick={onDocuments}><Plus size={16}/>{th?'เริ่มรอบใหม่':'New round'}</button></div></section>}
