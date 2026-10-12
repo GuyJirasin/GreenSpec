@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Sparkles, Calculator, Flame, Leaf, ArrowRight, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from './i18n';
+import MarkdownRenderer from './MarkdownRenderer.jsx';
 
 export default function ChatCopilot({ project }) {
   const { language } = useLanguage();
@@ -177,8 +178,8 @@ export default function ChatCopilot({ project }) {
               <div key={m.id} className={`message-row ${m.role}`}>
                 <div className="message-bubble">
                   {/* Text content */}
-                  <div className="message-text" style={{ whiteSpace: 'pre-wrap' }}>
-                    {m.content}
+                  <div className="message-text">
+                    <MarkdownRenderer content={m.content} role={m.role} />
                   </div>
 
                   {/* Render interactive tool execution card if any */}

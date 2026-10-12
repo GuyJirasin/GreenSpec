@@ -523,3 +523,206 @@
 .confirm-btn:hover:not(:disabled) {
   background: #1b4332;
 }
+
+/* ==================== AI COPILOT MARKDOWN STYLES ==================== */
+.greenspec-copilot-markdown {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.copilot-user-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #ffffff;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.copilot-p {
+  margin: 0 0 8px 0;
+}
+.copilot-p:last-child {
+  margin-bottom: 0;
+}
+
+.copilot-heading {
+  color: #143526;
+  font-weight: 700;
+  margin: 10px 0 4px 0;
+  line-height: 1.35;
+}
+.copilot-heading:first-child {
+  margin-top: 0;
+}
+.copilot-heading.h1 {
+  font-size: 15px;
+  border-bottom: 1px solid #b7e4c7;
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+}
+.copilot-heading.h2 {
+  font-size: 14.5px;
+  color: #1b4332;
+}
+.copilot-heading.h3 {
+  font-size: 13.5px;
+  color: #2d6a4f;
+}
+.copilot-heading.h4 {
+  font-size: 13px;
+  color: #2d6a4f;
+}
+
+/* Inline Code */
+.copilot-inline-code {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+}
+
+/* Fenced Code Block */
+.copilot-code-container {
+  background: #0f172a;
+  border-radius: 8px;
+  margin: 8px 0;
+  overflow: hidden;
+  border: 1px solid #334155;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.copilot-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1e293b;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom: 1px solid #334155;
+}
+
+.copilot-code-lang {
+  letter-spacing: 0.05em;
+  color: #7dd3fc;
+}
+
+.copilot-code-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.copilot-code-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+.copilot-code-copy-btn .copy-icon-success {
+  color: #4ade80;
+}
+
+.copilot-code-pre {
+  margin: 0;
+  padding: 10px 12px;
+  color: #f1f5f9;
+  font-size: 12px;
+  line-height: 1.5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Blockquote */
+.copilot-blockquote {
+  margin: 8px 0;
+  padding: 6px 12px;
+  background: #f0fdf4;
+  border-left: 3px solid #2d6a4f;
+  border-radius: 0 6px 6px 0;
+  color: #1b4332;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Lists */
+.copilot-ul,
+.copilot-ol {
+  margin: 6px 0 8px 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.copilot-ul li,
+.copilot-ol li {
+  margin: 0;
+}
+
+/* Tables */
+.copilot-table-wrapper {
+  margin: 8px 0;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.copilot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.copilot-table th {
+  background: #1b4332;
+  color: #ffffff;
+  padding: 6px 10px;
+  font-weight: 600;
+  border-bottom: 1px solid #143526;
+}
+.copilot-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+.copilot-table tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+.copilot-table tbody tr:hover td {
+  background: #edf7f2;
+}
+.copilot-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Horizontal Rule */
+.copilot-hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 10px 0;
+}
+
+/* Links */
+.copilot-link {
+  color: #15803d;
+  text-decoration: underline;
+  font-weight: 500;
+}
+.copilot-link:hover {
+  color: #166534;
+}
+
