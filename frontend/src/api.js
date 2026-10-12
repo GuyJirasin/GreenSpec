@@ -12,6 +12,9 @@ export const db = configured
     )
   : null;
 export const requestId = () => crypto.randomUUID();
+export const isUuid = (id) =>
+  typeof id === "string" &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 const errorText = {
   VERSION_CONFLICT: "Someone changed this record. Load the latest data and review your changes before saving.",
   REVIEW_LOCKED: "This decision is locked. Unlock it before changing the option or wording.",
@@ -34,7 +37,9 @@ export async function checked(request) {
   return data;
 }
 export const rows = (table, project) =>
-  checked(db.from(table).select("*").eq("project_id", project));
+  isUuid(project)
+    ? checked(db.from(table).select("*").eq("project_id", project))
+    : Promise.resolve([]);
 export const rpc = (name, args) => checked(db.rpc(name, args));
 export async function invoke(name, args) {
   try {

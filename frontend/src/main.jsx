@@ -27,6 +27,7 @@ import {
   AlertCircle,
   UploadCloud,
   Sparkles,
+  Eye,
 } from "lucide-react";
 import {
   db,
@@ -37,6 +38,7 @@ import {
   invoke,
   mutate,
   requestId,
+  isUuid,
   checksum,
   download,
   exportFile,
@@ -54,6 +56,7 @@ import { enterGuest } from "./guest";
 import { LanguageProvider, LanguageSwitcher, useLanguage } from "./i18n";
 import ChatCopilot from "./ChatCopilot";
 import ReviewFillInModal from "./ReviewFillInModal";
+import DocumentDiffModal from "./DocumentDiffModal";
 import { getDemoProjects, getDemoProjectData, seedDemoProjects } from "./demo-seeder.mjs";
 import "./chat-copilot.css";
 function bangkokInput(value) {
@@ -486,6 +489,7 @@ function App() {
       const startedWrites = { ...cached.writes };
       const result = await Promise.all(names.map(async name => {
         try {
+          if (target && !isUuid(target)) return [name, []];
           return [name, target ? name === "project_members" ? await rpc("gs_list_members", {p_project_id: target}) : await rows(name, target) : await checked(db.from(name).select("*"))];
         } catch {
           return [name, []];
@@ -1219,6 +1223,7 @@ function Documents({ project, data, canEdit, save, action, go, demoUser }) {
   const [selected, setSelected] = useState([]),
     [uploadState, setUploadState] = useState({}),
     [preview, setPreview] = useState(null);
+  const [diffDoc, setDiffDoc] = useState(null);
   const [fillInOpen, setFillInOpen] = useState(false);
   const [extractedReqs, setExtractedReqs] = useState([]);
   const [extracting, setExtracting] = useState(false);
@@ -1549,6 +1554,15 @@ function Documents({ project, data, canEdit, save, action, go, demoUser }) {
                         className="secondary"
                         onClick={() => setPreview(version)}
                       >{t("View text / source")}</button>
+                      <button
+                        type="button"
+                        className="secondary"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        onClick={() => setDiffDoc(doc)}
+                      >
+                        <Eye size={14} />
+                        {t("Visual Diff Preview")}
+                      </button>
                     </>
                   )}
                   {uploadState[doc.id]?.status === "Uploading" && (
@@ -1693,6 +1707,14 @@ function Documents({ project, data, canEdit, save, action, go, demoUser }) {
         extractedItems={extractedReqs}
         onConfirm={handleConfirmRequirements}
         loading={extracting}
+      />
+      <DocumentDiffModal
+        isOpen={Boolean(diffDoc)}
+        document={diffDoc}
+        project={project}
+        round={readDemo(demoUser, project.id)?.[0]}
+        canEdit={canEdit}
+        onClose={() => setDiffDoc(null)}
       />
     </div>
   );

@@ -1,0 +1,583 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+
+/* =========================================================
+   Engineering Contract Document Reviewer & Diff Viewer
+   Authentic Thai Government / Engineering Standards Layout
+   ========================================================= */
+
+.diff-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(6px);
+  z-index: 20000; /* Above all floating toolbars and Copilot widgets */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: diffFadeIn 0.2s ease-out;
+}
+
+@keyframes diffFadeIn {
+  from { opacity: 0; transform: scale(0.99); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.diff-modal {
+  background: #0f172a;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  width: 96vw;
+  max-width: 1550px;
+  height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+/* Modal System Toolbar (Dark Blue/Slate Engineering Desk) */
+.diff-modal-header {
+  padding: 12px 20px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #f8fafc;
+}
+
+.diff-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.diff-modal-title-group h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.diff-doc-tag {
+  background: #334155;
+  color: #cbd5e1;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.diff-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.diff-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.diff-stat-chip.green {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.diff-stat-chip.blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.diff-modal-header .icon.close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.diff-modal-header .icon.close:hover {
+  background: #334155;
+  color: #f8fafc;
+}
+
+/* Sub-toolbar: Jump Chips & View Controls */
+.diff-sub-toolbar {
+  padding: 8px 20px;
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.diff-jump-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.diff-jump-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.diff-jump-btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.diff-jump-btn:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.diff-jump-btn.active {
+  background: #047857;
+  border-color: #059669;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.diff-view-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.diff-sync-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #cbd5e1;
+  cursor: pointer;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.view-mode-tabs button {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  transition: all 0.15s ease;
+}
+
+.view-mode-tabs button:hover {
+  color: #f8fafc;
+}
+
+.view-mode-tabs button.active {
+  background: #334155;
+  border-color: #475569;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Modal Body: Drafting Table Background */
+.diff-modal-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: #0b1120;
+  overflow: hidden;
+}
+
+.diff-modal-body.single-pane {
+  grid-template-columns: 1fr;
+  max-width: 980px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.diff-pane-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e293b;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  overflow: hidden;
+}
+
+.diff-pane-header {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #334155;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.diff-pane-header.original {
+  background: #1e293b;
+  color: #f59e0b;
+}
+
+.diff-pane-header.revised {
+  background: #132e27;
+  color: #34d399;
+}
+
+.diff-scroll-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 16px 60px 16px;
+  background: #0b1120; /* Dark CAD drafting table */
+  display: block; /* Standard block context ensures all child pages expand cleanly */
+}
+
+/* Authentic Multi-Page A4 Layout Container */
+.a4-pages-container {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+/* Individual Physical A4 Paper Page */
+.a4-document-page {
+  width: 100%;
+  max-width: 760px;
+  min-height: 1060px;
+  background: #ffffff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), 0 1px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  padding: 44px 48px;
+  color: #0f172a;
+  font-family: 'Sarabun', 'TH Sarabun New', 'TH Sarabun PSK', sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.a4-document-page * {
+  box-sizing: border-box;
+}
+
+/* Subtle Desk Page Separator */
+.a4-page-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: -6px 0;
+  user-select: none;
+}
+
+.a4-page-separator span {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 14px;
+  border-radius: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.5px;
+}
+
+/* Official Government Garuda Block */
+.sheet-garuda-block {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.sheet-doc-subnotice {
+  text-align: center;
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0 0 6px 0;
+  font-weight: 400;
+}
+
+.sheet-running-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 6px;
+  margin-bottom: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.sheet-doc-title {
+  text-align: center;
+  margin-bottom: 18px;
+  border-bottom: 1.5px solid #000000;
+  padding-bottom: 12px;
+}
+
+.sheet-doc-title h1 {
+  font-size: 17.5px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 4px 0;
+  line-height: 1.35;
+}
+
+.sheet-doc-title h2 {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 2px 0;
+}
+
+.sheet-doc-title p {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+}
+
+/* Formal Identification Table with Fixed Layout & Word Wrap */
+.sheet-meta-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.sheet-meta-table col:nth-child(1) { width: 18%; }
+.sheet-meta-table col:nth-child(2) { width: 32%; }
+.sheet-meta-table col:nth-child(3) { width: 18%; }
+.sheet-meta-table col:nth-child(4) { width: 32%; }
+
+.sheet-meta-table td {
+  padding: 5px 8px;
+  border: 1px solid #cbd5e1;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  vertical-align: middle;
+}
+
+.sheet-meta-table .label {
+  font-weight: 600;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* Formal Headings */
+.sheet-section-h1 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #000000;
+  margin: 18px 0 8px 0;
+}
+
+.sheet-subhead {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin: 10px 0 4px 0;
+  color: #000000;
+}
+
+.sheet-p {
+  text-indent: 1.25cm;
+  text-align: justify;
+  margin: 0 0 10px 0;
+  font-size: 14.5px;
+}
+
+.sheet-standards-list {
+  padding-left: 1.25cm;
+  margin: 4px 0 12px 0;
+  font-size: 14px;
+  line-height: 1.65;
+  list-style: none;
+}
+
+/* Professional Engineering Revision Callout / BBox */
+.spec-diff-box {
+  position: relative;
+  margin: 12px 0 16px 0;
+  padding: 12px 14px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.spec-diff-box.original {
+  background: #fffbeb;
+  border-left: 4px solid #d97706;
+  border-top: 1px solid #fef3c7;
+  border-right: 1px solid #fef3c7;
+  border-bottom: 1px solid #fef3c7;
+}
+
+.spec-diff-box.revised {
+  background: #f0fdf4;
+  border-left: 4px solid #059669;
+  border-top: 1px solid #d1fae5;
+  border-right: 1px solid #d1fae5;
+  border-bottom: 1px solid #d1fae5;
+}
+
+.spec-diff-box.active {
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3);
+}
+
+.spec-diff-label-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
+}
+
+.spec-diff-box.original .spec-diff-label-strip {
+  color: #b45309;
+}
+
+.spec-diff-box.revised .spec-diff-label-strip {
+  color: #065f46;
+}
+
+.spec-diff-content {
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.spec-diff-meta-footer {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  color: #4b5563;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Sign-off Section */
+.sheet-sign-block {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.sheet-sign-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 20px;
+  margin-top: 20px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.sheet-sign-line {
+  margin-top: 28px;
+  border-top: 1px dotted #475569;
+  padding-top: 4px;
+  line-height: 1.5;
+}
+
+.sheet-running-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #94a3b8;
+  border-top: 1px solid #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Modal Footer */
+.diff-modal-footer {
+  padding: 10px 20px;
+  background: #1e293b;
+  border-top: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.diff-footer-stats {
+  font-size: 12.5px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.diff-footer-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.diff-footer-buttons button {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .diff-modal {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  .diff-modal-body {
+    grid-template-columns: 1fr;
+  }
+  .a4-document-page,
+  .a4-document-sheet {
+    padding: 24px;
+  }
+}
