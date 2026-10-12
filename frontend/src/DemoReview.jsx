@@ -1,5 +1,5 @@
 import React,{useState,useEffect} from 'react';
-import {X,Download,Check,Plus,Eye,Printer,FileText} from 'lucide-react';
+import {X,Download,Check,Plus,Eye,Printer,FileText,FileSpreadsheet} from 'lucide-react';
 import F1Screens from './F1Screens';
 import {presentPreparedPayload} from './material-standards.mjs';
 import {exportFile,stamp} from './api';
@@ -7,6 +7,7 @@ import {useLanguage} from './i18n';
 import {readDemo,writeDemo,updateDemoReview,finalizeDemo} from './demo-state.mjs';
 import DocumentDiffModal from './DocumentDiffModal';
 import {exportFormalDocx,openFormalPrintWindow} from './formal-document-generator.mjs';
+import {exportFormalExcel} from './formal-excel-generator.mjs';
 
 export default function DemoReview({project,user,runId,stage,onStage,canEdit,FormComponent,onDocuments}) {
   const {language}=useLanguage(),th=language!=='en';
@@ -18,7 +19,33 @@ export default function DemoReview({project,user,runId,stage,onStage,canEdit,For
   function change(next) {try{writeDemo(user,project.id,rounds.map(r=>r.id===round.id?next:r));setError('');return next;}catch{setError(th?'บันทึกไม่สำเร็จ กรุณาตรวจสอบพื้นที่จัดเก็บของเบราว์เซอร์':'Could not save. Check browser storage.');}}
   function edit(id,changes){if(!canEdit)return;try{return change(updateDemoReview(round,id,changes))}catch(e){setError(e.message)}}
   function finish(){if(!canEdit)return;try{change(finalizeDemo(round))}catch(e){setError(e.message)}}
-  function specification(){const lines=['GREEN SPEC — SPECIFICATION','Prepared example, not analysis of uploaded files.',project.name,''];for(const r of round.recs){const rev=round.reviews.find(v=>v.recommendation_id===r.id);if(rev.decision==='APPROVED'){const option=round.options.find(o=>o.recommendation_id===r.id&&o.option_key===rev.selected_option);lines.push(option.payload.proposed_material,rev.draft_wording||option.default_wording,'')}}return lines.join('\n')}
+  function specification(){
+    const lines=[
+      '================================================================================',
+      `GREEN SPEC — REVISED TECHNICAL SPECIFICATION (ข้อกำหนดทางเทคนิคฉบับแก้ไข)`,
+      `โครงการ: ${project.name}`,
+      `วันที่รับรอง: ${new Intl.DateTimeFormat('th-TH', { dateStyle: 'long' }).format(new Date())}`,
+      'มาตรฐานอ้างอิง: มยผ. 1101-64 / มอก. 2594 / มอก. 2135 / ACI 207 / CSI MasterFormat',
+      '================================================================================',
+      ''
+    ];
+    let idx=1;
+    for(const r of round.recs){
+      const rev=round.reviews.find(v=>v.recommendation_id===r.id);
+      if(rev?.decision==='APPROVED'){
+        const option=round.options.find(o=>o.recommendation_id===r.id&&o.option_key===rev.selected_option);
+        lines.push(`มาตรา ${idx}. ${option?.payload?.proposed_material||r.payload?.proposed_material}`);
+        lines.push(`[สถานะ: ได้รับความเห็นชอบจากคณะกรรมการ (Option ${rev.selected_option})]`);
+        lines.push(`ข้อกำหนดทางเทคนิค:`);
+        lines.push(rev.draft_wording||option?.default_wording||'');
+        lines.push(`เหตุผลทางวิศวกรรม: ${option?.payload?.rationale||''}`);
+        lines.push('--------------------------------------------------------------------------------');
+        lines.push('');
+        idx++;
+      }
+    }
+    return lines.join('\n');
+  }
   if(!round)return <section className="card"><h2>Start your analysis</h2><p>{th?'อัปโหลดเอกสาร แล้วกดวิเคราะห์เพื่อเริ่มต้น':'Upload a document, then start your analysis.'}</p><button onClick={onDocuments}>{th?'ไปหน้าเอกสาร':'Go to Documents'}</button></section>;
   const remaining=round.reviews.filter(r=>r.decision==='UNREVIEWED').length,approved=round.reviews.filter(r=>r.decision==='APPROVED').length;
   return <>
@@ -71,8 +98,29 @@ export default function DemoReview({project,user,runId,stage,onStage,canEdit,For
     )}
     {error&&<p className="error" role="alert">{error}</p>}
     <F1Screens {...{project,stage,FormComponent}} run={round} recs={round.recs.map(r=>({...r,payload:presentPreparedPayload(r.payload)}))} options={round.options.map(o=>({...o,payload:presentPreparedPayload(o.payload,o.option_key)}))} reviews={round.reviews} final={round.final} canEdit={canEdit&&!round.final} onStage={onStage} onSource={s=>setSource(s)} onDecision={(r,decision,locked,reason)=>edit(round.reviews.find(v=>v.recommendation_id===r.id).id,{decision,locked,...(reason===undefined?{}:{reason})})} onChange={(review,option,wording)=>edit(review.id,{selected_option:option,draft_wording:wording,decision:'UNREVIEWED',locked:false})} historyRuns={rounds} decisionSets={rounds.filter(r=>r.final).map(r=>r.final)} onRun={id=>onStage('overview',null,id)}/>
-    {stage==='summary'&&<section className="card demo-finalize"><h3>{round.final?'Final revision':'Review & finalize'}</h3><p>{round.final?(th?'บันทึกฉบับสุดท้ายแล้ว การแก้ไขต้องเริ่มรอบใหม่':'This revision is saved. Start a new round to make changes.'):(th?`เหลือ ${remaining} รายการที่ต้องตรวจทาน เลือกอนุมัติอย่างน้อย 1 รายการก่อน Finalize`:`Review ${remaining} remaining items and approve at least one change before finalizing.`)}</p><div className="actions"><button className="secondary" onClick={()=>setShowDiffModal(true)}><Eye size={16}/>{th?'ดูเปรียบเทียบเอกสาร':'Inspect Diff'}</button><button className="secondary" onClick={()=>exportFile('greenspec-analysis.json',{demo:true,notice:'Prepared example; not analysis of uploaded files.',project:{id:project.id,name:project.name},round})}><Download size={16}/>{th?'ข้อมูลผลวิเคราะห์ (JSON)':'Analysis JSON'}</button><button className="secondary" disabled={!approved} onClick={()=>openFormalPrintWindow({project,round,greenItems:round.recs.map(r=>{const rev=round.reviews.find(v=>v.recommendation_id===r.id);const opt=round.options.find(o=>o.recommendation_id===r.id&&o.option_key===rev?.selected_option);return{section:r.payload?.element_type||'ข้อกำหนด',title:opt?.payload?.proposed_material||r.payload?.title||'วัสดุคาร์บอนต่ำ',standard:opt?.payload?.standard_ref||'มอก. 2135-2545',carbonDelta:'-32% CO₂',originalSnippet:r.payload?.baseline_text,revisedText:rev?.draft_wording||opt?.default_wording};})})}><Printer size={16}/>{th?'พิมพ์ / PDF ทางการ':'Formal PDF'}</button><button className="primary" disabled={!approved} onClick={()=>exportFormalDocx({project,round,greenItems:round.recs.map(r=>{const rev=round.reviews.find(v=>v.recommendation_id===r.id);const opt=round.options.find(o=>o.recommendation_id===r.id&&o.option_key===rev?.selected_option);return{section:r.payload?.element_type||'ข้อกำหนด',title:opt?.payload?.proposed_material||r.payload?.title||'วัสดุคาร์บอนต่ำ',standard:opt?.payload?.standard_ref||'มอก. 2135-2545',carbonDelta:'-32% CO₂',originalSnippet:r.payload?.baseline_text,revisedText:rev?.draft_wording||opt?.default_wording};})})}><FileText size={16}/>{th?'ดาวน์โหลด DOCX ทางการ':'Formal DOCX'}</button>{!round.final&&<button disabled={!canEdit||remaining>0||!approved} onClick={finish}><Check size={16}/>Finalize</button>}<button className="secondary" onClick={onDocuments}><Plus size={16}/>{th?'เริ่มรอบใหม่':'New round'}</button></div></section>}
-    {source&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setSource(null)}><section className="modal" role="dialog" aria-modal="true" aria-label="Reference text"><button autoFocus className="icon close" aria-label="Close" onClick={()=>setSource(null)}><X/></button><h2>Reference text</h2><p className="notice">{th?'ข้อความตัวอย่างที่เตรียมไว้ ไม่ได้ดึงจากไฟล์ที่อัปโหลด':'Prepared example text. This was not extracted from your uploaded file.'}</p><blockquote>{source.exact_text}</blockquote><button onClick={()=>setSource(null)}>{th?'ปิด':'Close'}</button></section></div>}
+    {source&&(
+      <div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setSource(null)}>
+        <section className="modal" role="dialog" aria-modal="true" aria-label="Contract Source Excerpt" style={{ maxWidth: '640px' }}>
+          <button autoFocus className="icon close" aria-label="Close" onClick={()=>setSource(null)}><X/></button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <FileText size={20} color="#059669" />
+            <h2 style={{ margin: 0, fontSize: '18px' }}>{th ? 'ข้อความอ้างอิงจากเอกสารสัญญาต้นฉบับ' : 'Contract Source Excerpt'}</h2>
+          </div>
+          {source.document_name && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '4px', fontSize: '12px', color: '#065f46', fontWeight: 600, margin: '8px 0 12px 0' }}>
+              <span>📑 {source.document_name}</span>
+              {source.locator?.section && <span>· {source.locator.section}</span>}
+            </div>
+          )}
+          <blockquote style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: '14px', background: '#f8fafc', borderLeft: '4px solid #059669', padding: '14px 16px', borderRadius: '0 6px 6px 0', color: '#1e293b', margin: '12px 0' }}>
+            {source.exact_text}
+          </blockquote>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+            <button className="secondary" onClick={()=>setSource(null)}>{th ? 'ปิดหน้าต่าง' : 'Close'}</button>
+          </div>
+        </section>
+      </div>
+    )}
     <DocumentDiffModal
       isOpen={showDiffModal}
       project={project}

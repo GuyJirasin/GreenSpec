@@ -5,7 +5,9 @@ import {
   calculateEmbodiedCarbon,
   evaluateThermalMassConcrete,
   convertConcreteStrength,
-  estimateCostImpact
+  estimateCostImpact,
+  predictStrengthDevelopment,
+  simulateMassConcreteThermalTimeProfile
 } from './tools.mjs';
 
 test('calculateConcreteMix - Volumetric Conservation is exact', () => {
@@ -70,3 +72,41 @@ test('estimateCostImpact - Thai ready-mix cost delta', () => {
   assert.ok(cost.total_savings_thb > 0);
   assert.ok(cost.proposed_cost_thb_m3 < cost.baseline_cost_thb_m3);
 });
+
+test('predictStrengthDevelopment - 56-day acceptance and 14-day stripping safety', () => {
+  const pred = predictStrengthDevelopment({ fcTargetMpa: 35.0, scmPercent: 35.0, scmType: 'fly_ash' });
+  assert.equal(pred.fc_target_mpa, 35.0);
+  assert.equal(pred.stripping_threshold_mpa, 24.5);
+  assert.equal(pred.summary.safe_soffit_stripping_day, 14);
+  
+  const day14 = pred.timeline.find(t => t.day === 14);
+  assert.ok(day14.can_strip_soffit_forms);
+  assert.ok(day14.green_mpa >= 24.5);
+
+  const day56 = pred.timeline.find(t => t.day === 56);
+  assert.ok(day56.green_mpa >= 35.0);
+  assert.equal(day56.is_acceptance_day, true);
+});
+
+test('simulateMassConcreteThermalTimeProfile - ACI 207 DEF and cracking mitigation', () => {
+  const sim = simulateMassConcreteThermalTimeProfile({
+    thicknessM: 1.5,
+    totalBinderKgM3: 350.0,
+    scmPercent: 35.0,
+    scmType: 'fly_ash',
+    placingTempC: 30.0
+  });
+
+  // Baseline unmitigated should fail due to DEF (peak core >= 70) and/or thermal cracking (delta T > 20)
+  assert.equal(sim.unmitigated_baseline.def_safe, false); // Peak core is ~74 deg C
+  assert.equal(sim.unmitigated_baseline.thermal_cracking_safe, false); // Peak delta T is ~28.5 deg C
+  assert.equal(sim.unmitigated_baseline.status, 'FAILED_LIMITS');
+
+  // GreenSpec mitigated mix with 35% Fly Ash + insulation should pass both criteria
+  assert.equal(sim.green_mitigated.def_safe, true); // Peak core is ~61.2 deg C (< 70)
+  assert.equal(sim.green_mitigated.thermal_cracking_safe, true); // Peak delta T is ~14.8 deg C (<= 20)
+  assert.equal(sim.green_mitigated.status, 'FULLY_COMPLIANT');
+
+  assert.equal(sim.time_series.length, 10);
+});
+

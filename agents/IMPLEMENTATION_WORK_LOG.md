@@ -321,3 +321,70 @@ Production verification after c127a93: deployment dpl_FbNpUHeDeHBrrrWin7XQ2eTzut
   6. Z-Index Layering: Raised modal backdrop to `z-index: 20000`, preventing the floating AI Copilot button (`z-index: 9998`) from overlapping modal export buttons.
   7. Navigation Enhancements: Added Page Jump buttons `[1] [2] [3]` alongside clause jump chips in the sub-toolbar.
 - Validation: Client Vite production build succeeded in 1.65s; all 32 tests (shared, api, backend) passed with zero regressions.
+
+## 2026-10-12 — Engineering Calculation Annex (Annex 1), Strength Development Curve & ACI 207 Thermal Simulation
+- Aligned via `/grill-me` on engineering accuracy, precision, and contract completeness:
+  1. **ACI 211.1 Mix Design & Volumetric Conservation (1 m³)**: 227.5 kg hydraulic cement, 122.5 kg fly ash (35%), W/B 0.38, 2.8 L PCE superplasticizer, exactly 1,000 L absolute volume.
+  2. **TGO Embodied Carbon Verification**: 234.8 kgCO₂e/m³ vs 348.0 kgCO₂e/m³ baseline (-32.5% reduction, 465.8 tCO₂e saved across 4,115 m³).
+  3. **Strength Development Progression Curve (ACI 209 / มยผ. 1101-64)**:
+     - Predicted strength at 3, 7, 14, 28, 56, 90 days.
+     - Formwork stripping safety: Soffit beam/slab forms require $\ge 70\%$ $f'_c$ (24.5 MPa), verified achieved on Day 14 (25.9 MPa / 74%) for 35% fly ash mix.
+     - Contractual acceptance: 56-day cylinder test verifies $f'_c \ge 35\text{ MPa}$ (36.4 MPa / 104%).
+  4. **Hourly Mass Concrete Thermal Gradient Simulation (ACI 207 / มยผ. 1101-64)**:
+     - 0 to 168 hours (7 days) hourly temperature progression comparing unmitigated baseline vs GreenSpec mitigated control.
+     - Baseline: Peak Core = 74.0°C (DEF risk $> 70^\circ\text{C}$ FAIL), Peak $\Delta T = 28.5^\circ\text{C}$ (thermal cracking $> 20^\circ\text{C}$ FAIL).
+     - Mitigated: Peak Core = 61.2°C (DEF SAFE $< 70^\circ\text{C}$), Peak $\Delta T = 14.8^\circ\text{C}$ (thermal cracking SAFE $\le 20^\circ\text{C}$).
+  5. **Professional Engineer (PE) Certification Stamp**: Official signature blocks for Concrete Mix Design PE (สย. 48291) and TGO Carbon Verification Specialist (EP-2567-08).
+- Implementation:
+  - `shared/tools.mjs`: Added `predictStrengthDevelopment` and `simulateMassConcreteThermalTimeProfile`.
+  - `shared/tools.test.mjs`: Added unit tests verifying stripping criteria, 56-day acceptance, and thermal mitigation.
+  - `frontend/src/DocumentDiffModal.jsx`: Upgraded to 4 physical A4 pages (`page-1` through `page-4`), added Tables 1, 2, 3, 4, summary cards, and PE stamps on Page 4 for both Left (baseline) and Right (green) panes. Added `[4]` to page jump bar.
+  - `frontend/src/formal-document-generator.mjs`: Integrated Tables 1, 2, 3, 4 into both Word DOCX (`generateFormalDocxBlob`) and Print/PDF HTML (`getFormalHtmlContent`).
+  - `frontend/src/diff-viewer.css`: Added styles for Page 4 tables, engineering summary cards, and status badge pills (`.sheet-badge-pill.safe/danger`).
+- Validation:
+  - `npm test`: 11/11 tests pass.
+  - `npm run test:api`: 18/18 tests pass.
+  - `npm run test:backend`: 5/5 tests pass.
+  - Total: 34/34 tests passing with zero regressions.
+  - `npm run build:client`: Vite production build passed in 1.49s with zero errors.
+
+## 2026-10-12 — Cost & Budget Impact Annex (แบบ บก.๐๖) & Official Multi-Sheet Excel (.xlsx) Export
+- **Completed Page 5 (เอกสารแนบท้าย ๒: แบบ บก.๐๖)** across all platforms:
+  1. `DocumentDiffModal.jsx`: Added physical Page 5 to Left Pane (Baseline Procurement Budget) and Right Pane (Approved Green Revision BOQ).
+     - Financial Justification: Mathematical proof of 800,855 THB (3.11%) net cost savings (316,855 THB on concrete + 144,000 THB on EAF steel + 340,000 THB on AAC masonry) alongside 718.3 tCO₂e total embodied carbon reduction.
+     - Zero Green Premium: Proves low-carbon materials meeting TIS standards lower binder and installation costs without green premium.
+     - 2-Person Signature Block: Professional Cost Estimator (สย. 51042) and Head of Procuring Entity / Project Director.
+  2. `formal-document-generator.mjs`: Synchronized Page 5 across both Word DOCX (`generateFormalDocxBlob`) and Print/PDF HTML (`getFormalHtmlContent`), ensuring 100% 5-page parity across preview, DOCX, and PDF.
+- **Built Multi-Sheet OpenXML Excel (.xlsx) Generator (`frontend/src/formal-excel-generator.mjs`)**:
+  - Genuine OPC OpenXML spreadsheet package created using JSZip:
+    - **Sheet 1: `แบบ บก.๐๖`**: Official Comptroller General's Department 8-section form with allocated budget (26M THB), approved median price (24.92M THB), net savings (800,855 THB), reference market pricing sources, and committee signatures.
+    - **Sheet 2: `BOQ_Comparative`**: Itemized pricing table across 3 work packages with dynamic OpenXML formulas (`=D5*F5`, `=G5-I5`, `=SUM(G5:G7)`, `=SUM(J5:J7)`), % savings, and embodied carbon reductions.
+    - **Sheet 3: `Engineering_Calculations`**: Concrete mix design volumetric raw data (1,000 L conservation), TGO embodied carbon factors (234.8 kgCO₂e/m³ vs 348.0, -32.5%), strength progression, and mass concrete thermal readings.
+  - Also exported `exportBoqCsv` with UTF-8 BOM encoding for direct import into GFMIS and e-GP.
+- **UI Integration**:
+  - `DocumentDiffModal.jsx`: Added dedicated `[ราคากลาง บก.๐๖ (Excel)]` button in modal footer.
+  - `DemoReview.jsx`: Added `[ราคากลาง บก.๐๖ (Excel)]` button to finalized review summary actions.
+- **Verification**:
+  - Added unit test `frontend/src/formal-excel-generator.test.mjs` verifying multi-sheet OPC structure, formulas, and data.
+  - All 38 test suites pass: `npm test` (15/15), `npm run test:api` (18/18), `npm run test:backend` (5/5).
+  - Client production build (`npm run build:client`) succeeded in 1.34s with zero errors.
+
+## 2026-10-12 — Demo TOR Specification Realism & Engineering-Grade Overhaul
+- **Eliminated Informal / Oversimplified Demo Text**:
+  - Replaced informal placeholders (e.g., "ใช้คอนกรีตผสมเถ้าลอย", "เปลี่ยนเป็นบล็อกมวลเบา") with authentic CSI MasterFormat and Thai engineering procurement contract standards.
+  - Upgraded all 4 demo material work packages in `frontend/src/demo-state.mjs`:
+    1. **Concrete (Section 03 30 00)**: Baseline OPC Type 1 (ASTM C39, 35 MPa at 28d, W/C 0.45) -> Option A (TIS 2594 + 25% Fly ash, 28d) vs Option B (TIS 2594 + 35% Fly ash, 56d acceptance, 14d stripping safety, ACI 207 thermal control).
+    2. **Rebar (Section 03 21 00)**: Baseline BOF SD40 -> Option A (EAF rebar with >=90% recycled scrap, ISO 14025 EPD) vs Option B (EAF renewable energy, SCG Green Choice).
+    3. **Masonry (Section 04 20 00)**: Baseline clay brick masonry -> Option A (Autoclaved aerated concrete AAC G4 10 cm, TIS 1505) vs Option B (AAC with 30% recycled by-product, Green Label).
+    4. **Insulation (Section 07 21 00)**: Baseline PU foam -> Option A (Low-carbon glasswool 80% recycled, TIS 486, R-19) vs Option B (100 mm NZEB R-27 with EPD).
+  - Added authentic Thai and English CSI 3-Part technical specification text (`DEMO_SPEC_CLAUSE_TH` and `DEMO_SPEC_CLAUSE_EN`) to `createDemoRound` so the collapsible Technical Specifications box displays complete professional engineering contract clauses.
+- **Enhanced Source Excerpt Modal (`DemoReview.jsx`)**:
+  - Clicking "View source" now presents the realistic contract excerpt with document provenance (`document_name`), section/clause locator (`locator.section`), and formal formatting.
+  - Enhanced plain-text `specification()` export function to output structured contract clauses with standards, status, and engineering rationale.
+- **Verification**:
+  - Auto-migration in `demo-seeder.mjs` safely upgrades existing local demo rounds to the new specifications.
+  - All 38 test suites pass: `npm test` (15/15), `npm run test:api` (18/18), `npm run test:backend` (5/5).
+  - Client production build (`npm run build:client`) succeeded in 1.41s with zero errors.
+
+
+

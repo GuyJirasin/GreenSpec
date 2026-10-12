@@ -12,7 +12,7 @@
     "build:client": "cd frontend && npm run build",
     "build:server": "esbuild server/server.mjs --bundle --platform=node --target=node20 --format=esm --outfile=api/index.js --packages=external",
     "build": "npm run build:client && npm run build:server",
-    "test:shared": "node --test shared/*.test.mjs",
+    "test:shared": "node --test shared/*.test.mjs frontend/src/*.test.mjs",
     "test:backend": "cd backend && npm test",
     "test:python": "PYTHONPATH=. pytest -v tests/",
     "test": "npm run test:shared",

@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Download, Eye, Layers, FileText, Check, Printer } from 'lucide-react';
+import { X, Download, Eye, Layers, FileText, Check, Printer, FileSpreadsheet } from 'lucide-react';
 import { useLanguage } from './i18n';
 import { exportFile } from './api';
 import { exportFormalDocx, openFormalPrintWindow } from './formal-document-generator.mjs';
+import { exportFormalExcel } from './formal-excel-generator.mjs';
 import ThaiGarudaEmblem from './ThaiGarudaEmblem.jsx';
 import './diff-viewer.css';
 
@@ -169,6 +170,10 @@ export default function DocumentDiffModal({
     await exportFormalDocx({ project, document, round, greenItems });
   }
 
+  async function handleExportExcel() {
+    await exportFormalExcel({ project, document, round, greenItems });
+  }
+
   function handlePrintPdf() {
     openFormalPrintWindow({ project, document, round, greenItems });
   }
@@ -216,7 +221,7 @@ export default function DocumentDiffModal({
             ))}
 
             <span className="diff-jump-label" style={{ marginLeft: '8px' }}>{th ? 'หน้า:' : 'Page:'}</span>
-            {[1, 2, 3].map(page => (
+            {[1, 2, 3, 4, 5].map(page => (
               <button
                 key={page}
                 type="button"
@@ -284,7 +289,7 @@ export default function DocumentDiffModal({
                   <div className="a4-document-page page-1" data-page="1">
                     <div className="sheet-running-header">
                       <span>เอกสารแนบท้ายประกาศ · ฉบับร่างเดิม</span>
-                      <span>หน้า 1 จาก 3</span>
+                      <span>หน้า 1 จาก 5</span>
                     </div>
 
                     <div className="sheet-garuda-block">
@@ -355,17 +360,17 @@ export default function DocumentDiffModal({
 
                     <div className="sheet-running-footer">
                       <span>{projectName} · ฉบับร่างเดิม</span>
-                      <span>หน้า 1 จาก 3</span>
+                      <span>หน้า 1 จาก 5</span>
                     </div>
                   </div>
 
-                  <div className="a4-page-separator"><span>แผ่นที่ 1 (Page 1/3)</span></div>
+                  <div className="a4-page-separator"><span>แผ่นที่ 1 (Page 1/5)</span></div>
 
                   {/* LEFT PAGE 2: มาตรา 2.2 เหล็ก, 2.3 ผนัง + หมวดที่ 3 การก่อสร้าง */}
                   <div className="a4-document-page page-2" data-page="2">
                     <div className="sheet-running-header">
                       <span>เอกสารแนบท้ายประกาศ · ฉบับร่างเดิม</span>
-                      <span>หน้า 2 จาก 3</span>
+                      <span>หน้า 2 จาก 5</span>
                     </div>
 
                     <div className="sheet-section-h1" style={{ marginTop: 0 }}>
@@ -426,17 +431,17 @@ export default function DocumentDiffModal({
 
                     <div className="sheet-running-footer">
                       <span>{projectName} · ฉบับร่างเดิม</span>
-                      <span>หน้า 2 จาก 3</span>
+                      <span>หน้า 2 จาก 5</span>
                     </div>
                   </div>
 
-                  <div className="a4-page-separator"><span>แผ่นที่ 2 (Page 2/3)</span></div>
+                  <div className="a4-page-separator"><span>แผ่นที่ 2 (Page 2/5)</span></div>
 
                   {/* LEFT PAGE 3: หมวดที่ 4 การตรวจรับ + หมวดที่ 5 ลงนาม */}
                   <div className="a4-document-page page-3" data-page="3">
                     <div className="sheet-running-header">
                       <span>เอกสารแนบท้ายประกาศ · ฉบับร่างเดิม</span>
-                      <span>หน้า 3 จาก 3</span>
+                      <span>หน้า 3 จาก 5</span>
                     </div>
 
                     <div className="sheet-section-h1" style={{ marginTop: 0 }}>
@@ -473,7 +478,247 @@ export default function DocumentDiffModal({
 
                     <div className="sheet-running-footer">
                       <span>{projectName} · ฉบับร่างเดิม</span>
-                      <span>หน้า 3 จาก 3</span>
+                      <span>หน้า 3 จาก 5</span>
+                    </div>
+                  </div>
+
+                  <div className="a4-page-separator"><span>แผ่นที่ 3 (Page 3/5)</span></div>
+
+                  {/* LEFT PAGE 4: เอกสารแนบท้าย ๑ - สัดส่วนผสมเดิมและการปล่อยคาร์บอน */}
+                  <div className="a4-document-page page-4" data-page="4">
+                    <div className="sheet-running-header">
+                      <span>เอกสารแนบท้ายประกาศ · ฉบับร่างเดิม</span>
+                      <span>หน้า 4 จาก 5 (เอกสารแนบท้าย ๑)</span>
+                    </div>
+
+                    <div className="sheet-doc-title" style={{ borderBottom: '1px solid #94a3b8', paddingBottom: '8px' }}>
+                      <h1 style={{ fontSize: '16px' }}>เอกสารแนบท้าย ๑: รายการคำนวณสัดส่วนผสมคอนกรีตและการประเมินคาร์บอน (ฉบับร่างเดิม)</h1>
+                      <p>การออกแบบสัดส่วนผสมคอนกรีตโครงสร้างปูนซีเมนต์ปอร์ตแลนด์ตามมาตรฐาน มยผ. 1101-64</p>
+                    </div>
+
+                    <div className="sheet-subhead">๑. รายการสัดส่วนผสมคอนกรีตต่อ ๑ ลูกบาศก์เมตร (Baseline Mix Design - 1 m³):</div>
+                    <table className="sheet-calc-table">
+                      <thead>
+                        <tr>
+                          <th style={{ width: '40%' }}>รายการวัสดุ</th>
+                          <th style={{ width: '20%' }}>มาตรฐานอ้างอิง</th>
+                          <th style={{ width: '20%' }}>ปริมาณต่อ ลบ.ม.</th>
+                          <th style={{ width: '20%' }}>หน่วย</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>ปูนซีเมนต์ปอร์ตแลนด์ ประเภท 1 (OPC 100%)</td>
+                          <td className="center">มอก. 15-2562</td>
+                          <td className="num">350.0</td>
+                          <td className="center">กก.</td>
+                        </tr>
+                        <tr>
+                          <td>เถ้าลอย (Fly Ash)</td>
+                          <td className="center">-</td>
+                          <td className="num">0.0</td>
+                          <td className="center">กก. (0%)</td>
+                        </tr>
+                        <tr>
+                          <td>น้ำผสมคอนกรีต (Water, W/C = 0.45)</td>
+                          <td className="center">มยผ. 1101-64</td>
+                          <td className="num">157.5</td>
+                          <td className="center">ลิตร / กก.</td>
+                        </tr>
+                        <tr>
+                          <td>มวลรวมละเอียด (ทรายหยาบสะอาด)</td>
+                          <td className="center">ASTM C33</td>
+                          <td className="num">785.0</td>
+                          <td className="center">กก.</td>
+                        </tr>
+                        <tr>
+                          <td>มวลรวมหยาบ (หินเบอร์ 1 และ 2)</td>
+                          <td className="center">ASTM C33</td>
+                          <td className="num">1,060.0</td>
+                          <td className="center">กก.</td>
+                        </tr>
+                        <tr className="total-row">
+                          <td colSpan="2">รวมน้ำหนักวัสดุประสานรวม (Cementitious Materials)</td>
+                          <td className="num">350.0</td>
+                          <td className="center">กก./ลบ.ม.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div className="sheet-subhead">๒. การประเมินคาร์บอนฟุตพริ้นท์ตามเกณฑ์ อบก. (Embodied Carbon Baseline):</div>
+                    <table className="sheet-calc-table">
+                      <thead>
+                        <tr>
+                          <th>วัสดุ</th>
+                          <th>ค่าสัมประสิทธิ์ (EF)</th>
+                          <th>ปริมาณ</th>
+                          <th>Embodied Carbon</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>ปูนซีเมนต์ปอร์ตแลนด์ Type 1</td>
+                          <td className="center">0.880 kgCO₂e/kg</td>
+                          <td className="num">350 kg</td>
+                          <td className="num">308.0 kgCO₂e</td>
+                        </tr>
+                        <tr>
+                          <td>มวลรวม ขนส่ง และการผลิต</td>
+                          <td className="center">อบก. Ready-mix</td>
+                          <td className="num">1 m³</td>
+                          <td className="num">40.0 kgCO₂e</td>
+                        </tr>
+                        <tr className="total-row">
+                          <td colSpan="3">รวมการปล่อยก๊าซเรือนกระจกต่อ ๑ ลบ.ม. (Baseline Intensity)</td>
+                          <td className="num" style={{ color: '#b45309' }}>348.0 kgCO₂e/m³</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div className="sheet-subhead">๓. การพัฒนากำลังอัดสูตรเดิม (OPC 100% Strength Baseline):</div>
+                    <table className="sheet-calc-table">
+                      <thead>
+                        <tr>
+                          <th>อายุทดสอบ</th>
+                          <th>กำลังอัดคาดการณ์ (MPa)</th>
+                          <th>เทียบ f'c (% ของ 35 MPa)</th>
+                          <th>เกณฑ์ถอดแบบหล่อ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="center">3 วัน</td>
+                          <td className="center">17.5 MPa</td>
+                          <td className="center">50.0%</td>
+                          <td>ถอดแบบหล่อแนวดิ่ง เสา/ผนัง</td>
+                        </tr>
+                        <tr>
+                          <td className="center">7 วัน</td>
+                          <td className="center">24.5 MPa</td>
+                          <td className="center">70.0%</td>
+                          <td>ถอดค้ำยันแบบหล่อท้องคาน/พื้น</td>
+                        </tr>
+                        <tr style={{ background: '#f8fafc', fontWeight: 600 }}>
+                          <td className="center">28 วัน</td>
+                          <td className="center">35.0 MPa</td>
+                          <td className="center">100.0%</td>
+                          <td>เกณฑ์ตรวจรับงานเดิมตามสัญญา</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div className="sheet-subhead">๔. การจำลองความร้อนคอนกรีตมวลหนาเดิม (Unmitigated Mass Concrete Simulation):</div>
+                    <table className="sheet-calc-table">
+                      <thead>
+                        <tr>
+                          <th>เวลา (ชม.)</th>
+                          <th>อุณหภูมิแกนกลาง (T_core)</th>
+                          <th>ผลต่างอุณหภูมิ (ΔT)</th>
+                          <th>สถานะความเสี่ยง</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="center">24 ชม.</td>
+                          <td className="center">62.2°C</td>
+                          <td className="center" style={{ color: '#dc2626' }}>23.3°C</td>
+                          <td><span className="sheet-badge-pill danger">เสี่ยงแตกร้าว (ΔT &gt; 20°C)</span></td>
+                        </tr>
+                        <tr style={{ background: '#fef2f2' }}>
+                          <td className="center" style={{ fontWeight: 700 }}>48 ชม. (พีค)</td>
+                          <td className="center" style={{ fontWeight: 700, color: '#b91c1c' }}>74.0°C</td>
+                          <td className="center" style={{ fontWeight: 700, color: '#b91c1c' }}>28.5°C</td>
+                          <td><span className="sheet-badge-pill danger">ตกเกณฑ์ DEF (&ge;70°C)</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div className="sheet-calc-summary-card">
+                      <strong>สรุปผลกระทบฉบับเดิม:</strong><br/>
+                      • ปริมาณงานคอนกรีตฐานรากโครงการรวม 4,115 ลบ.ม. ปล่อยก๊าซเรือนกระจกสะสม: <strong>1,432.0 tCO₂e</strong><br/>
+                      • การควบคุมอุณหภูมิมวลหนา: <em>ไม่มีข้อกำหนดควบคุมผลต่างอุณหภูมิ ΔT (อุณหภูมิพีคทะลุ 74°C เสี่ยงแตกร้าวรุนแรงและเกิด DEF)</em>
+                    </div>
+
+                    <div className="sheet-running-footer">
+                      <span>{projectName} · ฉบับร่างเดิม</span>
+                      <span>หน้า 4 จาก 5</span>
+                    </div>
+                  </div>
+
+                  <div className="a4-page-separator"><span>แผ่นที่ 4 (Page 4/5)</span></div>
+
+                  {/* LEFT PAGE 5: เอกสารแนบท้าย ๒ - ราคากลางเดิม แบบ บก.๐๖ */}
+                  <div className="a4-document-page page-5" data-page="5">
+                    <div className="sheet-running-header">
+                      <span>เอกสารแนบท้ายประกาศ · ฉบับร่างเดิม</span>
+                      <span>หน้า 5 จาก 5 (เอกสารแนบท้าย ๒)</span>
+                    </div>
+
+                    <div className="sheet-doc-title" style={{ borderBottom: '1px solid #94a3b8', paddingBottom: '8px' }}>
+                      <h1 style={{ fontSize: '16px' }}>เอกสารแนบท้าย ๒: ตารางแสดงวงเงินงบประมาณที่ได้รับจัดสรรและราคากลาง (แบบ บก.๐๖)</h1>
+                      <p>ประมาณการงบประมาณค่าวัสดุก่อสร้างเดิม (Baseline Procurement Budget) ก่อนปรับปรุงข้อกำหนด</p>
+                    </div>
+
+                    <table className="sheet-meta-table">
+                      <tbody>
+                        <tr>
+                          <td className="label">วงเงินงบประมาณที่ได้รับจัดสรร:</td>
+                          <td><strong>26,000,000.00 บาท</strong></td>
+                          <td className="label">ราคากลางคำนวณ ณ วันที่:</td>
+                          <td>{thaiDate}</td>
+                        </tr>
+                        <tr>
+                          <td className="label">แหล่งที่มาของราคากลาง:</td>
+                          <td colSpan="3">ราคาสำรวจตลาดเฉลี่ยจากผู้ผลิต (SCG / CPAC / TPI) สืบราคา ณ เดือนตุลาคม 2569</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div className="sheet-subhead">ตารางสรุปงบประมาณค่าวัสดุฉบับเดิม (Baseline Material Budget):</div>
+                    <table className="sheet-calc-table">
+                      <thead>
+                        <tr>
+                          <th>หมวดงาน</th>
+                          <th>ปริมาณ</th>
+                          <th>ราคาต่อหน่วย</th>
+                          <th>รวมเป็นเงิน (บาท)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>1. คอนกรีตฐานราก Type 1 (35 MPa)</td>
+                          <td className="center">4,115 ลบ.ม.</td>
+                          <td className="num">2,285.00</td>
+                          <td className="num">9,402,775.00</td>
+                        </tr>
+                        <tr>
+                          <td>2. เหล็กเส้นข้ออ้อย SD40 BOF ทั่วไป</td>
+                          <td className="center">480 ตัน</td>
+                          <td className="num">25,500.00</td>
+                          <td className="num">12,240,000.00</td>
+                        </tr>
+                        <tr>
+                          <td>3. ผนังก่ออิฐมอญครึ่งแผ่นรวมปูนฉาบ</td>
+                          <td className="center">8,500 ตร.ม.</td>
+                          <td className="num">480.00</td>
+                          <td className="num">4,080,000.00</td>
+                        </tr>
+                        <tr className="total-row">
+                          <td colSpan="3">รวมงบประมาณค่าวัสดุเดิมทั้งสิ้น</td>
+                          <td className="num" style={{ color: '#b45309' }}>25,722,775.00</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div className="sheet-calc-summary-card">
+                      <strong>สถานะงบประมาณเดิม:</strong><br/>
+                      • ใช้วงเงินงบประมาณ 25,722,775.00 บาท จากกรอบ 26,000,000.00 บาท (เหลือเงินสำรอง 277,225.00 บาท)<br/>
+                      • ยังไม่มีการใช้วัสดุคาร์บอนต่ำหรือรับรองฉลากสิ่งแวดล้อม
+                    </div>
+
+                    <div className="sheet-running-footer">
+                      <span>{projectName} · ฉบับร่างเดิม</span>
+                      <span>หน้า 5 จาก 5</span>
                     </div>
                   </div>
 
@@ -495,7 +740,7 @@ export default function DocumentDiffModal({
                 <div className="a4-document-page page-1" data-page="1">
                   <div className="sheet-running-header">
                     <span>เอกสารแนบท้ายประกาศ · ฉบับแก้ไขเพิ่มเติม Rev. 1.0</span>
-                    <span>หน้า 1 จาก 3</span>
+                    <span>หน้า 1 จาก 5</span>
                   </div>
 
                   <div className="sheet-garuda-block">
@@ -582,17 +827,17 @@ export default function DocumentDiffModal({
 
                   <div className="sheet-running-footer">
                     <span>{projectName} · ฉบับแก้ไขเพิ่มเติม</span>
-                    <span>หน้า 1 จาก 3</span>
+                    <span>หน้า 1 จาก 5</span>
                   </div>
                 </div>
 
-                <div className="a4-page-separator"><span>แผ่นที่ 1 (Page 1/3)</span></div>
+                <div className="a4-page-separator"><span>แผ่นที่ 1 (Page 1/5)</span></div>
 
                 {/* RIGHT PAGE 2: มาตรา 2.2 เหล็ก, 2.3 ผนัง + หมวดที่ 3 ควบคุมอุณหภูมิการเทและการบ่ม */}
                 <div className="a4-document-page page-2" data-page="2">
                   <div className="sheet-running-header">
                     <span>เอกสารแนบท้ายประกาศ · ฉบับแก้ไขเพิ่มเติม Rev. 1.0</span>
-                    <span>หน้า 2 จาก 3</span>
+                    <span>หน้า 2 จาก 5</span>
                   </div>
 
                   <div className="sheet-section-h1" style={{ marginTop: 0 }}>
@@ -657,17 +902,17 @@ export default function DocumentDiffModal({
 
                   <div className="sheet-running-footer">
                     <span>{projectName} · ฉบับแก้ไขเพิ่มเติม</span>
-                    <span>หน้า 2 จาก 3</span>
+                    <span>หน้า 2 จาก 5</span>
                   </div>
                 </div>
 
-                <div className="a4-page-separator"><span>แผ่นที่ 2 (Page 2/3)</span></div>
+                <div className="a4-page-separator"><span>แผ่นที่ 2 (Page 2/5)</span></div>
 
                 {/* RIGHT PAGE 3: หมวดที่ 4 การตรวจรับพัสดุ + หมวดที่ 5 การลงนามคณะกรรมการ */}
                 <div className="a4-document-page page-3" data-page="3">
                   <div className="sheet-running-header">
                     <span>เอกสารแนบท้ายประกาศ · ฉบับแก้ไขเพิ่มเติม Rev. 1.0</span>
-                    <span>หน้า 3 จาก 3</span>
+                    <span>หน้า 3 จาก 5</span>
                   </div>
 
                   <div className="sheet-section-h1" style={{ marginTop: 0 }}>
@@ -707,7 +952,338 @@ export default function DocumentDiffModal({
 
                   <div className="sheet-running-footer">
                     <span>{projectName} · ฉบับแก้ไขเพิ่มเติม</span>
-                    <span>หน้า 3 จาก 3</span>
+                    <span>หน้า 3 จาก 5</span>
+                  </div>
+                </div>
+
+                <div className="a4-page-separator"><span>แผ่นที่ 3 (Page 3/5)</span></div>
+
+                {/* RIGHT PAGE 4: เอกสารแนบท้าย ๑ - รายการคำนวณ ACI 211 / TGO คาร์บอนต่ำ / ACI 207 */}
+                <div className="a4-document-page page-4" data-page="4">
+                  <div className="sheet-running-header">
+                    <span>เอกสารแนบท้ายประกาศ · ฉบับแก้ไขเพิ่มเติม Rev. 1.0</span>
+                    <span>หน้า 4 จาก 5 (เอกสารแนบท้าย ๑)</span>
+                  </div>
+
+                  <div className="sheet-doc-title" style={{ borderBottom: '1px solid #059669', paddingBottom: '8px' }}>
+                    <h1 style={{ fontSize: '16px', color: '#064e3b' }}>เอกสารแนบท้าย ๑: รายการคำนวณสัดส่วนผสมคอนกรีตคาร์บอนต่ำและการควบคุมความร้อน</h1>
+                    <p>การออกแบบสัดส่วนผสมคอนกรีต (ปูนไฮดรอลิก มอก. 2594 + เถ้าลอย มอก. 2135 ร้อยละ 35) ตาม มยผ. 1101-64 / ACI 211.1</p>
+                  </div>
+
+                  <div className="sheet-subhead">๑. รายการสัดส่วนผสมคอนกรีตคาร์บอนต่ำต่อ ๑ ลูกบาศก์เมตร (Low-Carbon Mix Design - 1 m³):</div>
+                  <table className="sheet-calc-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '40%' }}>รายการวัสดุ</th>
+                        <th style={{ width: '20%' }}>มาตรฐานอ้างอิง</th>
+                        <th style={{ width: '20%' }}>ปริมาณต่อ ลบ.ม.</th>
+                        <th style={{ width: '20%' }}>สัดส่วน / ค่า</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>ปูนซีเมนต์ไฮดรอลิก (Hydraulic Cement)</td>
+                        <td className="center">มอก. 2594-2556</td>
+                        <td className="num">227.5</td>
+                        <td className="center">กก. (65.0%)</td>
+                      </tr>
+                      <tr>
+                        <td>เถ้าลอยลิกไนต์คัดขนาด (Fly Ash Class 1/2)</td>
+                        <td className="center">มอก. 2135-2545</td>
+                        <td className="num">122.5</td>
+                        <td className="center">กก. (35.0%)</td>
+                      </tr>
+                      <tr>
+                        <td>น้ำผสมคอนกรีต (W/B = 0.38)</td>
+                        <td className="center">มยผ. 1101-64</td>
+                        <td className="num">133.0</td>
+                        <td className="center">ลิตร / กก.</td>
+                      </tr>
+                      <tr>
+                        <td>น้ำยาเคมีผสมเพิ่มลดน้ำพิเศษ Type F</td>
+                        <td className="center">มอก. 733 / ASTM C494</td>
+                        <td className="num">2.8</td>
+                        <td className="center">ลิตร</td>
+                      </tr>
+                      <tr>
+                        <td>มวลรวมละเอียด (ทรายหยาบสะอาด FM 2.8)</td>
+                        <td className="center">ASTM C33</td>
+                        <td className="num">805.0</td>
+                        <td className="center">กก.</td>
+                      </tr>
+                      <tr>
+                        <td>มวลรวมหยาบ (หิน 3/4 นิ้ว)</td>
+                        <td className="center">ASTM C33</td>
+                        <td className="num">1,055.0</td>
+                        <td className="center">กก.</td>
+                      </tr>
+                      <tr className="total-row">
+                        <td colSpan="2">รวมน้ำหนักวัสดุประสานรวม (Total Binder) & ปริมาตรสัมบูรณ์</td>
+                        <td className="num">350.0 กก.</td>
+                        <td className="center" style={{ color: '#047857' }}>1,000 ลิตร (1.00 m³)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="sheet-subhead">๒. การประเมินคาร์บอนฟุตพริ้นท์ตามเกณฑ์ อบก. (Embodied Carbon Verification):</div>
+                  <table className="sheet-calc-table">
+                    <thead>
+                      <tr>
+                        <th>วัสดุ</th>
+                        <th>ค่าสัมประสิทธิ์ (EF)</th>
+                        <th>ปริมาณต่อ ลบ.ม.</th>
+                        <th>Embodied Carbon</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>ปูนซีเมนต์ไฮดรอลิก (มอก. 2594)</td>
+                        <td className="center">0.690 kgCO₂e/kg</td>
+                        <td className="num">227.5 kg</td>
+                        <td className="num">157.0 kgCO₂e</td>
+                      </tr>
+                      <tr>
+                        <td>เถ้าลอย (By-product Allocation)</td>
+                        <td className="center">0.015 kgCO₂e/kg</td>
+                        <td className="num">122.5 kg</td>
+                        <td className="num">1.8 kgCO₂e</td>
+                      </tr>
+                      <tr>
+                        <td>มวลรวม ขนส่ง และกระบวนการผสม</td>
+                        <td className="center">อบก. Ready-mix</td>
+                        <td className="num">1 m³</td>
+                        <td className="num">40.0 kgCO₂e</td>
+                      </tr>
+                      <tr className="total-row">
+                        <td colSpan="3">รวมการปล่อยก๊าซเรือนกระจกต่อ ๑ ลบ.ม. (Approved Intensity)</td>
+                        <td className="num" style={{ color: '#047857' }}>234.8 kgCO₂e/m³</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="sheet-subhead">๓. การพัฒนากำลังอัดและเกณฑ์ความปลอดภัยการถอดแบบหล่อ (Strength Development & Formwork Stripping Safety - ACI 209):</div>
+                  <table className="sheet-calc-table">
+                    <thead>
+                      <tr>
+                        <th>อายุทดสอบ</th>
+                        <th>กำลังอัด (MPa)</th>
+                        <th>เทียบ f'c (%)</th>
+                        <th>เกณฑ์การปฏิบัติงาน / ตรวจรับ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="center">3 วัน</td>
+                        <td className="center">13.3 MPa</td>
+                        <td className="center">38.0%</td>
+                        <td>ถอดแบบหล่อแนวดิ่ง เสา/ผนัง (&ge;10 MPa ผ่าน)</td>
+                      </tr>
+                      <tr>
+                        <td className="center">7 วัน</td>
+                        <td className="center">20.3 MPa</td>
+                        <td className="center">58.0%</td>
+                        <td>ระยะบ่มน้ำชุ่มชื้นต่อเนื่องขั้นต่ำ</td>
+                      </tr>
+                      <tr style={{ background: '#ecfdf5', fontWeight: 600 }}>
+                        <td className="center">14 วัน</td>
+                        <td className="center" style={{ color: '#047857' }}>25.9 MPa</td>
+                        <td className="center" style={{ color: '#047857' }}>74.0%</td>
+                        <td style={{ color: '#047857' }}>★ ถอดค้ำยัน/แบบหล่อท้องคานและพื้น (&ge;70% ผ่าน)</td>
+                      </tr>
+                      <tr>
+                        <td className="center">28 วัน</td>
+                        <td className="center">30.8 MPa</td>
+                        <td className="center">88.0%</td>
+                        <td>เกณฑ์ตรวจรับคอนกรีตทั่วไป</td>
+                      </tr>
+                      <tr style={{ background: '#f0fdf4', fontWeight: 700 }}>
+                        <td className="center">56 วัน</td>
+                        <td className="center" style={{ color: '#047857' }}>36.4 MPa</td>
+                        <td className="center" style={{ color: '#047857' }}>104.0%</td>
+                        <td style={{ color: '#047857' }}>★ เกณฑ์ตรวจรับงานตามสัญญา TOR (&ge;35 MPa ผ่าน)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="sheet-subhead">๔. การจำลองการแพร่กระจายความร้อนคอนกรีตมวลหนา รายชั่วโมง (ACI 207 Hourly Mass Concrete Thermal Simulation):</div>
+                  <table className="sheet-calc-table">
+                    <thead>
+                      <tr>
+                        <th>เวลา (ชม. / วัน)</th>
+                        <th>อุณหภูมิแกนกลาง (T_core)</th>
+                        <th>ผลต่างอุณหภูมิ (ΔT)</th>
+                        <th>สถานะความปลอดภัย ACI 207</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="center">0 ชม. (เริ่มเท)</td>
+                        <td className="center">30.0°C</td>
+                        <td className="center">2.0°C</td>
+                        <td><span className="sheet-badge-pill safe">ปลอดภัย</span></td>
+                      </tr>
+                      <tr>
+                        <td className="center">24 ชม. (1 วัน)</td>
+                        <td className="center">44.9°C</td>
+                        <td className="center">7.1°C</td>
+                        <td><span className="sheet-badge-pill safe">ปลอดภัย (ΔT &le; 20°C)</span></td>
+                      </tr>
+                      <tr style={{ background: '#ecfdf5' }}>
+                        <td className="center" style={{ fontWeight: 700 }}>48 ชม. (พีคสูงสุด)</td>
+                        <td className="center" style={{ fontWeight: 700, color: '#047857' }}>57.5°C</td>
+                        <td className="center" style={{ fontWeight: 700, color: '#047857' }}>13.5°C</td>
+                        <td><span className="sheet-badge-pill safe">ผ่านเกณฑ์ (T_core &lt; 70°C, ΔT &le; 20°C)</span></td>
+                      </tr>
+                      <tr>
+                        <td className="center">72 ชม. (3 วัน)</td>
+                        <td className="center">61.2°C</td>
+                        <td className="center">14.8°C</td>
+                        <td><span className="sheet-badge-pill safe">ปลอดภัย (พีค ΔT ผ่านเกณฑ์)</span></td>
+                      </tr>
+                      <tr>
+                        <td className="center">168 ชม. (7 วัน)</td>
+                        <td className="center">48.0°C</td>
+                        <td className="center">8.4°C</td>
+                        <td><span className="sheet-badge-pill safe">ควบคุมอุณหภูมิลดลงสมบูรณ์</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="sheet-calc-summary-card highlight">
+                    <strong>ผลการประเมินทางวิศวกรรมและการลดก๊าซเรือนกระจกสุทธิ:</strong><br/>
+                    • อัตราการลดคาร์บอนต่อ ลบ.ม.: <strong>ลดลง 32.5%</strong> (-113.2 kgCO₂e/m³)<br/>
+                    • ปริมาณการลดก๊าซเรือนกระจกสะสมทั้งโครงการ (4,115 ลบ.ม.): <strong>ลดลง 465.8 ตันคาร์บอน (tCO₂e)</strong><br/>
+                    • การควบคุมความร้อนคอนกรีตมวลหนา (ACI 207): T_max = <strong>61.2°C</strong> (&lt; 70°C ปลอดภัย DEF) และ ΔT = <strong>14.8°C</strong> (&le; 20°C ไม่แตกร้าว)<br/>
+                    • การพัฒนากำลังอัด: ถอดแบบหล่อท้องคาน/พื้นได้ใน <strong>วันที่ 14</strong> (กำลังอัด 74% &ge; 70%) และกำลังอัดที่ 56 วัน <strong>f'c = 36.4 MPa</strong> (ผ่านเกณฑ์สัญญา &ge; 35 MPa)
+                  </div>
+
+                  <div className="sheet-pe-stamp">
+                    <div style={{ fontWeight: 600, fontSize: '13px', color: '#0f172a', textAlign: 'center' }}>
+                      การรับรองรายการคำนวณและการทดสอบทางวิศวกรรม (Engineering Certification)
+                    </div>
+                    <div className="sheet-pe-grid">
+                      <div>
+                        (ลงชื่อ) ................................................................<br/>
+                        ( วิศวกรผู้ออกแบบส่วนผสมคอนกรีต )<br/>
+                        วศ.บ. (วิศวกรรมโยธา) เลขทะเบียน สย. 48291
+                      </div>
+                      <div>
+                        (ลงชื่อ) ................................................................<br/>
+                        ( วิศวกรผู้เชี่ยวชาญการประเมินคาร์บอน )<br/>
+                        วท.ม. (การจัดการสิ่งแวดล้อม) เลขทะเบียน อบก. EP-2567-08
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="sheet-running-footer">
+                    <span>{projectName} · ฉบับแก้ไขเพิ่มเติม</span>
+                    <span>หน้า 4 จาก 5</span>
+                  </div>
+                </div>
+
+                <div className="a4-page-separator"><span>แผ่นที่ 4 (Page 4/5)</span></div>
+
+                {/* RIGHT PAGE 5: เอกสารแนบท้าย ๒ - ตารางแสดงวงเงินงบประมาณและราคากลาง (แบบ บก.๐๖) */}
+                <div className="a4-document-page page-5" data-page="5">
+                  <div className="sheet-running-header">
+                    <span>เอกสารแนบท้ายประกาศ · ฉบับแก้ไขเพิ่มเติม Rev. 1.0</span>
+                    <span>หน้า 5 จาก 5 (เอกสารแนบท้าย ๒)</span>
+                  </div>
+
+                  <div className="sheet-doc-title" style={{ borderBottom: '1px solid #059669', paddingBottom: '8px' }}>
+                    <h1 style={{ fontSize: '16px', color: '#064e3b' }}>เอกสารแนบท้าย ๒: ตารางแสดงวงเงินงบประมาณที่ได้รับจัดสรรและราคากลาง (แบบ บก.๐๖)</h1>
+                    <p>การวิเคราะห์ความคุ้มค่าทางการเงินและการประหยัดงบประมาณ (Cost & Budget Impact Analysis)</p>
+                  </div>
+
+                  <table className="sheet-meta-table">
+                    <tbody>
+                      <tr>
+                        <td className="label">วงเงินงบประมาณที่ได้รับจัดสรร:</td>
+                        <td><strong>26,000,000.00 บาท</strong></td>
+                        <td className="label">ราคากลางคำนวณ ณ วันที่:</td>
+                        <td>{thaiDate}</td>
+                      </tr>
+                      <tr>
+                        <td className="label">แหล่งที่มาของราคากลาง:</td>
+                        <td colSpan="3">ราคาสำรวจตลาดเฉลี่ยจากผู้ผลิตชั้นนำ (SCG / CPAC / TPI / Tata Tiscon / Q-CON) สืบราคา ณ เดือนตุลาคม 2569</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="sheet-subhead">ตารางเปรียบเทียบปริมาณวัสดุและราคากลาง (BOQ Pricing Comparison):</div>
+                  <table className="sheet-calc-table" style={{ fontSize: '12px' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: '28%' }}>รายการ / หมวดงาน</th>
+                        <th style={{ width: '12%' }}>ปริมาณ</th>
+                        <th style={{ width: '15%' }}>เดิม (บาท)</th>
+                        <th style={{ width: '15%' }}>รวมเดิม (บาท)</th>
+                        <th style={{ width: '15%' }}>Green Spec (บาท)</th>
+                        <th style={{ width: '15%' }}>รวมใหม่ (บาท)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>1. คอนกรีตฐานราก (เถ้าลอย 35%)</td>
+                        <td className="center">4,115 m³</td>
+                        <td className="num">2,285.00</td>
+                        <td className="num">9,402,775</td>
+                        <td className="num" style={{ color: '#047857' }}>2,208.00</td>
+                        <td className="num" style={{ color: '#047857' }}>9,085,920</td>
+                      </tr>
+                      <tr>
+                        <td>2. เหล็กเส้นข้ออ้อย EAF (EPD)</td>
+                        <td className="center">480 ตัน</td>
+                        <td className="num">25,500.00</td>
+                        <td className="num">12,240,000</td>
+                        <td className="num" style={{ color: '#047857' }}>25,200.00</td>
+                        <td className="num" style={{ color: '#047857' }}>12,096,000</td>
+                      </tr>
+                      <tr>
+                        <td>3. ผนังมวลเบาอบไอน้ำ AAC G4</td>
+                        <td className="center">8,500 m²</td>
+                        <td className="num">480.00</td>
+                        <td className="num">4,080,000</td>
+                        <td className="num" style={{ color: '#047857' }}>440.00</td>
+                        <td className="num" style={{ color: '#047857' }}>3,740,000</td>
+                      </tr>
+                      <tr className="total-row">
+                        <td colSpan="3">รวมงบประมาณค่าวัสดุทั้งสิ้น</td>
+                        <td className="num">25,722,775</td>
+                        <td className="center" style={{ color: '#047857' }}>ประหยัด 3.11%</td>
+                        <td className="num" style={{ color: '#047857' }}>24,921,920</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="sheet-calc-summary-card highlight" style={{ marginTop: '12px' }}>
+                    <strong>สรุปความคุ้มค่าทางการเงินและการจัดซื้อจัดจ้างสีเขียว (Win-Win Green Procurement):</strong><br/>
+                    • ยอดงบประมาณประหยัดสุทธิทั้งโครงการ: <strong>800,855.00 บาท</strong> (ประหยัด 3.11% ต่ำกว่าราคากลางเดิม)<br/>
+                    • การลดก๊าซเรือนกระจกสะสมรวม: <strong>718.3 ตันคาร์บอน (tCO₂e)</strong> (คอนกรีต 465.8 t + เหล็ก 210.0 t + ผนัง 42.5 t)<br/>
+                    • ผลประโยชน์ทางเศรษฐศาสตร์: <strong>ไม่มีต้นทุนส่วนเพิ่ม (Zero Green Premium)</strong> การใช้วัสดุคาร์บอนต่ำที่ได้รับ มอก. ช่วยลดต้นทุนเม็ดปูนและค่าแรงก่อฉาบได้จริง พร้อมได้รับสิทธิประโยชน์ทางภาษีและเกณฑ์อาคารเขียว
+                  </div>
+
+                  <div className="sheet-pe-stamp" style={{ marginTop: '16px' }}>
+                    <div style={{ fontWeight: 600, fontSize: '13px', color: '#0f172a', textAlign: 'center' }}>
+                      การตรวจสอบและรับรองราคากลาง (Procurement Cost Verification)
+                    </div>
+                    <div className="sheet-pe-grid">
+                      <div>
+                        (ลงชื่อ) ................................................................<br/>
+                        ( วิศวกรผู้ประมาณราคาและวิเคราะห์ต้นทุน )<br/>
+                        วศ.บ. (วิศวกรรมโยธา) เลขทะเบียน สย. 51042
+                      </div>
+                      <div>
+                        (ลงชื่อ) ................................................................<br/>
+                        ( หัวหน้าหน่วยงานผู้มีอำนาจอนุมัติงบประมาณ )<br/>
+                        ประธานกรรมการจัดซื้อจัดจ้าง / ผู้อำนวยการโครงการ
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="sheet-running-footer">
+                    <span>{projectName} · ฉบับแก้ไขเพิ่มเติม</span>
+                    <span>หน้า 5 จาก 5</span>
                   </div>
                 </div>
 
@@ -728,6 +1304,10 @@ export default function DocumentDiffModal({
             <button type="button" className="secondary" onClick={handleExportDiffJson}>
               <Download size={14} />
               <span>{th ? 'รายงานเปรียบเทียบ (JSON)' : 'Diff Report (JSON)'}</span>
+            </button>
+            <button type="button" className="secondary" onClick={handleExportExcel} style={{ borderColor: '#059669', color: '#047857' }}>
+              <FileSpreadsheet size={14} />
+              <span>{th ? 'ราคากลาง บก.๐๖ (Excel)' : 'Budget BOQ (.xlsx)'}</span>
             </button>
             <button type="button" className="secondary" onClick={handlePrintPdf}>
               <Printer size={14} />

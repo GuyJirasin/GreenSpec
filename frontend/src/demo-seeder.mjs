@@ -199,20 +199,24 @@ export function seedDemoProjects(user = 'guest') {
 
   // Create initial demo analysis round for Project 1 so user has rich metrics ready to explore
   const existingP1Rounds = readDemo(user, p1Id);
-  if (!existingP1Rounds || existingP1Rounds.length === 0) {
+  const isOldVersion = existingP1Rounds?.length > 0 &&
+    existingP1Rounds[0].recs?.some(r => r.payload?.proposed_material === 'ใช้คอนกรีตผสมเถ้าลอย' || !existingP1Rounds[0].spec_clause_th);
+
+  if (!existingP1Rounds || existingP1Rounds.length === 0 || isOldVersion) {
     const round1 = createDemoRound(p1, [ver1Id, ver2Id]);
     // Approve Option B for Concrete
     const concReview = round1.reviews.find(r => r.recommendation_id.endsWith('-concrete'));
     if (concReview) {
       concReview.decision = 'APPROVED';
       concReview.selected_option = 'B';
-      concReview.draft_wording = 'คงกำลังอัด 35 MPa ที่อายุ 56 วัน ใช้ปูนซีเมนต์ไฮดรอลิกผสมเถ้าลอย 35% (มอก. 2135-2545) ตามมาตรฐาน มอก. 213-2560 ตรวจสอบแผนการบ่มคอนกรีตก่อนอนุมัติ';
+      concReview.draft_wording = 'คอนกรีตสำหรับงานโครงสร้างฐานรากและโครงสร้างมวลหนา (Mass Concrete) ต้องใช้ปูนซีเมนต์ไฮดรอลิกตาม มอก. 2594-2556 ร่วมกับเถ้าลอยลิกไนต์คัดขนาดตาม มอก. 2135-2545 ในอัตราส่วนทดแทนร้อยละ 30-35 โดยน้ำหนัก มีกำลังอัดประลัยระบุไม่น้อยกว่า 35 เมกะปาสกาล (MPa) ที่อายุ 56 วัน ตาม มยผ. 1101-64 และ ACI 211.1 กำลังอัดที่ 14 วันต้องไม่น้อยกว่า 25 MPa (70% f\'c) เพื่อความปลอดภัยในการถอดค้ำยันแบบหล่อ การควบคุมอุณหภูมิภายในคอนกรีตต้องไม่เกิน 70 องศาเซลเซียส และผลต่างอุณหภูมิระหว่างแกนกลางกับผิวคอนกรีตต้องไม่เกิน 20 องศาเซลเซียส ตาม ACI 207.1R';
     }
     // Approve Option A for Steel
     const steelReview = round1.reviews.find(r => r.recommendation_id.endsWith('-steel'));
     if (steelReview) {
       steelReview.decision = 'APPROVED';
       steelReview.selected_option = 'A';
+      steelReview.draft_wording = 'เหล็กเส้นเสริมคอนกรีตทั้งหมด ต้องเป็นเหล็กข้ออ้อย ชั้นคุณภาพ SD40T หรือ SD40 ตามมาตรฐาน มอก. 24-2559 ที่ผลิตจากกระบวนการเตาหลอมอาร์กไฟฟ้า (Electric Arc Furnace - EAF) โดยมีสัดส่วนเศษเหล็กรีไซเคิล (Recycled Scrap Content) ไม่น้อยกว่าร้อยละ 90 และได้รับการรับรองการประเมินวัฏจักรชีวิตสิ่งแวดล้อม (EPD) ตามมาตรฐาน ISO 14025 ค่ากำลังคราก (Yield Strength) ต้องไม่น้อยกว่า 400 MPa พร้อมแนบ Mill Test Certificate ประจำรุ่นผลิต';
     }
     writeDemo(user, p1Id, [round1]);
   }
